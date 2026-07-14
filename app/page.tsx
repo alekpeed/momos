@@ -3090,8 +3090,9 @@ export default function Home() {
       );
     };
     const activeSequencedTasks = state.tasks.filter((task) => !isFinishedTask(task));
-    const readyTasks = activeSequencedTasks.filter((task) => !activeBlockers(task).length && task.status !== "Waiting");
-    const blockedTasks = activeSequencedTasks.filter((task) => activeBlockers(task).length);
+    const activeTaskCount = activeSequencedTasks.length;
+    const readySequencedTasks = activeSequencedTasks.filter((task) => !activeBlockers(task).length && task.status !== "Waiting");
+    const blockedSequencedTasks = activeSequencedTasks.filter((task) => activeBlockers(task).length);
     const unlockers = activeSequencedTasks
       .map((task) => ({ task, unlocks: activeSequencedTasks.filter((candidate) => (candidate.dependencyIds ?? []).includes(task.id)) }))
       .filter((entry) => entry.unlocks.length)
@@ -3099,16 +3100,17 @@ export default function Home() {
       .slice(0, 6);
     return (
       <div className="project-map">
-        <article className="project-card task-flow-card">
+        <article className="project-card task-flow-card everything-map">
           <div className="section-head compact">
             <div>
-              <h3>Task flow check</h3>
-              <p className="meta">A builder-facing view of what can happen now, what is waiting, and which tasks unlock other tasks.</p>
+              <h3>Everything Map</h3>
+              <p className="meta">A household-wide dependency view that explains what is available now, what is waiting, and which tasks unlock other work.</p>
             </div>
           </div>
           <div className="stats-grid mini-stats">
-            <div><strong>{readyTasks.length}</strong><span>ready now</span></div>
-            <div><strong>{blockedTasks.length}</strong><span>blocked</span></div>
+            <div><strong>{activeTaskCount}</strong><span>active tasks</span></div>
+            <div><strong>{readySequencedTasks.length}</strong><span>ready now</span></div>
+            <div><strong>{blockedSequencedTasks.length}</strong><span>blocked</span></div>
             <div><strong>{unlockers.length}</strong><span>unlock paths</span></div>
           </div>
           {unlockers.length ? (
@@ -3126,7 +3128,7 @@ export default function Home() {
                 </div>
               ))}
             </div>
-          ) : <p className="meta">No prerequisite chains yet. That is okay; only add dependencies when order matters.</p>}
+          ) : <p className="meta">No active dependencies yet. Add prerequisites on task cards to build the map.</p>}
         </article>
         {groups.map(({ project, tasks }) => {
           const orderedTasks = orderProjectTasks(tasks);
