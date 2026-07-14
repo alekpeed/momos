@@ -17,7 +17,7 @@ See `docs/project-status.md` for percentages and `docs/roadmap.md` for the phase
 
 - TypeScript type checking passes with `npm run typecheck`.
 - Production build passes with `npm run build`.
-- Lint now runs non-interactively with `npm run lint`; it currently reports warnings only for existing image/performance and hook-dependency guidance.
+- Lint runs non-interactively with `npm run lint`; the latest local pass completed with no ESLint warnings or errors after dependencies were installed with `npm install`.
 - JSON backup/restore recognizes core records, Ideas, helper records, purchase import queue entries, and encrypted vault records.
 
 ## Important Boundaries
