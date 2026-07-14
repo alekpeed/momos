@@ -1,0 +1,799 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mom Home Adaptive Briefing Desk</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f2efe7;
+        --desk: #ebe5d8;
+        --ink: #161b1b;
+        --muted: #66716d;
+        --soft: #8a948f;
+        --paper: #fffdfa;
+        --line: #d8ded7;
+        --line-dark: rgba(22, 27, 27, 0.13);
+        --green: #08796e;
+        --green-soft: #dff3ed;
+        --blue: #315fbc;
+        --blue-soft: #e7edfb;
+        --gold: #b67310;
+        --gold-soft: #f8ebcf;
+        --rose: #bd4e64;
+        --rose-soft: #fae6eb;
+        --violet: #7657c8;
+        --violet-soft: #eee8fb;
+        --graphite: #18201f;
+        --shadow: 0 24px 70px rgba(22, 27, 27, 0.18);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          linear-gradient(145deg, rgba(8, 121, 110, 0.11), transparent 34%),
+          linear-gradient(315deg, rgba(118, 87, 200, 0.10), transparent 36%),
+          #dfe4dd;
+        color: var(--ink);
+        font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      body {
+        display: grid;
+        place-items: center;
+      }
+
+      button {
+        font: inherit;
+      }
+
+      .phone {
+        width: min(100vw, 430px);
+        min-height: 100vh;
+        position: relative;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 70% 13%, rgba(255, 253, 250, 0.72), transparent 24%),
+          linear-gradient(180deg, #f7f4ee 0, var(--desk) 330px, var(--bg) 100%);
+        box-shadow: var(--shadow);
+      }
+
+      .app {
+        min-height: 100vh;
+        padding: 16px 14px 104px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      .topbar {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .kicker {
+        color: var(--green);
+        font-size: 11px;
+        font-weight: 950;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin-top: 3px;
+        font-size: 30px;
+        line-height: 1.02;
+        letter-spacing: 0;
+      }
+
+      .subtitle {
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.3;
+      }
+
+      .add {
+        width: 52px;
+        height: 52px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--graphite);
+        color: white;
+        font-size: 28px;
+        font-weight: 950;
+      }
+
+      .mode-strip {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: max-content;
+        gap: 8px;
+        overflow-x: auto;
+        margin-top: 14px;
+        padding-bottom: 3px;
+        scrollbar-width: none;
+      }
+
+      .mode-strip::-webkit-scrollbar {
+        display: none;
+      }
+
+      .mode {
+        min-height: 42px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(255, 253, 250, 0.72);
+        color: var(--muted);
+        padding: 0 13px;
+        font-size: 13px;
+        font-weight: 950;
+        white-space: nowrap;
+      }
+
+      .mode.active {
+        background: var(--graphite);
+        border-color: var(--graphite);
+        color: white;
+      }
+
+      .desk {
+        position: relative;
+        min-height: 312px;
+        margin-top: 12px;
+        border-radius: 8px;
+        overflow: hidden;
+        background:
+          linear-gradient(135deg, rgba(255, 253, 250, 0.8), rgba(255, 253, 250, 0.24)),
+          var(--desk);
+        border: 1px solid #ded7c9;
+      }
+
+      .desk::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(90deg, rgba(22, 27, 27, 0.045) 1px, transparent 1px),
+          linear-gradient(180deg, rgba(22, 27, 27, 0.035) 1px, transparent 1px);
+        background-size: 34px 34px;
+        opacity: 0.55;
+        pointer-events: none;
+      }
+
+      .memo {
+        position: relative;
+        margin: 12px;
+        border-radius: 8px;
+        background: var(--paper);
+        border: 1px solid rgba(22, 27, 27, 0.10);
+        box-shadow: 0 18px 36px rgba(22, 27, 27, 0.12);
+        overflow: hidden;
+        z-index: 2;
+      }
+
+      .memo-head {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: start;
+        padding: 14px 14px 12px;
+        border-bottom: 1px solid var(--line-dark);
+      }
+
+      .memo h2 {
+        font-size: 22px;
+        line-height: 1.1;
+      }
+
+      .memo p {
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      .explain {
+        min-height: 38px;
+        border: 0;
+        border-radius: 8px;
+        background: var(--green-soft);
+        color: var(--green);
+        padding: 0 11px;
+        font-size: 12px;
+        font-weight: 950;
+        white-space: nowrap;
+      }
+
+      .brief-list {
+        display: grid;
+        gap: 1px;
+        background: var(--line-dark);
+      }
+
+      .brief-item {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 10px;
+        align-items: center;
+        min-height: 58px;
+        padding: 10px 12px;
+        background: var(--paper);
+      }
+
+      .brief-mark {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        color: white;
+        font-size: 11px;
+        font-weight: 950;
+      }
+
+      .brief-item strong {
+        display: block;
+        font-size: 14px;
+        line-height: 1.18;
+      }
+
+      .brief-item span {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.24;
+      }
+
+      .brief-item button {
+        min-height: 34px;
+        border: 0;
+        border-radius: 8px;
+        background: var(--graphite);
+        color: white;
+        padding: 0 10px;
+        font-size: 12px;
+        font-weight: 950;
+      }
+
+      .desk-pins {
+        position: relative;
+        z-index: 3;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 8px;
+        padding: 0 12px 12px;
+      }
+
+      .pin {
+        min-height: 76px;
+        border: 1px solid rgba(22, 27, 27, 0.12);
+        border-radius: 8px;
+        background: rgba(255, 253, 250, 0.84);
+        padding: 10px;
+        box-shadow: 0 10px 20px rgba(22, 27, 27, 0.08);
+      }
+
+      .pin strong {
+        display: block;
+        font-size: 20px;
+        line-height: 1;
+      }
+
+      .pin span {
+        display: block;
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 850;
+        line-height: 1.25;
+      }
+
+      .section {
+        margin-top: 16px;
+      }
+
+      .section-head {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: end;
+        margin-bottom: 9px;
+      }
+
+      .section h2 {
+        font-size: 18px;
+        line-height: 1.1;
+      }
+
+      .section-head p {
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.3;
+      }
+
+      .small-button {
+        min-height: 36px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 253, 250, 0.78);
+        color: var(--ink);
+        padding: 0 11px;
+        font-size: 12px;
+        font-weight: 950;
+        white-space: nowrap;
+      }
+
+      .dossier-stack {
+        display: grid;
+        gap: 9px;
+      }
+
+      .dossier {
+        position: relative;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--paper);
+        overflow: hidden;
+      }
+
+      .dossier::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 6px;
+        background: var(--green);
+      }
+
+      .dossier.buy::before {
+        background: var(--gold);
+      }
+
+      .dossier.take::before {
+        background: var(--blue);
+      }
+
+      .dossier.help::before {
+        background: var(--violet);
+      }
+
+      .dossier-body {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: center;
+        padding: 12px 12px 12px 16px;
+      }
+
+      .dossier h3 {
+        font-size: 16px;
+        line-height: 1.2;
+      }
+
+      .dossier p {
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.34;
+      }
+
+      .confidence {
+        display: inline-flex;
+        min-height: 30px;
+        align-items: center;
+        border-radius: 999px;
+        background: #e7eeea;
+        color: var(--green);
+        padding: 0 9px;
+        font-size: 11px;
+        font-weight: 950;
+        white-space: nowrap;
+      }
+
+      .dossier-actions {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1px;
+        background: var(--line-dark);
+      }
+
+      .dossier-actions button {
+        min-height: 42px;
+        border: 0;
+        background: #f8f7f2;
+        color: var(--ink);
+        font-size: 12px;
+        font-weight: 950;
+      }
+
+      .instrument-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .instrument {
+        min-height: 118px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--paper);
+        padding: 12px;
+      }
+
+      .instrument h3 {
+        font-size: 15px;
+        line-height: 1.2;
+      }
+
+      .instrument .number {
+        display: block;
+        margin-top: 10px;
+        font-size: 32px;
+        line-height: 1;
+        font-weight: 950;
+      }
+
+      .instrument p {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.3;
+      }
+
+      .decision-console {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .decision {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--paper);
+        padding: 12px;
+      }
+
+      .decision-top {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: start;
+      }
+
+      .decision h3 {
+        font-size: 16px;
+        line-height: 1.2;
+      }
+
+      .decision p {
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      .truth-table {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+        margin-top: 10px;
+      }
+
+      .truth-table div {
+        min-height: 54px;
+        border-radius: 8px;
+        background: #f2f0e9;
+        padding: 8px;
+      }
+
+      .truth-table strong {
+        display: block;
+        font-size: 11px;
+        text-transform: uppercase;
+      }
+
+      .truth-table span {
+        display: block;
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.2;
+      }
+
+      .nav {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 4px;
+        padding: 9px 9px 13px;
+        background: rgba(255, 253, 250, 0.9);
+        border-top: 1px solid var(--line);
+        backdrop-filter: blur(18px);
+      }
+
+      .nav button {
+        border: 0;
+        min-height: 52px;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 950;
+      }
+
+      .nav .active {
+        background: var(--graphite);
+        color: white;
+      }
+
+      @media (min-width: 520px) {
+        body {
+          padding: 28px;
+        }
+
+        .phone {
+          min-height: 950px;
+          border-radius: 30px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="phone" aria-label="Adaptive Briefing Desk home screen concept">
+      <div class="app">
+        <header class="topbar">
+          <div>
+            <p class="kicker">Adaptive Briefing Desk</p>
+            <h1>Today’s desk</h1>
+            <p class="subtitle">A smart front page that rearranges itself around what matters now.</p>
+          </div>
+          <button class="add" aria-label="Add">+</button>
+        </header>
+
+        <div class="mode-strip" aria-label="Briefing modes">
+          <button class="mode active" data-mode="chief">Chief of staff</button>
+          <button class="mode" data-mode="errands">Errands</button>
+          <button class="mode" data-mode="home">Household</button>
+          <button class="mode" data-mode="quiet">Quiet mode</button>
+        </div>
+
+        <section class="desk">
+          <article class="memo">
+            <div class="memo-head">
+              <div>
+                <h2 id="memoTitle">The useful move is small.</h2>
+                <p id="memoText">Buy shelf labels first. It opens the pantry project, pairs with a paper-goods order, and does not force the rest of the day into a schedule.</p>
+              </div>
+              <button class="explain">Why</button>
+            </div>
+            <div class="brief-list" id="briefList"></div>
+          </article>
+
+          <div class="desk-pins" aria-label="Pinned instruments">
+            <div class="pin"><strong id="pinOne">4</strong><span id="pinOneText">ready actions</span></div>
+            <div class="pin"><strong id="pinTwo">2</strong><span id="pinTwoText">blocked paths</span></div>
+            <div class="pin"><strong id="pinThree">6</strong><span id="pinThreeText">buy signals</span></div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div>
+              <h2>Adaptive dossiers</h2>
+              <p>Modules appear because they matter, not because the screen always has boxes.</p>
+            </div>
+            <button class="small-button">Pin</button>
+          </div>
+          <div class="dossier-stack" id="dossierStack"></div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div>
+              <h2>Decision console</h2>
+              <p>AI is useful only when it shows its work.</p>
+            </div>
+            <button class="small-button">Audit</button>
+          </div>
+          <div class="decision-console">
+            <article class="decision">
+              <div class="decision-top">
+                <div>
+                  <h3 id="decisionTitle">Paper towels: likely Costco</h3>
+                  <p id="decisionText">The app would compare saved purchase history, current candidates, exactness, unit price, and delivery timing before recommending anything.</p>
+                </div>
+                <span class="confidence" id="decisionConfidence">Explainable</span>
+              </div>
+              <div class="truth-table">
+                <div><strong>Source</strong><span id="truthOne">saved receipt</span></div>
+                <div><strong>Risk</strong><span id="truthTwo">brand mismatch</span></div>
+                <div><strong>Action</strong><span id="truthThree">review first</span></div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div>
+              <h2>Always available</h2>
+              <p>Stable instruments that do not depend on the AI brief.</p>
+            </div>
+          </div>
+          <div class="instrument-row">
+            <article class="instrument">
+              <h3>Ask Adam</h3>
+              <span class="number">1</span>
+              <p>Send a clean task, note, or urgent alert. Vault remains separate.</p>
+            </article>
+            <article class="instrument">
+              <h3>Private vault</h3>
+              <span class="number">0</span>
+              <p>Locked separately. No helper or AI access without explicit unlock.</p>
+            </article>
+          </div>
+        </section>
+      </div>
+
+      <nav class="nav" aria-label="Main navigation">
+        <button class="active">Brief</button>
+        <button>Tasks</button>
+        <button>Calendar</button>
+        <button>Items</button>
+        <button>More</button>
+      </nav>
+    </main>
+
+    <script>
+      const modes = {
+        chief: {
+          title: "The useful move is small.",
+          text: "Buy shelf labels first. It opens the pantry project, pairs with a paper-goods order, and does not force the rest of the day into a schedule.",
+          pins: ["4", "ready actions", "2", "blocked paths", "6", "buy signals"],
+          brief: [
+            ["DO", "Shelf labels unlock the pantry chain", "High leverage, low friction.", "Open", "var(--green)"],
+            ["BUY", "Paper goods can be bundled", "Saved purchase history suggests one combined order.", "Compare", "var(--gold)"],
+            ["TAKE", "Vitamin D needs attention", "Log today and verify exact bottle before reorder.", "Log", "var(--blue)"]
+          ],
+          dossiers: [
+            ["do", "Kitchen chain", "Shelf labels -> pantry shelf -> QR bins. The app keeps the sequence visible without making a schedule.", "Ready"],
+            ["buy", "Reorder basket", "Paper towels, trash bags, and supplement reorder candidates grouped by confidence.", "Review"],
+            ["help", "Assistant handoff", "Send Adam only the selected tasks and notes. Vault stays out of scope.", "Safe"]
+          ],
+          decision: ["Paper towels: likely Costco", "The app would compare saved purchase history, current candidates, exactness, unit price, and delivery timing before recommending anything.", "Explainable", "saved receipt", "brand mismatch", "review first"]
+        },
+        errands: {
+          title: "Bundle the outside-world stuff.",
+          text: "If she leaves the house, combine shelf labels with paper goods. If not, generate a clean Adam handoff or online basket.",
+          pins: ["3", "errand items", "1", "delegate list", "$", "price watch"],
+          brief: [
+            ["BUY", "Paper goods are the basket anchor", "Costco history may beat Amazon unit price.", "Compare", "var(--gold)"],
+            ["DO", "Shelf labels are the add-on", "Small item, high project value.", "Add", "var(--green)"],
+            ["HELP", "Adam handoff is ready", "One clean segmented list, no vault access.", "Draft", "var(--violet)"]
+          ],
+          dossiers: [
+            ["buy", "Basket builder", "Groups exact matches, similar substitutes, and one outlier for price context.", "Compare"],
+            ["help", "Sendable errand brief", "Creates a readable list with store, quantity, links, and notes.", "Draft"],
+            ["buy", "Receipt memory", "Uses previous purchases as a starting point, not as blind autopilot.", "Saved"]
+          ],
+          decision: ["Errand vs delivery", "If delivery fees wipe out unit-price savings, the app should say so clearly and offer Adam handoff instead.", "Practical", "store history", "fees/time", "choose route"]
+        },
+        home: {
+          title: "Household systems, not random chores.",
+          text: "The app groups tasks by the household system they improve: kitchen reset, inventory accuracy, containers, ordering, and helper access.",
+          pins: ["5", "systems", "2", "unlock chains", "9", "mapped items"],
+          brief: [
+            ["MAP", "Pantry project has a visible chain", "One blocker currently controls the next two steps.", "Trace", "var(--green)"],
+            ["ITEM", "Container labels come later", "QR bins matter after pantry shelf review.", "Later", "var(--blue)"],
+            ["WATCH", "Delivery is passive", "Visible, but not interrupting unless it changes.", "Track", "var(--rose)"]
+          ],
+          dossiers: [
+            ["do", "Project chain", "Shows what can happen now, what waits, and what becomes possible next.", "Mapped"],
+            ["take", "Inventory accuracy", "Flags incomplete records without punishing incomplete data.", "Gentle"],
+            ["help", "Access boundaries", "Helper permissions are visible and revocable. Vault is never implied.", "Clear"]
+          ],
+          decision: ["What should be visible?", "The front page adapts based on unlock value, urgency, and confidence, not just due dates.", "Ranked", "task graph", "low confidence", "show why"]
+        },
+        quiet: {
+          title: "Nothing has to be done right now.",
+          text: "Quiet mode keeps the system aware without pressuring her. It shows only safe, light options and lets her ask for suggestions if she wants.",
+          pins: ["0", "nagging", "2", "light options", "1", "calm note"],
+          brief: [
+            ["CALM", "The app can leave her alone", "No proactive energy-based task suggestions.", "Rest", "var(--green)"],
+            ["TAKE", "Only essential supplement logging", "A gentle record, not a productivity demand.", "Log", "var(--blue)"],
+            ["HELP", "Ask Adam if needed", "Low-effort message drafting is available.", "Ask", "var(--violet)"]
+          ],
+          dossiers: [
+            ["take", "Supplement record", "Keep health-related logs easy without turning them into pressure.", "Light"],
+            ["help", "One-tap help", "Send a note without explaining everything from scratch.", "Available"],
+            ["do", "Optional quick wins", "Only appears if she asks for light suggestions.", "Optional"]
+          ],
+          decision: ["Suggestion boundary", "Energy journal data is record-only unless she explicitly asks AI to use it.", "Respectful", "journal", "overreach", "ask first"]
+        }
+      };
+
+      const modeButtons = Array.from(document.querySelectorAll(".mode"));
+      const memoTitle = document.getElementById("memoTitle");
+      const memoText = document.getElementById("memoText");
+      const briefList = document.getElementById("briefList");
+      const dossierStack = document.getElementById("dossierStack");
+      const pinOne = document.getElementById("pinOne");
+      const pinOneText = document.getElementById("pinOneText");
+      const pinTwo = document.getElementById("pinTwo");
+      const pinTwoText = document.getElementById("pinTwoText");
+      const pinThree = document.getElementById("pinThree");
+      const pinThreeText = document.getElementById("pinThreeText");
+      const decisionTitle = document.getElementById("decisionTitle");
+      const decisionText = document.getElementById("decisionText");
+      const decisionConfidence = document.getElementById("decisionConfidence");
+      const truthOne = document.getElementById("truthOne");
+      const truthTwo = document.getElementById("truthTwo");
+      const truthThree = document.getElementById("truthThree");
+
+      function render(mode) {
+        const data = modes[mode];
+        memoTitle.textContent = data.title;
+        memoText.textContent = data.text;
+        [pinOne.textContent, pinOneText.textContent, pinTwo.textContent, pinTwoText.textContent, pinThree.textContent, pinThreeText.textContent] = data.pins;
+        briefList.innerHTML = data.brief
+          .map(([code, title, meta, action, color]) => `
+            <div class="brief-item">
+              <div class="brief-mark" style="background:${color}">${code}</div>
+              <div>
+                <strong>${title}</strong>
+                <span>${meta}</span>
+              </div>
+              <button>${action}</button>
+            </div>
+          `)
+          .join("");
+        dossierStack.innerHTML = data.dossiers
+          .map(([kind, title, text, status]) => `
+            <article class="dossier ${kind}">
+              <div class="dossier-body">
+                <div>
+                  <h3>${title}</h3>
+                  <p>${text}</p>
+                </div>
+                <span class="confidence">${status}</span>
+              </div>
+              <div class="dossier-actions">
+                <button>Open</button>
+                <button>Pin</button>
+                <button>Send</button>
+              </div>
+            </article>
+          `)
+          .join("");
+        [decisionTitle.textContent, decisionText.textContent, decisionConfidence.textContent, truthOne.textContent, truthTwo.textContent, truthThree.textContent] = data.decision;
+        modeButtons.forEach((button) => button.classList.toggle("active", button.dataset.mode === mode));
+      }
+
+      modeButtons.forEach((button) => {
+        button.addEventListener("click", () => render(button.dataset.mode));
+      });
+
+      render("chief");
+    </script>
+  </body>
+</html>

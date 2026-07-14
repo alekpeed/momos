@@ -1,0 +1,720 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mom Home Living Timeline</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f3f0e8;
+        --ink: #171a1a;
+        --muted: #65706c;
+        --soft: #858f8b;
+        --paper: #fffdf8;
+        --line: #d9ded6;
+        --line-strong: #bfc9c2;
+        --green: #087c72;
+        --green-soft: #dff3ed;
+        --blue: #335fbc;
+        --blue-soft: #e7edfb;
+        --rose: #c14f67;
+        --rose-soft: #fae6ec;
+        --gold: #b77712;
+        --gold-soft: #f7ebcf;
+        --graphite: #202626;
+        --shadow: 0 24px 70px rgba(23, 26, 26, 0.18);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          linear-gradient(145deg, rgba(8, 124, 114, 0.12), transparent 38%),
+          linear-gradient(315deg, rgba(193, 79, 103, 0.10), transparent 34%),
+          #dfe5dd;
+        color: var(--ink);
+        font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      body {
+        display: grid;
+        place-items: center;
+      }
+
+      button {
+        font: inherit;
+      }
+
+      .phone {
+        width: min(100vw, 430px);
+        min-height: 100vh;
+        position: relative;
+        overflow: hidden;
+        background: var(--bg);
+        box-shadow: var(--shadow);
+      }
+
+      .app {
+        min-height: 100vh;
+        padding: 16px 14px 104px;
+      }
+
+      .topbar {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: center;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      .kicker {
+        color: var(--green);
+        font-size: 11px;
+        font-weight: 950;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin-top: 3px;
+        font-size: 30px;
+        line-height: 1.04;
+        letter-spacing: 0;
+      }
+
+      .date {
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .view-toggle {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 5px;
+        width: 96px;
+        padding: 5px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: rgba(255, 253, 248, 0.78);
+      }
+
+      .view-toggle button {
+        min-height: 30px;
+        border: 0;
+        border-radius: 10px;
+        background: transparent;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 950;
+      }
+
+      .view-toggle .active {
+        background: var(--graphite);
+        color: white;
+      }
+
+      .editor {
+        margin-top: 14px;
+        border-radius: 18px;
+        background: var(--graphite);
+        color: white;
+        overflow: hidden;
+      }
+
+      .editor-head {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: start;
+        padding: 14px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      }
+
+      .editor h2 {
+        font-size: 20px;
+        line-height: 1.15;
+      }
+
+      .editor p {
+        margin-top: 6px;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 13px;
+        line-height: 1.38;
+      }
+
+      .ask {
+        min-height: 40px;
+        border: 0;
+        border-radius: 12px;
+        padding: 0 12px;
+        background: var(--green-soft);
+        color: #07362f;
+        font-size: 13px;
+        font-weight: 950;
+      }
+
+      .editor-metrics {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1px;
+        background: rgba(255, 255, 255, 0.12);
+      }
+
+      .editor-metrics div {
+        min-height: 64px;
+        padding: 10px 8px;
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .editor-metrics strong {
+        display: block;
+        font-size: 22px;
+        line-height: 1;
+      }
+
+      .editor-metrics span {
+        display: block;
+        margin-top: 6px;
+        color: rgba(255, 255, 255, 0.62);
+        font-size: 10px;
+        font-weight: 850;
+        line-height: 1.2;
+        text-transform: uppercase;
+      }
+
+      .time-lens {
+        display: grid;
+        grid-template-columns: 54px 1fr;
+        gap: 9px;
+        align-items: center;
+        margin-top: 12px;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: rgba(255, 253, 248, 0.76);
+      }
+
+      .now-box {
+        display: grid;
+        place-items: center;
+        min-height: 54px;
+        border-radius: 13px;
+        background: var(--green);
+        color: white;
+        font-size: 12px;
+        font-weight: 950;
+        line-height: 1.1;
+        text-align: center;
+      }
+
+      .time-lens strong {
+        display: block;
+        font-size: 16px;
+        line-height: 1.2;
+      }
+
+      .time-lens span {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.3;
+      }
+
+      .river {
+        position: relative;
+        margin-top: 18px;
+        padding-left: 56px;
+      }
+
+      .river::before {
+        content: "";
+        position: absolute;
+        left: 27px;
+        top: 0;
+        bottom: 0;
+        width: 8px;
+        border-radius: 999px;
+        background:
+          linear-gradient(
+            180deg,
+            var(--green) 0 23%,
+            var(--gold) 23% 43%,
+            var(--blue) 43% 66%,
+            var(--rose) 66% 86%,
+            var(--graphite) 86% 100%
+          );
+      }
+
+      .time-band {
+        position: relative;
+        margin-bottom: 18px;
+      }
+
+      .time-band::before {
+        content: attr(data-time);
+        position: absolute;
+        left: -56px;
+        top: 3px;
+        width: 54px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 950;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+      }
+
+      .time-band::after {
+        content: "";
+        position: absolute;
+        left: -34px;
+        top: 27px;
+        width: 22px;
+        height: 2px;
+        background: var(--line-strong);
+      }
+
+      .phase {
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .phase h2 {
+        font-size: 18px;
+        line-height: 1.1;
+      }
+
+      .phase span {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 850;
+      }
+
+      .stream {
+        display: grid;
+        gap: 8px;
+      }
+
+      .event {
+        position: relative;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--paper);
+        overflow: hidden;
+      }
+
+      .event::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 6px;
+        background: var(--green);
+      }
+
+      .event.buy::before {
+        background: var(--gold);
+      }
+
+      .event.take::before {
+        background: var(--blue);
+      }
+
+      .event.watch::before {
+        background: var(--rose);
+      }
+
+      .event.blocked::before {
+        background: var(--soft);
+      }
+
+      .event-main {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: start;
+        padding: 12px 12px 12px 16px;
+      }
+
+      .event h3 {
+        font-size: 16px;
+        line-height: 1.22;
+      }
+
+      .event p {
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      .event button {
+        min-height: 38px;
+        border: 0;
+        border-radius: 11px;
+        padding: 0 10px;
+        background: var(--graphite);
+        color: white;
+        font-size: 12px;
+        font-weight: 950;
+        white-space: nowrap;
+      }
+
+      .meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+      }
+
+      .tag {
+        display: inline-flex;
+        min-height: 25px;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0 8px;
+        font-size: 11px;
+        font-weight: 950;
+      }
+
+      .tag.green {
+        background: var(--green-soft);
+        color: var(--green);
+      }
+
+      .tag.gold {
+        background: var(--gold-soft);
+        color: #72500b;
+      }
+
+      .tag.blue {
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+
+      .tag.rose {
+        background: var(--rose-soft);
+        color: var(--rose);
+      }
+
+      .branch {
+        margin: 0 10px 10px 18px;
+        padding: 10px 10px 10px 12px;
+        border-left: 2px solid var(--line-strong);
+        background: #f8f7f1;
+        border-radius: 0 12px 12px 0;
+      }
+
+      .branch strong {
+        display: block;
+        font-size: 13px;
+      }
+
+      .branch span {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.3;
+      }
+
+      .merge {
+        margin-top: 8px;
+        border: 1px dashed var(--line-strong);
+        border-radius: 14px;
+        padding: 10px;
+        background: rgba(255, 253, 248, 0.58);
+      }
+
+      .merge h3 {
+        font-size: 14px;
+        line-height: 1.2;
+      }
+
+      .merge p {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      .floating-summary {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .summary-cell {
+        min-height: 74px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: rgba(255, 253, 248, 0.72);
+        padding: 10px;
+      }
+
+      .summary-cell strong {
+        display: block;
+        font-size: 20px;
+        line-height: 1;
+      }
+
+      .summary-cell span {
+        display: block;
+        margin-top: 7px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 850;
+        line-height: 1.25;
+      }
+
+      .nav {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 4px;
+        padding: 9px 9px 13px;
+        background: rgba(255, 253, 248, 0.9);
+        border-top: 1px solid var(--line);
+        backdrop-filter: blur(18px);
+      }
+
+      .nav button {
+        min-height: 52px;
+        border: 0;
+        border-radius: 14px;
+        background: transparent;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 950;
+      }
+
+      .nav .active {
+        background: var(--graphite);
+        color: white;
+      }
+
+      @media (min-width: 520px) {
+        body {
+          padding: 28px;
+        }
+
+        .phone {
+          min-height: 950px;
+          border-radius: 34px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="phone" aria-label="Living Timeline home screen concept">
+      <div class="app">
+        <header class="topbar">
+          <div>
+            <p class="kicker">Living Timeline</p>
+            <h1>The day, in order</h1>
+            <p class="date">Wednesday, July 8 · household flow</p>
+          </div>
+          <div class="view-toggle" aria-label="Timeline mode">
+            <button class="active">Flow</button>
+            <button>Map</button>
+          </div>
+        </header>
+
+        <section class="editor" aria-label="AI daily editor">
+          <div class="editor-head">
+            <div>
+              <h2>AI editor’s note</h2>
+              <p>
+                The day has one hinge: shelf labels unlock the pantry project. Handle that, log supplements,
+                and bundle paper goods into one order.
+              </p>
+            </div>
+            <button class="ask">Ask why</button>
+          </div>
+          <div class="editor-metrics">
+            <div><strong>1</strong><span>key unlock</span></div>
+            <div><strong>3</strong><span>quick wins</span></div>
+            <div><strong>2</strong><span>waiting</span></div>
+            <div><strong>6</strong><span>buy signals</span></div>
+          </div>
+        </section>
+
+        <section class="time-lens" aria-label="Current focus">
+          <div class="now-box">NOW<br />LENS</div>
+          <div>
+            <strong>Best current move: buy shelf labels.</strong>
+            <span>It is small, ready, and it unlocks the pantry sequence without deciding the whole day.</span>
+          </div>
+        </section>
+
+        <div class="floating-summary" aria-label="Timeline summary">
+          <div class="summary-cell"><strong>9:45</strong><span>next useful window starts now</span></div>
+          <div class="summary-cell"><strong>4:30</strong><span>delivery watch ends later today</span></div>
+        </div>
+
+        <section class="river" aria-label="Daily living timeline">
+          <div class="time-band" data-time="Morning">
+            <div class="phase">
+              <h2>Settle and start</h2>
+              <span>low friction</span>
+            </div>
+            <div class="stream">
+              <article class="event take">
+                <div class="event-main">
+                  <div>
+                    <h3>Log morning supplements</h3>
+                    <p>Vitamin D is below reorder threshold. Magnesium just needs a taken log.</p>
+                    <div class="meta-row">
+                      <span class="tag blue">Take</span>
+                      <span class="tag gold">Reorder soon</span>
+                    </div>
+                  </div>
+                  <button>Taken</button>
+                </div>
+              </article>
+
+              <article class="event">
+                <div class="event-main">
+                  <div>
+                    <h3>Buy shelf labels</h3>
+                    <p>Ready now. This is the small action that opens the pantry reset path.</p>
+                    <div class="meta-row">
+                      <span class="tag green">Ready</span>
+                      <span class="tag gold">★★★★★</span>
+                    </div>
+                  </div>
+                  <button>Done</button>
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <div class="time-band" data-time="After">
+            <div class="phase">
+              <h2>Unlocked branch</h2>
+              <span>appears when ready</span>
+            </div>
+            <div class="stream">
+              <article class="event blocked">
+                <div class="event-main">
+                  <div>
+                    <h3>Review one pantry shelf</h3>
+                    <p>Currently waiting. It moves into the main flow after shelf labels are done.</p>
+                    <div class="meta-row">
+                      <span class="tag rose">Blocked</span>
+                      <span class="tag green">Pantry project</span>
+                    </div>
+                  </div>
+                  <button>View</button>
+                </div>
+                <div class="branch">
+                  <strong>Prerequisite</strong>
+                  <span>Buy shelf labels. The app keeps this dependency visible without nagging.</span>
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <div class="time-band" data-time="Errands">
+            <div class="phase">
+              <h2>Buying stream</h2>
+              <span>bundle candidates</span>
+            </div>
+            <div class="stream">
+              <article class="event buy">
+                <div class="event-main">
+                  <div>
+                    <h3>Paper goods reorder</h3>
+                    <p>Paper towels and trash bags can be bundled. Saved Costco purchase may beat Amazon.</p>
+                    <div class="meta-row">
+                      <span class="tag gold">Compare price</span>
+                      <span class="tag green">One trip</span>
+                    </div>
+                  </div>
+                  <button>Compare</button>
+                </div>
+                <div class="merge">
+                  <h3>AI merge suggestion</h3>
+                  <p>Combine with shelf labels if going out. Otherwise generate an assistant handoff list.</p>
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <div class="time-band" data-time="1:30">
+            <div class="phase">
+              <h2>Watch window</h2>
+              <span>passive attention</span>
+            </div>
+            <div class="stream">
+              <article class="event watch">
+                <div class="event-main">
+                  <div>
+                    <h3>Home Depot delivery window</h3>
+                    <p>Tracking screenshot attached. Alert if status changes or if the window is almost over.</p>
+                    <div class="meta-row">
+                      <span class="tag rose">Watch</span>
+                      <span class="tag blue">Screenshot</span>
+                    </div>
+                  </div>
+                  <button>Track</button>
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <div class="time-band" data-time="Later">
+            <div class="phase">
+              <h2>Close the loop</h2>
+              <span>only if useful</span>
+            </div>
+            <div class="stream">
+              <article class="event">
+                <div class="event-main">
+                  <div>
+                    <h3>Optional daily wrap</h3>
+                    <p>Review what changed: tasks completed, bottles logged, inventory updated, purchases saved.</p>
+                    <div class="meta-row">
+                      <span class="tag green">Calm</span>
+                      <span class="tag blue">Journal</span>
+                    </div>
+                  </div>
+                  <button>Open</button>
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <nav class="nav" aria-label="Main navigation">
+        <button class="active">Today</button>
+        <button>Tasks</button>
+        <button>Calendar</button>
+        <button>Items</button>
+        <button>More</button>
+      </nav>
+    </main>
+  </body>
+</html>

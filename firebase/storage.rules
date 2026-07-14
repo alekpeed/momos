@@ -1,0 +1,23 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isMember(householdId) {
+      return request.auth != null
+        && firestore.get(/databases/(default)/documents/households/$(householdId)).data.memberIds.hasAny([request.auth.uid]);
+    }
+
+    function isEditor(householdId) {
+      return request.auth != null
+        && firestore.get(/databases/(default)/documents/households/$(householdId)).data.editorIds.hasAny([request.auth.uid]);
+    }
+
+    match /household-media/{householdId}/{allPaths=**} {
+      allow read: if isMember(householdId);
+      allow create, update: if isEditor(householdId)
+        && request.resource.size < 15 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*|application/pdf');
+      allow delete: if isEditor(householdId);
+    }
+  }
+}

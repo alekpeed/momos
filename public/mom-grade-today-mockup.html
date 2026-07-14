@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mom Home Mockup</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --paper: #fbf8f1;
+        --surface: #ffffff;
+        --ink: #23302d;
+        --muted: #6f7974;
+        --line: #d9ded7;
+        --green: #2f6f63;
+        --green-soft: #e7f2ed;
+        --blue: #315f8f;
+        --blue-soft: #e8f0f8;
+        --coral: #b85d4f;
+        --coral-soft: #faebe8;
+        --gold: #b88924;
+        --gold-soft: #fbf2d8;
+        --shadow: 0 18px 42px rgba(35, 48, 45, 0.16);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #e8ece8;
+        color: var(--ink);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      .phone {
+        width: min(100vw, 430px);
+        min-height: 100vh;
+        background: var(--paper);
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .app {
+        min-height: 100vh;
+        padding: 18px 18px 94px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 16px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: 30px;
+        line-height: 1.05;
+        letter-spacing: 0;
+      }
+
+      .date {
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 16px;
+      }
+
+      .icon-button {
+        width: 54px;
+        height: 54px;
+        border: 0;
+        border-radius: 8px;
+        background: var(--ink);
+        color: white;
+        font-size: 30px;
+        font-weight: 700;
+      }
+
+      .calm-strip {
+        display: grid;
+        grid-template-columns: 58px 1fr;
+        gap: 13px;
+        align-items: center;
+        padding: 14px;
+        background: #f1eadc;
+        border: 1px solid #ded4bf;
+        border-radius: 8px;
+      }
+
+      .sun {
+        height: 58px;
+        border-radius: 50%;
+        background:
+          radial-gradient(circle at 35% 35%, #fff4c7 0 16%, transparent 17%),
+          linear-gradient(135deg, #e2ae3d, #c87945);
+      }
+
+      .quote {
+        font-size: 15px;
+        line-height: 1.35;
+      }
+
+      .quote span {
+        display: block;
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .section {
+        margin-top: 18px;
+      }
+
+      .section-head {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+
+      h2 {
+        font-size: 19px;
+        line-height: 1.2;
+      }
+
+      .see-all {
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink);
+        border-radius: 8px;
+        min-height: 40px;
+        padding: 0 13px;
+        font-size: 15px;
+        font-weight: 700;
+      }
+
+      .hero-card,
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+
+      .hero-card {
+        padding: 16px;
+      }
+
+      .task-title {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .task-title h3 {
+        font-size: 22px;
+        line-height: 1.2;
+      }
+
+      .star-stack {
+        white-space: nowrap;
+        color: var(--gold);
+        font-size: 16px;
+        font-weight: 800;
+      }
+
+      .meta {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.35;
+      }
+
+      .status-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 13px;
+      }
+
+      .pill {
+        display: inline-flex;
+        min-height: 34px;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .pill.green {
+        background: var(--green-soft);
+        color: var(--green);
+      }
+
+      .pill.gold {
+        background: var(--gold-soft);
+        color: #75560f;
+      }
+
+      .pill.coral {
+        background: var(--coral-soft);
+        color: var(--coral);
+      }
+
+      .primary-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 15px;
+      }
+
+      .action {
+        border: 0;
+        min-height: 54px;
+        border-radius: 8px;
+        font-size: 17px;
+        font-weight: 800;
+      }
+
+      .action.primary {
+        background: var(--green);
+        color: white;
+      }
+
+      .action.secondary {
+        background: var(--green-soft);
+        color: var(--green);
+      }
+
+      .two-column {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .card {
+        padding: 14px;
+        min-height: 132px;
+      }
+
+      .card h3 {
+        font-size: 17px;
+        line-height: 1.2;
+      }
+
+      .big-number {
+        display: block;
+        margin-top: 10px;
+        font-size: 34px;
+        font-weight: 900;
+        line-height: 1;
+      }
+
+      .small-note {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.3;
+      }
+
+      .list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .row-card {
+        display: grid;
+        grid-template-columns: 46px 1fr auto;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+
+      .thumb {
+        width: 46px;
+        height: 46px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-weight: 900;
+      }
+
+      .thumb.blue {
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+
+      .thumb.coral {
+        background: var(--coral-soft);
+        color: var(--coral);
+      }
+
+      .row-card h3 {
+        font-size: 17px;
+      }
+
+      .row-card p {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .mini-button {
+        border: 0;
+        border-radius: 8px;
+        background: var(--ink);
+        color: white;
+        min-height: 42px;
+        padding: 0 13px;
+        font-weight: 800;
+      }
+
+      .help-card {
+        padding: 14px;
+        background: #f8eeee;
+        border: 1px solid #e5c9c3;
+        border-radius: 8px;
+      }
+
+      .help-card h2 {
+        color: #6f2118;
+      }
+
+      .help-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 12px;
+      }
+
+      .help-buttons button {
+        border: 0;
+        border-radius: 8px;
+        min-height: 50px;
+        font-size: 16px;
+        font-weight: 900;
+      }
+
+      .help-buttons .normal {
+        background: white;
+        color: #6f2118;
+      }
+
+      .help-buttons .urgent {
+        background: #8f2b20;
+        color: white;
+      }
+
+      .nav {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 4px;
+        padding: 10px 10px 14px;
+        background: rgba(255, 255, 255, 0.94);
+        border-top: 1px solid var(--line);
+        backdrop-filter: blur(18px);
+      }
+
+      .nav button {
+        border: 0;
+        border-radius: 8px;
+        min-height: 52px;
+        background: transparent;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .nav .active {
+        background: var(--green-soft);
+        color: var(--green);
+      }
+
+      @media (min-width: 520px) {
+        body {
+          padding: 28px;
+        }
+
+        .phone {
+          min-height: 900px;
+          border-radius: 32px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="phone" aria-label="Mom Home polished Today mockup">
+      <div class="app">
+        <header class="topbar">
+          <div>
+            <h1>Good morning, Mom</h1>
+            <p class="date">Wednesday, July 8</p>
+          </div>
+          <button class="icon-button" aria-label="Add something">+</button>
+        </header>
+
+        <section class="calm-strip" aria-label="Daily calm thought">
+          <div class="sun" aria-hidden="true"></div>
+          <p class="quote">
+            “Do the next right thing, and let that be enough.”
+            <span>Quiet start · rain sound ready</span>
+          </p>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Do this next</h2>
+            <button class="see-all">All tasks</button>
+          </div>
+          <article class="hero-card">
+            <div class="task-title">
+              <h3>Buy shelf labels before pantry reset</h3>
+              <span class="star-stack">★★★★★</span>
+            </div>
+            <p class="meta">Ready now. This unlocks: Review one pantry shelf.</p>
+            <div class="status-row">
+              <span class="pill green">Ready now</span>
+              <span class="pill gold">Quick win</span>
+              <span class="pill coral">Ask for help</span>
+            </div>
+            <div class="primary-row">
+              <button class="action primary">Done</button>
+              <button class="action secondary">Remind me</button>
+            </div>
+          </article>
+        </section>
+
+        <section class="section two-column" aria-label="At a glance">
+          <article class="card">
+            <h3>Needs ordering</h3>
+            <span class="big-number">3</span>
+            <p class="small-note">Paper towels, Vitamin D, trash bags</p>
+          </article>
+          <article class="card">
+            <h3>Low stock</h3>
+            <span class="big-number">5</span>
+            <p class="small-note">Includes two supplement bottles</p>
+          </article>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Supplements</h2>
+            <button class="see-all">Open</button>
+          </div>
+          <div class="list">
+            <article class="row-card">
+              <div class="thumb blue">D</div>
+              <div>
+                <h3>Vitamin D</h3>
+                <p>14 left · reorder soon</p>
+              </div>
+              <button class="mini-button">Taken</button>
+            </article>
+            <article class="row-card">
+              <div class="thumb coral">Mg</div>
+              <div>
+                <h3>Magnesium</h3>
+                <p>Plenty left · last taken yesterday</p>
+              </div>
+              <button class="mini-button">Taken</button>
+            </article>
+          </div>
+        </section>
+
+        <section class="section help-card">
+          <h2>Need help?</h2>
+          <p class="small-note">Send Adam a task, a note, or an urgent alert.</p>
+          <div class="help-buttons">
+            <button class="normal">Ask Adam</button>
+            <button class="urgent">Urgent</button>
+          </div>
+        </section>
+      </div>
+
+      <nav class="nav" aria-label="Main navigation">
+        <button class="active">Today</button>
+        <button>Tasks</button>
+        <button>Calendar</button>
+        <button>Items</button>
+        <button>More</button>
+      </nav>
+    </main>
+  </body>
+</html>

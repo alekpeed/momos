@@ -1,0 +1,1085 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mom Home Command Center Mockup</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f5f3ed;
+        --ink: #171b1a;
+        --muted: #68716d;
+        --quiet: #8a938f;
+        --surface: #ffffff;
+        --surface-2: #f8faf7;
+        --line: #dfe5df;
+        --line-strong: #c8d0ca;
+        --teal: #087c72;
+        --teal-soft: #dff4ee;
+        --blue: #2e62ad;
+        --blue-soft: #e6eefb;
+        --coral: #c45745;
+        --coral-soft: #fae8e3;
+        --violet: #7154bd;
+        --violet-soft: #eee8fb;
+        --gold: #b87912;
+        --gold-soft: #f8efd7;
+        --lime: #638b22;
+        --lime-soft: #eaf4d7;
+        --shadow: 0 16px 50px rgba(23, 27, 26, 0.14);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        background: #dfe5df;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        color: var(--ink);
+        font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      .phone {
+        width: min(100vw, 430px);
+        min-height: 100vh;
+        background:
+          linear-gradient(180deg, rgba(8, 124, 114, 0.08), transparent 230px),
+          var(--bg);
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .app {
+        min-height: 100vh;
+        padding: 18px 14px 104px;
+      }
+
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      .eyebrow {
+        color: var(--teal);
+        font-size: 12px;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin-top: 3px;
+        font-size: 28px;
+        line-height: 1.05;
+        letter-spacing: 0;
+      }
+
+      .date-line {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .profile-chip {
+        display: grid;
+        place-items: center;
+        width: 48px;
+        height: 48px;
+        border: 1px solid var(--line-strong);
+        border-radius: 8px;
+        background: var(--surface);
+        font-weight: 950;
+        color: var(--teal);
+      }
+
+      .search-row {
+        display: grid;
+        grid-template-columns: 1fr 48px;
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      .search {
+        height: 48px;
+        border: 1px solid var(--line-strong);
+        border-radius: 8px;
+        padding: 0 14px;
+        background: rgba(255, 255, 255, 0.86);
+        color: var(--ink);
+        font-size: 15px;
+      }
+
+      .add-button {
+        border: 0;
+        border-radius: 8px;
+        background: var(--ink);
+        color: white;
+        font-size: 28px;
+        font-weight: 900;
+      }
+
+      .ai-brief {
+        margin-top: 14px;
+        border: 1px solid #b9dcd5;
+        border-radius: 8px;
+        background:
+          linear-gradient(135deg, rgba(8, 124, 114, 0.14), rgba(113, 84, 189, 0.08)),
+          var(--surface);
+        overflow: hidden;
+      }
+
+      .brief-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 14px;
+        border-bottom: 1px solid rgba(8, 124, 114, 0.18);
+      }
+
+      .brief-head h2 {
+        font-size: 20px;
+        line-height: 1.15;
+      }
+
+      .brief-head p {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.3;
+      }
+
+      .ask-ai {
+        min-height: 42px;
+        border: 0;
+        border-radius: 8px;
+        padding: 0 12px;
+        background: var(--teal);
+        color: white;
+        font-size: 14px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+
+      .brief-body {
+        padding: 12px 14px 14px;
+      }
+
+      .brief-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .metric {
+        min-height: 76px;
+        border: 1px solid rgba(23, 27, 26, 0.08);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.72);
+        padding: 10px;
+      }
+
+      .metric strong {
+        display: block;
+        font-size: 25px;
+        line-height: 1;
+      }
+
+      .metric span {
+        display: block;
+        margin-top: 7px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.25;
+      }
+
+      .brief-text {
+        margin-top: 10px;
+        color: #25302d;
+        font-size: 14px;
+        line-height: 1.45;
+      }
+
+      .command-strip {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(100px, 1fr);
+        gap: 8px;
+        margin-top: 12px;
+        overflow-x: auto;
+        padding-bottom: 2px;
+        scrollbar-width: none;
+      }
+
+      .command-strip::-webkit-scrollbar {
+        display: none;
+      }
+
+      .command {
+        min-height: 62px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        padding: 9px 10px;
+        text-align: left;
+        font-weight: 900;
+        color: var(--ink);
+      }
+
+      .command span {
+        display: block;
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .section {
+        margin-top: 18px;
+      }
+
+      .mode-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 8px;
+      }
+
+      .ai-card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        padding: 12px;
+        min-height: 132px;
+      }
+
+      .ai-card.primary {
+        background:
+          linear-gradient(135deg, rgba(23, 27, 26, 0.92), rgba(8, 124, 114, 0.9)),
+          #17201d;
+        color: white;
+        border-color: rgba(23, 27, 26, 0.2);
+      }
+
+      .ai-card h3 {
+        font-size: 15px;
+        line-height: 1.2;
+      }
+
+      .ai-card p {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      .ai-card.primary p {
+        color: rgba(255, 255, 255, 0.74);
+      }
+
+      .mode-button {
+        margin-top: 12px;
+        min-height: 40px;
+        width: 100%;
+        border: 0;
+        border-radius: 8px;
+        background: white;
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 950;
+      }
+
+      .ai-card:not(.primary) .mode-button {
+        background: var(--teal-soft);
+        color: var(--teal);
+      }
+
+      .decision-rail {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .decision {
+        min-height: 116px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        padding: 12px;
+      }
+
+      .decision strong {
+        display: block;
+        font-size: 13px;
+        line-height: 1.2;
+      }
+
+      .decision p {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.3;
+      }
+
+      .confidence {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        border-radius: 999px;
+        padding: 0 8px;
+        margin-top: 9px;
+        background: var(--lime-soft);
+        color: var(--lime);
+        font-size: 11px;
+        font-weight: 950;
+      }
+
+      .section-head {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 9px;
+      }
+
+      .section-head h2 {
+        font-size: 18px;
+        line-height: 1.1;
+      }
+
+      .section-head p {
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .text-button {
+        min-height: 36px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        color: var(--ink);
+        padding: 0 11px;
+        font-size: 13px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+
+      .priority-stack,
+      .signal-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .task-card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        padding: 12px;
+      }
+
+      .task-top {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+      }
+
+      .task-top h3 {
+        font-size: 17px;
+        line-height: 1.22;
+      }
+
+      .stars {
+        color: var(--gold);
+        font-size: 12px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+
+      .task-card p {
+        margin-top: 7px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.35;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 9px;
+      }
+
+      .chip {
+        min-height: 28px;
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0 9px;
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .chip.teal {
+        background: var(--teal-soft);
+        color: var(--teal);
+      }
+
+      .chip.violet {
+        background: var(--violet-soft);
+        color: var(--violet);
+      }
+
+      .chip.coral {
+        background: var(--coral-soft);
+        color: var(--coral);
+      }
+
+      .chip.gold {
+        background: var(--gold-soft);
+        color: #72500a;
+      }
+
+      .split {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .mini-panel {
+        min-height: 128px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        padding: 12px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .mini-panel h3 {
+        font-size: 15px;
+        line-height: 1.2;
+      }
+
+      .mini-panel .number {
+        display: block;
+        margin-top: 10px;
+        font-size: 30px;
+        line-height: 1;
+        font-weight: 950;
+      }
+
+      .mini-panel p {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      .spark {
+        position: absolute;
+        right: 10px;
+        bottom: 10px;
+        display: flex;
+        align-items: end;
+        gap: 3px;
+        height: 30px;
+      }
+
+      .spark span {
+        width: 6px;
+        border-radius: 999px;
+        background: var(--teal);
+        opacity: 0.72;
+      }
+
+      .spark span:nth-child(1) {
+        height: 13px;
+      }
+
+      .spark span:nth-child(2) {
+        height: 22px;
+      }
+
+      .spark span:nth-child(3) {
+        height: 17px;
+      }
+
+      .spark span:nth-child(4) {
+        height: 27px;
+      }
+
+      .map {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        padding: 12px;
+      }
+
+      .flow {
+        display: grid;
+        gap: 8px;
+      }
+
+      .flow-item {
+        display: grid;
+        grid-template-columns: 26px 1fr auto;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .node {
+        width: 26px;
+        height: 26px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        color: white;
+        font-size: 12px;
+        font-weight: 950;
+      }
+
+      .node.done {
+        background: var(--teal);
+      }
+
+      .node.now {
+        background: var(--gold);
+      }
+
+      .node.wait {
+        background: var(--quiet);
+      }
+
+      .flow-item strong {
+        font-size: 14px;
+      }
+
+      .flow-item span {
+        color: var(--muted);
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .connector {
+        width: 2px;
+        height: 13px;
+        margin-left: 12px;
+        background: var(--line-strong);
+      }
+
+      .row-card {
+        display: grid;
+        grid-template-columns: 42px 1fr auto;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        padding: 10px;
+      }
+
+      .visual {
+        width: 42px;
+        height: 42px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-weight: 950;
+      }
+
+      .visual.blue {
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+
+      .visual.coral {
+        background: var(--coral-soft);
+        color: var(--coral);
+      }
+
+      .visual.lime {
+        background: var(--lime-soft);
+        color: var(--lime);
+      }
+
+      .row-card h3 {
+        font-size: 15px;
+        line-height: 1.2;
+      }
+
+      .row-card p {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.3;
+      }
+
+      .row-action {
+        min-height: 38px;
+        border: 0;
+        border-radius: 8px;
+        background: var(--ink);
+        color: white;
+        padding: 0 10px;
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .timeline {
+        border-left: 2px solid var(--line-strong);
+        padding-left: 12px;
+        display: grid;
+        gap: 11px;
+      }
+
+      .time-item {
+        position: relative;
+        display: grid;
+        grid-template-columns: 54px 1fr;
+        gap: 10px;
+      }
+
+      .time-item::before {
+        content: "";
+        position: absolute;
+        left: -18px;
+        top: 4px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--teal);
+        border: 2px solid var(--bg);
+      }
+
+      .time {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .time-item strong {
+        font-size: 14px;
+      }
+
+      .time-item p {
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.3;
+      }
+
+      .assistant-panel {
+        border: 1px solid #e1c5bf;
+        border-radius: 8px;
+        background:
+          linear-gradient(135deg, rgba(196, 87, 69, 0.12), rgba(184, 121, 18, 0.09)),
+          var(--surface);
+        padding: 12px;
+      }
+
+      .vault-strip {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        padding: 12px;
+      }
+
+      .vault-strip h2 {
+        font-size: 16px;
+      }
+
+      .vault-strip p {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.3;
+      }
+
+      .lock {
+        min-height: 42px;
+        border: 0;
+        border-radius: 8px;
+        background: var(--ink);
+        color: white;
+        padding: 0 12px;
+        font-size: 13px;
+        font-weight: 950;
+      }
+
+      .assistant-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .assistant-row button {
+        min-height: 44px;
+        border: 0;
+        border-radius: 8px;
+        font-weight: 950;
+      }
+
+      .ask {
+        background: white;
+        color: var(--coral);
+      }
+
+      .urgent {
+        background: var(--coral);
+        color: white;
+      }
+
+      .nav {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 4px;
+        padding: 9px 9px 13px;
+        background: rgba(255, 255, 255, 0.9);
+        border-top: 1px solid var(--line);
+        backdrop-filter: blur(18px);
+      }
+
+      .nav button {
+        border: 0;
+        min-height: 52px;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 950;
+      }
+
+      .nav .active {
+        background: var(--ink);
+        color: white;
+      }
+
+      @media (min-width: 520px) {
+        body {
+          padding: 28px;
+        }
+
+        .phone {
+          min-height: 930px;
+          border-radius: 30px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="phone" aria-label="Mom Home advanced Today dashboard concept">
+      <div class="app">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Mom Home Command Center</p>
+            <h1>Today</h1>
+            <p class="date-line">Wednesday, July 8 · synced 9:42 PM</p>
+          </div>
+          <div class="profile-chip">M</div>
+        </header>
+
+        <div class="search-row">
+          <input class="search" value="" placeholder="Search everything..." aria-label="Search everything" />
+          <button class="add-button" aria-label="Add">+</button>
+        </div>
+
+        <section class="ai-brief">
+          <div class="brief-head">
+            <div>
+              <h2>AI daily brief</h2>
+              <p>Generated from tasks, calendar, inventory, supplements, and recent purchases.</p>
+            </div>
+            <button class="ask-ai">Ask AI</button>
+          </div>
+          <div class="brief-body">
+            <div class="brief-grid">
+              <div class="metric">
+                <strong>4</strong>
+                <span>ready tasks, including 1 starred</span>
+              </div>
+              <div class="metric">
+                <strong>2</strong>
+                <span>blocked tasks waiting on prior steps</span>
+              </div>
+              <div class="metric">
+                <strong>5</strong>
+                <span>low-stock household items</span>
+              </div>
+              <div class="metric">
+                <strong>3</strong>
+                <span>supplement actions today</span>
+              </div>
+            </div>
+            <p class="brief-text">
+              Best path: buy shelf labels first, then the pantry reset becomes ready. Vitamin D is below the reorder line.
+              Trash bags and paper towels are good candidates for one combined order.
+            </p>
+          </div>
+        </section>
+
+        <div class="command-strip" aria-label="Fast actions">
+          <button class="command">Task<span>capture next step</span></button>
+          <button class="command">Item<span>scan or photo</span></button>
+          <button class="command">Purchase<span>receipt or link</span></button>
+          <button class="command">Supplement<span>log taken</span></button>
+          <button class="command">Compare<span>find better price</span></button>
+          <button class="command">Help<span>send to Adam</span></button>
+        </div>
+
+        <section class="section">
+          <div class="section-head">
+            <div>
+              <h2>AI action deck</h2>
+              <p>She chooses when AI helps. Nothing runs her day for her.</p>
+            </div>
+            <button class="text-button">History</button>
+          </div>
+          <div class="mode-grid">
+            <article class="ai-card primary">
+              <h3>Plan my next 90 minutes</h3>
+              <p>Uses only ready tasks, calendar windows, blocked steps, and her manual preferences.</p>
+              <button class="mode-button">Preview plan</button>
+            </article>
+            <article class="ai-card">
+              <h3>Build an errand route</h3>
+              <p>Combines pickup items, store preferences, and purchase history.</p>
+              <button class="mode-button">Draft route</button>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div>
+              <h2>Decision rail</h2>
+              <p>Smart comparisons without hiding the reasoning.</p>
+            </div>
+            <button class="text-button">Review</button>
+          </div>
+          <div class="decision-rail">
+            <article class="decision">
+              <strong>Paper towels: Costco likely wins</strong>
+              <p>Saved purchase history beats current Amazon unit price by about 11%.</p>
+              <span class="confidence">High confidence</span>
+            </article>
+            <article class="decision">
+              <strong>Vitamin D: verify exact bottle</strong>
+              <p>Similar labels found. Needs confirmation before reorder.</p>
+              <span class="confidence">Needs review</span>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div>
+              <h2>Priority stack</h2>
+              <p>Ready, blocked, starred, flagged, and due soon.</p>
+            </div>
+            <button class="text-button">Tune</button>
+          </div>
+          <div class="priority-stack">
+            <article class="task-card">
+              <div class="task-top">
+                <h3>Buy shelf labels before pantry reset</h3>
+                <span class="stars">★★★★★</span>
+              </div>
+              <p>Ready now · unlocks “Review one pantry shelf” · can send to assistant.</p>
+              <div class="chips">
+                <span class="chip teal">Ready</span>
+                <span class="chip gold">Most important</span>
+                <span class="chip violet">Kitchen</span>
+              </div>
+            </article>
+            <article class="task-card">
+              <div class="task-top">
+                <h3>Review one pantry shelf</h3>
+                <span class="stars">★★★</span>
+              </div>
+              <p>Blocked until shelf labels are bought. AI suggests keeping this visible, not nagging.</p>
+              <div class="chips">
+                <span class="chip coral">Blocked</span>
+                <span class="chip teal">Project</span>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="section split">
+          <article class="mini-panel">
+            <h3>To order</h3>
+            <span class="number">6</span>
+            <p>2 urgent · 3 can be bundled · 1 price watch</p>
+            <div class="spark" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+          </article>
+          <article class="mini-panel">
+            <h3>Purchases</h3>
+            <span class="number">$48</span>
+            <p>estimated reorder basket from saved history</p>
+            <div class="spark" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+          </article>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div>
+              <h2>Project sequencing</h2>
+              <p>Dependency-aware view without making her manage a chart.</p>
+            </div>
+            <button class="text-button">Map</button>
+          </div>
+          <div class="map">
+            <div class="flow">
+              <div class="flow-item">
+                <div class="node now">1</div>
+                <strong>Buy shelf labels</strong>
+                <span>ready</span>
+              </div>
+              <div class="connector"></div>
+              <div class="flow-item">
+                <div class="node wait">2</div>
+                <strong>Review pantry shelf</strong>
+                <span>waiting</span>
+              </div>
+              <div class="connector"></div>
+              <div class="flow-item">
+                <div class="node wait">3</div>
+                <strong>Print bin QR labels</strong>
+                <span>later</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div>
+              <h2>Signals</h2>
+              <p>Inventory, supplements, and ordering alerts.</p>
+            </div>
+            <button class="text-button">All</button>
+          </div>
+          <div class="signal-list">
+            <article class="row-card">
+              <div class="visual blue">D</div>
+              <div>
+                <h3>Vitamin D below threshold</h3>
+                <p>14 left · usually reordered from Amazon</p>
+              </div>
+              <button class="row-action">Order</button>
+            </article>
+            <article class="row-card">
+              <div class="visual coral">PT</div>
+              <div>
+                <h3>Paper towels are low</h3>
+                <p>Last bought at Costco · 36 days ago</p>
+              </div>
+              <button class="row-action">Compare</button>
+            </article>
+            <article class="row-card">
+              <div class="visual lime">Mg</div>
+              <div>
+                <h3>Magnesium logged yesterday</h3>
+                <p>Tap Taken when done today</p>
+              </div>
+              <button class="row-action">Taken</button>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div>
+              <h2>Calendar flow</h2>
+              <p>Her calendar, task timing, reminders, and nag mode.</p>
+            </div>
+            <button class="text-button">Week</button>
+          </div>
+          <div class="timeline">
+            <div class="time-item">
+              <span class="time">10:00</span>
+              <div>
+                <strong>Call pharmacy</strong>
+                <p>Flagged teal · reminder enabled</p>
+              </div>
+            </div>
+            <div class="time-item">
+              <span class="time">1:30</span>
+              <div>
+                <strong>Package window</strong>
+                <p>Home Depot delivery screenshot attached</p>
+              </div>
+            </div>
+            <div class="time-item">
+              <span class="time">Anytime</span>
+              <div>
+                <strong>Energy journal check-in</strong>
+                <p>Record only. Suggestions happen only if she asks.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section assistant-panel">
+          <div class="section-head">
+            <div>
+              <h2>Assistant access</h2>
+              <p>Share tasks, notes, and urgent alerts without exposing the vault.</p>
+            </div>
+          </div>
+          <div class="assistant-row">
+            <button class="ask">Ask Adam</button>
+            <button class="urgent">Urgent alert</button>
+          </div>
+        </section>
+
+        <section class="section vault-strip">
+          <div>
+            <h2>Private vault</h2>
+            <p>Locked separately. Helper access never opens this area.</p>
+          </div>
+          <button class="lock">Locked</button>
+        </section>
+      </div>
+
+      <nav class="nav" aria-label="Main navigation">
+        <button class="active">Today</button>
+        <button>Tasks</button>
+        <button>Calendar</button>
+        <button>Inventory</button>
+        <button>More</button>
+      </nav>
+    </main>
+  </body>
+</html>

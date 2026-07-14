@@ -1,0 +1,89 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function household(householdId) {
+      return get(/databases/$(database)/documents/households/$(householdId));
+    }
+
+    function isHouseholdMember(householdId) {
+      return signedIn() && household(householdId).data.memberIds.hasAny([request.auth.uid]);
+    }
+
+    function isHouseholdEditor(householdId) {
+      return signedIn() && household(householdId).data.editorIds.hasAny([request.auth.uid]);
+    }
+
+    function isHouseholdOwner(householdId) {
+      return signedIn() && household(householdId).data.ownerUserId == request.auth.uid;
+    }
+
+    function activeInvite(householdId, inviteId) {
+      return get(/databases/$(database)/documents/households/$(householdId)/invites/$(inviteId)).data.active == true
+        && get(/databases/$(database)/documents/households/$(householdId)/invites/$(inviteId)).data.expiresAt > request.time;
+    }
+
+    function inviteRole(householdId, inviteId) {
+      return get(/databases/$(database)/documents/households/$(householdId)/invites/$(inviteId)).data.role;
+    }
+
+    match /households/{householdId} {
+      allow create: if signedIn()
+        && request.resource.data.ownerUserId == request.auth.uid
+        && request.resource.data.memberIds.hasAny([request.auth.uid])
+        && request.resource.data.editorIds.hasAny([request.auth.uid]);
+      // Parent document access must use resource.data. Calling get() for this
+      // same document recursively denies the client request.
+      allow read: if signedIn() && resource.data.memberIds.hasAny([request.auth.uid]);
+      allow update: if signedIn()
+        && (resource.data.ownerUserId == request.auth.uid
+          || (resource.data.editorIds.hasAny([request.auth.uid])
+          && request.resource.data.ownerUserId == resource.data.ownerUserId
+          && request.resource.data.memberIds == resource.data.memberIds
+          && request.resource.data.editorIds == resource.data.editorIds
+          && request.resource.data.memberRoles == resource.data.memberRoles));
+      allow delete: if signedIn() && resource.data.ownerUserId == request.auth.uid;
+
+      match /metadata/{documentId} {
+        allow read: if isHouseholdMember(householdId);
+        allow create, update: if isHouseholdEditor(householdId);
+        allow delete: if isHouseholdOwner(householdId);
+      }
+
+      match /activity/{activityId} {
+        allow read: if isHouseholdMember(householdId);
+        allow create: if isHouseholdEditor(householdId);
+        allow update, delete: if false;
+      }
+
+      match /invites/{inviteId} {
+        // A signed-in person who knows an active code may read only that exact
+        // invite. Only the owner can list, create, revoke, or alter invites.
+        allow get: if signedIn()
+          && resource.data.active == true
+          && resource.data.expiresAt > request.time;
+        allow list, create, update, delete: if isHouseholdOwner(householdId);
+      }
+
+      match /joinRequests/{requestUserId} {
+        // A request is bound to the signed-in recipient and to the role stored
+        // on the matching active invite. The owner alone approves membership.
+        allow create: if signedIn()
+          && requestUserId == request.auth.uid
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.status == "pending"
+          && request.resource.data.inviteCode is string
+          && activeInvite(householdId, request.resource.data.inviteCode)
+          && request.resource.data.role == inviteRole(householdId, request.resource.data.inviteCode);
+        allow get: if signedIn() && (requestUserId == request.auth.uid || isHouseholdOwner(householdId));
+        allow list: if isHouseholdOwner(householdId);
+        allow delete: if signedIn() && (requestUserId == request.auth.uid || isHouseholdOwner(householdId));
+        allow update: if false;
+      }
+    }
+  }
+}

@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mom Home Household Radar</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #07090c;
+        --ink: #f8f2e6;
+        --muted: rgba(248, 242, 230, 0.66);
+        --faint: rgba(248, 242, 230, 0.13);
+        --panel: rgba(12, 16, 19, 0.82);
+        --glass: rgba(248, 242, 230, 0.08);
+        --line: rgba(248, 242, 230, 0.16);
+        --do: #2ce0a0;
+        --buy: #ffb23f;
+        --take: #7ea2ff;
+        --watch: #ff6387;
+        --help: #d96cff;
+        --vault: #f8f2e6;
+        --danger: #ff4d3d;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at 50% 20%, rgba(44, 224, 160, 0.16), transparent 34%),
+          radial-gradient(circle at 25% 82%, rgba(126, 162, 255, 0.13), transparent 32%),
+          radial-gradient(circle at 84% 70%, rgba(255, 99, 135, 0.11), transparent 34%),
+          var(--bg);
+        color: var(--ink);
+        font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      body {
+        display: grid;
+        place-items: center;
+      }
+
+      button {
+        font: inherit;
+      }
+
+      .phone {
+        width: min(100vw, 430px);
+        min-height: 100vh;
+        position: relative;
+        overflow: hidden;
+        background:
+          linear-gradient(180deg, rgba(248, 242, 230, 0.04), transparent 190px),
+          #07090c;
+        box-shadow: 0 28px 90px rgba(0, 0, 0, 0.58);
+      }
+
+      .app {
+        min-height: 100vh;
+        padding: 16px 14px 104px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      .topbar {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .kicker {
+        color: var(--do);
+        font-size: 11px;
+        font-weight: 950;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin-top: 3px;
+        font-size: 30px;
+        line-height: 1.02;
+        letter-spacing: 0;
+      }
+
+      .sync {
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .add {
+        width: 52px;
+        height: 52px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--glass);
+        color: white;
+        font-size: 28px;
+        font-weight: 950;
+      }
+
+      .lens-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+        margin-top: 13px;
+      }
+
+      .lens {
+        min-height: 43px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--glass);
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 950;
+      }
+
+      .lens.active {
+        background: var(--ink);
+        color: #0a0d0f;
+      }
+
+      .radar-wrap {
+        position: relative;
+        width: min(94vw, 394px);
+        aspect-ratio: 1;
+        margin: 16px auto 0;
+      }
+
+      .radar {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background:
+          radial-gradient(circle at center, rgba(248, 242, 230, 0.11) 0 8%, transparent 8.4%),
+          radial-gradient(circle at center, transparent 0 25%, rgba(248, 242, 230, 0.09) 25.4% 25.9%, transparent 26.2% 46%, rgba(248, 242, 230, 0.08) 46.4% 46.9%, transparent 47.3% 68%, rgba(248, 242, 230, 0.08) 68.4% 68.9%, transparent 69.2%),
+          conic-gradient(from 0deg, rgba(44, 224, 160, 0.30), transparent 38deg, rgba(248, 242, 230, 0.04) 38deg 360deg);
+        border: 1px solid var(--line);
+        overflow: hidden;
+      }
+
+      .radar::before,
+      .radar::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: rgba(248, 242, 230, 0.1);
+      }
+
+      .radar::after {
+        top: 50%;
+        left: 0;
+        right: 0;
+        bottom: auto;
+        width: auto;
+        height: 1px;
+      }
+
+      .sweep {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background: conic-gradient(from 310deg, rgba(44, 224, 160, 0.0), rgba(44, 224, 160, 0.22), rgba(44, 224, 160, 0.0) 52deg);
+        animation: sweep 8s linear infinite;
+        pointer-events: none;
+      }
+
+      @keyframes sweep {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .center {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 116px;
+        height: 116px;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        background:
+          radial-gradient(circle at 35% 30%, rgba(248, 242, 230, 0.24), transparent 34%),
+          rgba(7, 9, 12, 0.92);
+        border: 1px solid rgba(248, 242, 230, 0.24);
+        display: grid;
+        place-items: center;
+        text-align: center;
+        z-index: 4;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
+      }
+
+      .center strong {
+        display: block;
+        font-size: 24px;
+        line-height: 1;
+      }
+
+      .center span {
+        display: block;
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .ring-label {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        color: rgba(248, 242, 230, 0.48);
+        font-size: 10px;
+        font-weight: 950;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .ring-label.now {
+        top: 82px;
+      }
+
+      .ring-label.soon {
+        top: 38px;
+      }
+
+      .ring-label.watch {
+        top: 10px;
+      }
+
+      .ping {
+        position: absolute;
+        z-index: 6;
+        min-width: 40px;
+        min-height: 40px;
+        border: 0;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        color: #08100e;
+        font-size: 12px;
+        font-weight: 950;
+        box-shadow: 0 0 0 6px rgba(248, 242, 230, 0.06), 0 13px 26px rgba(0, 0, 0, 0.34);
+      }
+
+      .ping::after {
+        content: attr(data-short);
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 50%;
+        transform: translateX(-50%);
+        color: var(--ink);
+        text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
+        font-size: 10px;
+        white-space: nowrap;
+      }
+
+      .ping.active {
+        outline: 2px solid var(--ink);
+        outline-offset: 3px;
+      }
+
+      .ping.do {
+        background: var(--do);
+      }
+
+      .ping.buy {
+        background: var(--buy);
+      }
+
+      .ping.take {
+        background: var(--take);
+      }
+
+      .ping.watch {
+        background: var(--watch);
+      }
+
+      .ping.help {
+        background: var(--help);
+      }
+
+      .ping.p1 {
+        left: 48%;
+        top: 30%;
+      }
+
+      .ping.p2 {
+        left: 65%;
+        top: 49%;
+      }
+
+      .ping.p3 {
+        left: 27%;
+        top: 56%;
+      }
+
+      .ping.p4 {
+        left: 58%;
+        top: 75%;
+      }
+
+      .ping.p5 {
+        left: 16%;
+        top: 31%;
+      }
+
+      .ping.p6 {
+        left: 78%;
+        top: 23%;
+      }
+
+      .constellation {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 3;
+      }
+
+      .constellation line {
+        stroke: rgba(248, 242, 230, 0.22);
+        stroke-width: 1.5;
+        stroke-dasharray: 4 5;
+      }
+
+      .rail {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .rail-cell {
+        min-height: 62px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--glass);
+        padding: 9px;
+      }
+
+      .rail-cell strong {
+        display: block;
+        font-size: 19px;
+        line-height: 1;
+      }
+
+      .rail-cell span {
+        display: block;
+        margin-top: 7px;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 850;
+        line-height: 1.2;
+        text-transform: uppercase;
+      }
+
+      .inspector {
+        margin-top: 12px;
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        background: rgba(248, 242, 230, 0.94);
+        color: #101516;
+        overflow: hidden;
+      }
+
+      .inspector-head {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 10px;
+        align-items: center;
+        padding: 14px;
+        border-bottom: 1px solid rgba(16, 21, 22, 0.1);
+      }
+
+      .type-dot {
+        width: 14px;
+        height: 46px;
+        border-radius: 999px;
+        background: var(--do);
+      }
+
+      .inspector h2 {
+        font-size: 21px;
+        line-height: 1.1;
+      }
+
+      .inspector p {
+        margin-top: 5px;
+        color: #5c6664;
+        font-size: 13px;
+        line-height: 1.35;
+      }
+
+      .confidence {
+        min-height: 35px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        padding: 0 10px;
+        background: #e5f3ed;
+        color: #087c72;
+        font-size: 11px;
+        font-weight: 950;
+        white-space: nowrap;
+      }
+
+      .inspector-body {
+        padding: 13px 14px 14px;
+      }
+
+      .why {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .why div {
+        min-height: 70px;
+        border: 1px solid rgba(16, 21, 22, 0.1);
+        border-radius: 15px;
+        padding: 10px;
+        background: white;
+      }
+
+      .why strong {
+        display: block;
+        font-size: 13px;
+        line-height: 1.2;
+      }
+
+      .why span {
+        display: block;
+        margin-top: 6px;
+        color: #68716e;
+        font-size: 12px;
+        line-height: 1.3;
+      }
+
+      .actions {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-top: 11px;
+      }
+
+      .actions button {
+        min-height: 46px;
+        border: 0;
+        border-radius: 14px;
+        background: #111718;
+        color: white;
+        font-size: 12px;
+        font-weight: 950;
+      }
+
+      .actions .soft {
+        background: #e6ece8;
+        color: #111718;
+      }
+
+      .actions .danger {
+        background: var(--danger);
+        color: white;
+      }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 11px;
+      }
+
+      .legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        min-height: 25px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 0 8px;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 850;
+      }
+
+      .legend i {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: block;
+      }
+
+      .nav {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 4px;
+        padding: 9px 9px 13px;
+        background: rgba(7, 9, 12, 0.78);
+        border-top: 1px solid var(--line);
+        backdrop-filter: blur(18px);
+      }
+
+      .nav button {
+        border: 0;
+        min-height: 52px;
+        border-radius: 14px;
+        background: transparent;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 950;
+      }
+
+      .nav .active {
+        background: rgba(248, 242, 230, 0.14);
+        color: white;
+      }
+
+      @media (min-width: 520px) {
+        body {
+          padding: 28px;
+        }
+
+        .phone {
+          min-height: 930px;
+          border-radius: 34px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="phone" aria-label="Household Radar home screen concept">
+      <div class="app">
+        <header class="topbar">
+          <div>
+            <p class="kicker">Household Radar</p>
+            <h1>Attention field</h1>
+            <p class="sync">No schedule required · tap any signal</p>
+          </div>
+          <button class="add" aria-label="Add">+</button>
+        </header>
+
+        <div class="lens-row" aria-label="Radar lenses">
+          <button class="lens active">All</button>
+          <button class="lens">Urgent</button>
+          <button class="lens">Errands</button>
+          <button class="lens">Calm</button>
+        </div>
+
+        <section class="radar-wrap" aria-label="Radar map">
+          <div class="radar"></div>
+          <div class="sweep"></div>
+          <svg class="constellation" viewBox="0 0 394 394" aria-hidden="true">
+            <line x1="210" y1="132" x2="276" y2="210"></line>
+            <line x1="276" y1="210" x2="130" y2="236"></line>
+            <line x1="130" y1="236" x2="240" y2="300"></line>
+            <line x1="78" y1="132" x2="210" y2="132"></line>
+          </svg>
+          <div class="center">
+            <div>
+              <strong>11</strong>
+              <span>live signals</span>
+            </div>
+          </div>
+          <div class="ring-label watch">watch</div>
+          <div class="ring-label soon">soon</div>
+          <div class="ring-label now">now</div>
+
+          <button class="ping do p1 active" data-id="labels" data-short="labels">DO</button>
+          <button class="ping buy p2" data-id="paper" data-short="paper">BUY</button>
+          <button class="ping take p3" data-id="vitd" data-short="vit D">TAKE</button>
+          <button class="ping watch p4" data-id="delivery" data-short="delivery">WATCH</button>
+          <button class="ping help p5" data-id="adam" data-short="Adam">HELP</button>
+          <button class="ping buy p6" data-id="price" data-short="price">AI</button>
+        </section>
+
+        <section class="rail" aria-label="Radar summary">
+          <div class="rail-cell"><strong>3</strong><span>near center</span></div>
+          <div class="rail-cell"><strong>2</strong><span>blocked paths</span></div>
+          <div class="rail-cell"><strong>$</strong><span>price watch</span></div>
+        </section>
+
+        <section class="inspector" aria-live="polite">
+          <div class="inspector-head">
+            <div class="type-dot" id="typeDot"></div>
+            <div>
+              <h2 id="signalTitle">Buy shelf labels</h2>
+              <p id="signalSummary">Closest useful action. It unlocks the pantry project without structuring the whole day.</p>
+            </div>
+            <span class="confidence" id="confidence">Ready</span>
+          </div>
+          <div class="inspector-body">
+            <div class="why">
+              <div>
+                <strong id="whyOneTitle">Why it is close</strong>
+                <span id="whyOne">Small action, high unlock value, no dependency.</span>
+              </div>
+              <div>
+                <strong id="whyTwoTitle">Connected to</strong>
+                <span id="whyTwo">Pantry reset, QR labels, paper goods errand.</span>
+              </div>
+            </div>
+            <div class="actions" id="actions"></div>
+          </div>
+        </section>
+
+        <div class="legend" aria-label="Signal legend">
+          <span><i style="background: var(--do)"></i>Do</span>
+          <span><i style="background: var(--buy)"></i>Buy</span>
+          <span><i style="background: var(--take)"></i>Take</span>
+          <span><i style="background: var(--watch)"></i>Watch</span>
+          <span><i style="background: var(--help)"></i>Help</span>
+        </div>
+      </div>
+
+      <nav class="nav" aria-label="Main navigation">
+        <button class="active">Radar</button>
+        <button>Tasks</button>
+        <button>Calendar</button>
+        <button>Items</button>
+        <button>More</button>
+      </nav>
+    </main>
+
+    <script>
+      const signals = {
+        labels: {
+          color: "var(--do)",
+          title: "Buy shelf labels",
+          summary: "Closest useful action. It unlocks the pantry project without structuring the whole day.",
+          confidence: "Ready",
+          whyOneTitle: "Why it is close",
+          whyOne: "Small action, high unlock value, no dependency.",
+          whyTwoTitle: "Connected to",
+          whyTwo: "Pantry reset, QR labels, paper goods errand.",
+          actions: [["Done", ""], ["Remind", "soft"], ["Ask Adam", "soft"]]
+        },
+        paper: {
+          color: "var(--buy)",
+          title: "Paper goods reorder",
+          summary: "Low stock signal with a good chance to bundle and save money.",
+          confidence: "Compare",
+          whyOneTitle: "Why it matters",
+          whyOne: "Paper towels and trash bags are both low.",
+          whyTwoTitle: "AI note",
+          whyTwo: "Saved Costco history may beat Amazon by about 11%.",
+          actions: [["Compare", ""], ["Add to order", "soft"], ["Send list", "soft"]]
+        },
+        vitd: {
+          color: "var(--take)",
+          title: "Vitamin D",
+          summary: "Bottle is below the reorder line and still needs today’s taken log.",
+          confidence: "Due",
+          whyOneTitle: "Bottle count",
+          whyOne: "14 left, reorder threshold is 30.",
+          whyTwoTitle: "Caution",
+          whyTwo: "Verify exact bottle before buying a replacement.",
+          actions: [["Taken", ""], ["Order", "soft"], ["Photo", "soft"]]
+        },
+        delivery: {
+          color: "var(--watch)",
+          title: "Home Depot delivery",
+          summary: "Passive watch item. It should alert her only if the window is nearly over or status changes.",
+          confidence: "Watching",
+          whyOneTitle: "Window",
+          whyOne: "1:30 to 4:30, screenshot attached.",
+          whyTwoTitle: "Behavior",
+          whyTwo: "Stay visible but do not interrupt unless important.",
+          actions: [["Track", ""], ["Alert me", "soft"], ["Dismiss", "soft"]]
+        },
+        adam: {
+          color: "var(--help)",
+          title: "Ask Adam",
+          summary: "One tap creates a clean helper handoff without exposing the private vault.",
+          confidence: "Private",
+          whyOneTitle: "Can include",
+          whyOne: "Task, notes, photos, errand list, urgency.",
+          whyTwoTitle: "Never includes",
+          whyTwo: "Vault contents or private records unless she explicitly opens them.",
+          actions: [["Send task", ""], ["Urgent", "danger"], ["Draft", "soft"]]
+        },
+        price: {
+          color: "var(--buy)",
+          title: "Price intelligence",
+          summary: "AI found similar items, exact-match candidates, and one useful outlier for comparison.",
+          confidence: "Review",
+          whyOneTitle: "Exactness",
+          whyOne: "Two likely matches, one needs label confirmation.",
+          whyTwoTitle: "Outlier",
+          whyTwo: "A larger pack costs more upfront but lower per unit.",
+          actions: [["Review", ""], ["Save", "soft"], ["Ignore", "soft"]]
+        }
+      };
+
+      const pings = Array.from(document.querySelectorAll(".ping"));
+      const typeDot = document.getElementById("typeDot");
+      const signalTitle = document.getElementById("signalTitle");
+      const signalSummary = document.getElementById("signalSummary");
+      const confidence = document.getElementById("confidence");
+      const whyOneTitle = document.getElementById("whyOneTitle");
+      const whyOne = document.getElementById("whyOne");
+      const whyTwoTitle = document.getElementById("whyTwoTitle");
+      const whyTwo = document.getElementById("whyTwo");
+      const actions = document.getElementById("actions");
+
+      function render(id) {
+        const data = signals[id];
+        typeDot.style.background = data.color;
+        signalTitle.textContent = data.title;
+        signalSummary.textContent = data.summary;
+        confidence.textContent = data.confidence;
+        whyOneTitle.textContent = data.whyOneTitle;
+        whyOne.textContent = data.whyOne;
+        whyTwoTitle.textContent = data.whyTwoTitle;
+        whyTwo.textContent = data.whyTwo;
+        actions.innerHTML = data.actions
+          .map(([label, kind]) => `<button class="${kind}">${label}</button>`)
+          .join("");
+        pings.forEach((ping) => ping.classList.toggle("active", ping.dataset.id === id));
+      }
+
+      pings.forEach((ping) => {
+        ping.addEventListener("click", () => render(ping.dataset.id));
+      });
+
+      render("labels");
+    </script>
+  </body>
+</html>

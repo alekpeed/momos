@@ -1,0 +1,819 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mom Home Project Constellation</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #06070a;
+        --ink: #fbf5e9;
+        --muted: rgba(251, 245, 233, 0.66);
+        --dim: rgba(251, 245, 233, 0.38);
+        --line: rgba(251, 245, 233, 0.16);
+        --glass: rgba(251, 245, 233, 0.08);
+        --panel: rgba(251, 245, 233, 0.94);
+        --panel-ink: #141819;
+        --green: #32dda4;
+        --gold: #ffb63f;
+        --blue: #86a7ff;
+        --rose: #ff668c;
+        --violet: #b978ff;
+        --cyan: #60e5ff;
+        --danger: #ff4f42;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at 38% 22%, rgba(96, 229, 255, 0.13), transparent 33%),
+          radial-gradient(circle at 72% 68%, rgba(185, 120, 255, 0.12), transparent 35%),
+          radial-gradient(circle at 20% 78%, rgba(50, 221, 164, 0.10), transparent 34%),
+          var(--bg);
+        color: var(--ink);
+        font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      body {
+        display: grid;
+        place-items: center;
+      }
+
+      button {
+        font: inherit;
+      }
+
+      .phone {
+        width: min(100vw, 430px);
+        min-height: 100vh;
+        position: relative;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 50% 42%, rgba(251, 245, 233, 0.08), transparent 28%),
+          #06070a;
+        box-shadow: 0 28px 90px rgba(0, 0, 0, 0.62);
+      }
+
+      .app {
+        min-height: 100vh;
+        padding: 16px 14px 104px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      .topbar {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .kicker {
+        color: var(--cyan);
+        font-size: 11px;
+        font-weight: 950;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin-top: 3px;
+        font-size: 30px;
+        line-height: 1.02;
+        letter-spacing: 0;
+      }
+
+      .subtitle {
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.3;
+      }
+
+      .add {
+        width: 52px;
+        height: 52px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--glass);
+        color: white;
+        font-size: 28px;
+        font-weight: 950;
+      }
+
+      .ai-path {
+        margin-top: 13px;
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+        border: 1px solid rgba(96, 229, 255, 0.28);
+        border-radius: 8px;
+        background: rgba(96, 229, 255, 0.08);
+      }
+
+      .ai-mark {
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        background: var(--cyan);
+        color: #061113;
+        font-size: 12px;
+        font-weight: 950;
+      }
+
+      .ai-path strong {
+        display: block;
+        font-size: 14px;
+        line-height: 1.2;
+      }
+
+      .ai-path span {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.25;
+      }
+
+      .ai-path button {
+        min-height: 38px;
+        border: 0;
+        border-radius: 8px;
+        padding: 0 10px;
+        background: var(--ink);
+        color: #0a0d10;
+        font-size: 12px;
+        font-weight: 950;
+      }
+
+      .map-shell {
+        position: relative;
+        width: min(94vw, 398px);
+        height: 438px;
+        margin: 14px auto 0;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 20% 30%, rgba(251, 245, 233, 0.11) 0 1px, transparent 2px),
+          radial-gradient(circle at 72% 20%, rgba(251, 245, 233, 0.10) 0 1px, transparent 2px),
+          radial-gradient(circle at 88% 70%, rgba(251, 245, 233, 0.12) 0 1px, transparent 2px),
+          radial-gradient(circle at 38% 78%, rgba(251, 245, 233, 0.10) 0 1px, transparent 2px),
+          rgba(251, 245, 233, 0.035);
+      }
+
+      .map-lines {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+
+      .map-lines line {
+        stroke: rgba(251, 245, 233, 0.23);
+        stroke-width: 1.4;
+      }
+
+      .map-lines .path {
+        stroke: var(--cyan);
+        stroke-width: 2.2;
+        stroke-dasharray: 7 7;
+      }
+
+      .map-lines .blocker {
+        stroke: var(--rose);
+        stroke-width: 1.8;
+        stroke-dasharray: 2 5;
+      }
+
+      .cluster-label {
+        position: absolute;
+        color: var(--dim);
+        font-size: 10px;
+        font-weight: 950;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        pointer-events: none;
+      }
+
+      .label-kitchen {
+        left: 24px;
+        top: 22px;
+      }
+
+      .label-orders {
+        right: 24px;
+        top: 29px;
+      }
+
+      .label-health {
+        left: 24px;
+        bottom: 104px;
+      }
+
+      .label-helper {
+        right: 24px;
+        bottom: 82px;
+      }
+
+      .node {
+        position: absolute;
+        border: 1px solid rgba(251, 245, 233, 0.24);
+        border-radius: 8px;
+        background: rgba(6, 7, 10, 0.72);
+        color: white;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        padding: 6px;
+        z-index: 3;
+        backdrop-filter: blur(14px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+      }
+
+      .node strong {
+        display: block;
+        font-size: 12px;
+        line-height: 1.05;
+      }
+
+      .node span {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 850;
+        text-transform: uppercase;
+      }
+
+      .node.active {
+        outline: 2px solid var(--cyan);
+        outline-offset: 3px;
+      }
+
+      .node.ready {
+        box-shadow: inset 0 -4px 0 var(--green), 0 12px 30px rgba(0, 0, 0, 0.35);
+      }
+
+      .node.blocked {
+        box-shadow: inset 0 -4px 0 var(--rose), 0 12px 30px rgba(0, 0, 0, 0.35);
+      }
+
+      .node.buy {
+        box-shadow: inset 0 -4px 0 var(--gold), 0 12px 30px rgba(0, 0, 0, 0.35);
+      }
+
+      .node.take {
+        box-shadow: inset 0 -4px 0 var(--blue), 0 12px 30px rgba(0, 0, 0, 0.35);
+      }
+
+      .node.help {
+        box-shadow: inset 0 -4px 0 var(--violet), 0 12px 30px rgba(0, 0, 0, 0.35);
+      }
+
+      .core {
+        width: 104px;
+        height: 104px;
+        left: 147px;
+        top: 166px;
+        border-radius: 50%;
+        background:
+          radial-gradient(circle at 35% 28%, rgba(96, 229, 255, 0.30), transparent 35%),
+          rgba(10, 16, 18, 0.88);
+      }
+
+      .core strong {
+        font-size: 17px;
+      }
+
+      .n1 {
+        width: 82px;
+        height: 68px;
+        left: 36px;
+        top: 67px;
+      }
+
+      .n2 {
+        width: 86px;
+        height: 70px;
+        left: 41px;
+        top: 170px;
+      }
+
+      .n3 {
+        width: 92px;
+        height: 72px;
+        left: 154px;
+        top: 58px;
+      }
+
+      .n4 {
+        width: 90px;
+        height: 70px;
+        right: 36px;
+        top: 82px;
+      }
+
+      .n5 {
+        width: 86px;
+        height: 70px;
+        right: 44px;
+        top: 204px;
+      }
+
+      .n6 {
+        width: 86px;
+        height: 70px;
+        left: 45px;
+        bottom: 60px;
+      }
+
+      .n7 {
+        width: 90px;
+        height: 70px;
+        left: 165px;
+        bottom: 40px;
+      }
+
+      .n8 {
+        width: 86px;
+        height: 70px;
+        right: 34px;
+        bottom: 52px;
+      }
+
+      .orbit {
+        position: absolute;
+        border: 1px dashed rgba(251, 245, 233, 0.13);
+        border-radius: 50%;
+        pointer-events: none;
+      }
+
+      .orbit.one {
+        width: 190px;
+        height: 190px;
+        left: 104px;
+        top: 122px;
+      }
+
+      .orbit.two {
+        width: 312px;
+        height: 312px;
+        left: 43px;
+        top: 58px;
+      }
+
+      .mini-legend {
+        position: absolute;
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+        z-index: 4;
+      }
+
+      .mini-legend span {
+        min-height: 26px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(6, 7, 10, 0.62);
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 850;
+      }
+
+      .mini-legend i {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+      }
+
+      .inspector {
+        margin-top: 12px;
+        border-radius: 8px;
+        background: var(--panel);
+        color: var(--panel-ink);
+        overflow: hidden;
+      }
+
+      .inspector-head {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 10px;
+        align-items: center;
+        padding: 13px;
+        border-bottom: 1px solid rgba(20, 24, 25, 0.12);
+      }
+
+      .node-mark {
+        width: 13px;
+        height: 44px;
+        border-radius: 999px;
+        background: var(--green);
+      }
+
+      .inspector h2 {
+        font-size: 20px;
+        line-height: 1.1;
+      }
+
+      .inspector p {
+        margin-top: 5px;
+        color: #606b68;
+        font-size: 13px;
+        line-height: 1.35;
+      }
+
+      .status {
+        min-height: 34px;
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0 10px;
+        background: #e6f5ef;
+        color: #087c72;
+        font-size: 11px;
+        font-weight: 950;
+        white-space: nowrap;
+      }
+
+      .inspector-body {
+        padding: 12px 13px 13px;
+      }
+
+      .path-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .path-step {
+        display: grid;
+        grid-template-columns: 30px 1fr auto;
+        gap: 9px;
+        align-items: center;
+        min-height: 52px;
+        border: 1px solid rgba(20, 24, 25, 0.1);
+        border-radius: 8px;
+        background: white;
+        padding: 9px;
+      }
+
+      .step-num {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        background: #141819;
+        color: white;
+        font-size: 12px;
+        font-weight: 950;
+      }
+
+      .path-step strong {
+        display: block;
+        font-size: 14px;
+        line-height: 1.15;
+      }
+
+      .path-step span {
+        display: block;
+        margin-top: 3px;
+        color: #66716d;
+        font-size: 12px;
+        line-height: 1.25;
+      }
+
+      .path-step button {
+        min-height: 36px;
+        border: 0;
+        border-radius: 8px;
+        padding: 0 10px;
+        background: #141819;
+        color: white;
+        font-size: 12px;
+        font-weight: 950;
+      }
+
+      .quick {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .quick button {
+        min-height: 42px;
+        border: 0;
+        border-radius: 8px;
+        background: #e7eeea;
+        color: #141819;
+        font-size: 12px;
+        font-weight: 950;
+      }
+
+      .quick .primary {
+        background: #141819;
+        color: white;
+      }
+
+      .nav {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 4px;
+        padding: 9px 9px 13px;
+        background: rgba(6, 7, 10, 0.78);
+        border-top: 1px solid var(--line);
+        backdrop-filter: blur(18px);
+      }
+
+      .nav button {
+        border: 0;
+        min-height: 52px;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 950;
+      }
+
+      .nav .active {
+        background: rgba(251, 245, 233, 0.14);
+        color: white;
+      }
+
+      @media (min-width: 520px) {
+        body {
+          padding: 28px;
+        }
+
+        .phone {
+          min-height: 930px;
+          border-radius: 30px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="phone" aria-label="Project Constellation home screen concept">
+      <div class="app">
+        <header class="topbar">
+          <div>
+            <p class="kicker">Project Constellation</p>
+            <h1>Everything map</h1>
+            <p class="subtitle">Projects, supplies, helpers, blockers, and next paths in one field.</p>
+          </div>
+          <button class="add" aria-label="Add">+</button>
+        </header>
+
+        <section class="ai-path" aria-label="AI highlighted route">
+          <div class="ai-mark">AI</div>
+          <div>
+            <strong>Suggested route: Labels to Pantry to QR bins</strong>
+            <span>A short path unlocks three household improvements without scheduling her day.</span>
+          </div>
+          <button>Trace</button>
+        </section>
+
+        <section class="map-shell" aria-label="Constellation relationship map">
+          <div class="orbit one"></div>
+          <div class="orbit two"></div>
+          <svg class="map-lines" viewBox="0 0 398 438" aria-hidden="true">
+            <line class="path" x1="82" y1="101" x2="199" y2="218"></line>
+            <line class="path" x1="199" y1="218" x2="84" y2="205"></line>
+            <line class="path" x1="84" y1="205" x2="210" y2="363"></line>
+            <line x1="200" y1="94" x2="318" y2="117"></line>
+            <line x1="318" y1="117" x2="311" y2="239"></line>
+            <line class="blocker" x1="84" y1="205" x2="82" y2="101"></line>
+            <line x1="199" y1="218" x2="88" y2="343"></line>
+            <line x1="199" y1="218" x2="313" y2="359"></line>
+            <line x1="210" y1="363" x2="313" y2="359"></line>
+          </svg>
+
+          <div class="cluster-label label-kitchen">Kitchen reset</div>
+          <div class="cluster-label label-orders">Orders</div>
+          <div class="cluster-label label-health">Health</div>
+          <div class="cluster-label label-helper">Helper</div>
+
+          <button class="node core active" data-id="home"><strong>Mom Home</strong><span>system center</span></button>
+          <button class="node ready n1" data-id="labels"><strong>Shelf labels</strong><span>ready</span></button>
+          <button class="node blocked n2" data-id="pantry"><strong>Pantry shelf</strong><span>blocked</span></button>
+          <button class="node buy n3" data-id="paper"><strong>Paper goods</strong><span>bundle</span></button>
+          <button class="node buy n4" data-id="price"><strong>Price compare</strong><span>review</span></button>
+          <button class="node ready n5" data-id="delivery"><strong>Delivery</strong><span>watch</span></button>
+          <button class="node take n6" data-id="vitd"><strong>Vitamin D</strong><span>low</span></button>
+          <button class="node ready n7" data-id="qr"><strong>QR bins</strong><span>later</span></button>
+          <button class="node help n8" data-id="adam"><strong>Adam</strong><span>helper</span></button>
+
+          <div class="mini-legend">
+            <span><i style="background: var(--green)"></i>ready</span>
+            <span><i style="background: var(--rose)"></i>blocked</span>
+            <span><i style="background: var(--gold)"></i>buy</span>
+            <span><i style="background: var(--cyan)"></i>AI path</span>
+          </div>
+        </section>
+
+        <section class="inspector" aria-live="polite">
+          <div class="inspector-head">
+            <div class="node-mark" id="nodeMark"></div>
+            <div>
+              <h2 id="nodeTitle">Mom Home system</h2>
+              <p id="nodeSummary">The app sees projects, inventory, purchases, supplements, and helper access as connected objects.</p>
+            </div>
+            <span class="status" id="nodeStatus">Overview</span>
+          </div>
+          <div class="inspector-body">
+            <div class="path-list" id="pathList"></div>
+            <div class="quick" id="quickActions"></div>
+          </div>
+        </section>
+      </div>
+
+      <nav class="nav" aria-label="Main navigation">
+        <button class="active">Map</button>
+        <button>Tasks</button>
+        <button>Calendar</button>
+        <button>Items</button>
+        <button>More</button>
+      </nav>
+    </main>
+
+    <script>
+      const nodes = {
+        home: {
+          color: "var(--cyan)",
+          title: "Mom Home system",
+          summary: "The app sees projects, inventory, purchases, supplements, and helper access as connected objects.",
+          status: "Overview",
+          steps: [
+            ["1", "Trace AI path", "Labels -> pantry shelf -> QR bins", "Trace"],
+            ["2", "Show blockers", "Two project steps are waiting on prior actions", "Show"],
+            ["3", "Delegate safely", "Helper can receive tasks without vault access", "Share"]
+          ],
+          actions: ["Ask AI", "Search", "Add"]
+        },
+        labels: {
+          color: "var(--green)",
+          title: "Shelf labels",
+          summary: "Small ready task with high unlock value for the kitchen reset project.",
+          status: "Ready",
+          steps: [
+            ["1", "Buy shelf labels", "Current next action", "Done"],
+            ["2", "Unlock pantry shelf", "This blocked task becomes ready", "Preview"],
+            ["3", "Bundle errand", "Can pair with paper goods order", "Bundle"]
+          ],
+          actions: ["Done", "Remind", "Ask Adam"]
+        },
+        pantry: {
+          color: "var(--rose)",
+          title: "Review pantry shelf",
+          summary: "Blocked project step. It stays visible but does not nag until shelf labels are handled.",
+          status: "Blocked",
+          steps: [
+            ["1", "Prerequisite", "Buy shelf labels first", "Open"],
+            ["2", "Then inventory", "Review one shelf and update item locations", "Plan"],
+            ["3", "Then QR bins", "Print or scan container labels", "Later"]
+          ],
+          actions: ["View", "Unblock", "Hide"]
+        },
+        paper: {
+          color: "var(--gold)",
+          title: "Paper goods",
+          summary: "Low-stock items connected to saved purchase history and the current errand path.",
+          status: "Bundle",
+          steps: [
+            ["1", "Paper towels", "Low stock, previous Costco purchase", "Compare"],
+            ["2", "Trash bags", "Can be ordered in same run", "Add"],
+            ["3", "Shelf labels", "Could be included if leaving house", "Bundle"]
+          ],
+          actions: ["Compare", "Order", "Send"]
+        },
+        price: {
+          color: "var(--gold)",
+          title: "Price compare",
+          summary: "AI search candidates are attached to the purchase object, not floating in a random note.",
+          status: "Review",
+          steps: [
+            ["1", "Exact match", "Two likely matches need confirmation", "Review"],
+            ["2", "Similar item", "Same price range, different brand", "Open"],
+            ["3", "Outlier", "Bulk option with better unit price", "Save"]
+          ],
+          actions: ["Review", "Ignore", "Save"]
+        },
+        delivery: {
+          color: "var(--green)",
+          title: "Delivery watch",
+          summary: "A passive watch node connected to calendar, screenshots, and reminders.",
+          status: "Watching",
+          steps: [
+            ["1", "Window", "Home Depot, 1:30 to 4:30", "Track"],
+            ["2", "Screenshot", "Order screen saved as proof", "View"],
+            ["3", "Alert rule", "Only interrupt if status changes", "Tune"]
+          ],
+          actions: ["Track", "Alert", "Dismiss"]
+        },
+        vitd: {
+          color: "var(--blue)",
+          title: "Vitamin D",
+          summary: "Supplement node connected to bottle photo, taken logs, inventory count, and reorder path.",
+          status: "Low",
+          steps: [
+            ["1", "Log taken", "Due today", "Taken"],
+            ["2", "Bottle count", "14 left, below threshold", "Edit"],
+            ["3", "Reorder", "Verify exact bottle first", "Review"]
+          ],
+          actions: ["Taken", "Photo", "Order"]
+        },
+        qr: {
+          color: "var(--cyan)",
+          title: "QR bins",
+          summary: "Later project node. It becomes more relevant after pantry inventory is cleaned up.",
+          status: "Later",
+          steps: [
+            ["1", "Containers", "Choose bins to label", "Open"],
+            ["2", "Generate QR", "Print or save labels", "Make"],
+            ["3", "Scan flow", "Scan bin to see contents", "Test"]
+          ],
+          actions: ["Open", "Print", "Scan"]
+        },
+        adam: {
+          color: "var(--violet)",
+          title: "Adam helper access",
+          summary: "Connected to tasks, errands, and urgent alerts. Not connected to the private vault.",
+          status: "Safe",
+          steps: [
+            ["1", "Task handoff", "Send selected task and notes", "Send"],
+            ["2", "Errand bundle", "Paper goods plus shelf labels", "Draft"],
+            ["3", "Emergency", "Urgent alert path stays separate", "Alert"]
+          ],
+          actions: ["Ask", "Urgent", "Access"]
+        }
+      };
+
+      const nodeButtons = Array.from(document.querySelectorAll(".node"));
+      const nodeMark = document.getElementById("nodeMark");
+      const nodeTitle = document.getElementById("nodeTitle");
+      const nodeSummary = document.getElementById("nodeSummary");
+      const nodeStatus = document.getElementById("nodeStatus");
+      const pathList = document.getElementById("pathList");
+      const quickActions = document.getElementById("quickActions");
+
+      function render(id) {
+        const data = nodes[id];
+        nodeMark.style.background = data.color;
+        nodeTitle.textContent = data.title;
+        nodeSummary.textContent = data.summary;
+        nodeStatus.textContent = data.status;
+        pathList.innerHTML = data.steps
+          .map(([num, title, meta, action]) => `
+            <div class="path-step">
+              <div class="step-num">${num}</div>
+              <div>
+                <strong>${title}</strong>
+                <span>${meta}</span>
+              </div>
+              <button>${action}</button>
+            </div>
+          `)
+          .join("");
+        quickActions.innerHTML = data.actions
+          .map((action, index) => `<button class="${index === 0 ? "primary" : ""}">${action}</button>`)
+          .join("");
+        nodeButtons.forEach((button) => button.classList.toggle("active", button.dataset.id === id));
+      }
+
+      nodeButtons.forEach((button) => {
+        button.addEventListener("click", () => render(button.dataset.id));
+      });
+
+      render("home");
+    </script>
+  </body>
+</html>

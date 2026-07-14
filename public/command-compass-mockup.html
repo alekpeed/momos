@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mom Home Command Compass</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #080b0d;
+        --panel: rgba(247, 244, 236, 0.94);
+        --ink: #111717;
+        --muted: #5d6764;
+        --quiet: #9ca6a2;
+        --line: rgba(247, 244, 236, 0.18);
+        --line-dark: rgba(17, 23, 23, 0.12);
+        --do: #30d7a0;
+        --buy: #ffb13d;
+        --take: #8aa7ff;
+        --watch: #ff6d8a;
+        --ai: #d8fff3;
+        --deep: #111817;
+        --shadow: 0 28px 80px rgba(0, 0, 0, 0.45);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          linear-gradient(145deg, rgba(48, 215, 160, 0.14), transparent 34%),
+          linear-gradient(315deg, rgba(255, 109, 138, 0.12), transparent 34%),
+          var(--bg);
+        color: #f7f4ec;
+        font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      body {
+        display: grid;
+        place-items: center;
+      }
+
+      button {
+        font: inherit;
+      }
+
+      .phone {
+        width: min(100vw, 430px);
+        min-height: 100vh;
+        position: relative;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 50% 23%, rgba(216, 255, 243, 0.12), transparent 33%),
+          linear-gradient(180deg, #101616 0%, #080b0d 60%, #060808 100%);
+        box-shadow: var(--shadow);
+      }
+
+      .app {
+        min-height: 100vh;
+        padding: 18px 16px 104px;
+      }
+
+      .topbar {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: center;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      .kicker {
+        color: var(--ai);
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin-top: 4px;
+        font-size: 30px;
+        line-height: 1.02;
+        letter-spacing: 0;
+      }
+
+      .sync {
+        margin-top: 5px;
+        color: rgba(247, 244, 236, 0.62);
+        font-size: 13px;
+      }
+
+      .quick-add {
+        width: 52px;
+        height: 52px;
+        border: 1px solid rgba(247, 244, 236, 0.22);
+        border-radius: 14px;
+        background: rgba(247, 244, 236, 0.09);
+        color: white;
+        font-size: 28px;
+        font-weight: 950;
+      }
+
+      .brief {
+        margin-top: 15px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: center;
+        padding: 12px;
+        border: 1px solid rgba(216, 255, 243, 0.2);
+        border-radius: 16px;
+        background: rgba(216, 255, 243, 0.08);
+      }
+
+      .brief strong {
+        display: block;
+        font-size: 15px;
+        line-height: 1.25;
+      }
+
+      .brief span {
+        display: block;
+        margin-top: 4px;
+        color: rgba(247, 244, 236, 0.66);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      .ask {
+        min-height: 40px;
+        border: 0;
+        border-radius: 12px;
+        padding: 0 12px;
+        background: var(--ai);
+        color: #09201b;
+        font-size: 13px;
+        font-weight: 950;
+      }
+
+      .compass-shell {
+        position: relative;
+        width: min(94vw, 390px);
+        aspect-ratio: 1;
+        margin: 18px auto 0;
+      }
+
+      .ring {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background:
+          conic-gradient(
+            from -45deg,
+            color-mix(in srgb, var(--do), transparent 6%) 0deg 74deg,
+            rgba(247, 244, 236, 0.08) 74deg 90deg,
+            color-mix(in srgb, var(--buy), transparent 8%) 90deg 166deg,
+            rgba(247, 244, 236, 0.08) 166deg 180deg,
+            color-mix(in srgb, var(--take), transparent 7%) 180deg 253deg,
+            rgba(247, 244, 236, 0.08) 253deg 270deg,
+            color-mix(in srgb, var(--watch), transparent 8%) 270deg 344deg,
+            rgba(247, 244, 236, 0.08) 344deg 360deg
+          );
+        filter: saturate(1.08);
+        opacity: 0.95;
+      }
+
+      .ring::after {
+        content: "";
+        position: absolute;
+        inset: 18px;
+        border-radius: 50%;
+        background:
+          radial-gradient(circle at center, #111817 0 58%, rgba(17, 24, 23, 0.68) 59% 67%, transparent 68%),
+          repeating-conic-gradient(from -45deg, rgba(255,255,255,0.12) 0deg 1deg, transparent 1deg 30deg);
+        border: 1px solid rgba(247, 244, 236, 0.16);
+      }
+
+      .crosshair {
+        position: absolute;
+        inset: 44px;
+        border-radius: 50%;
+        border: 1px solid rgba(247, 244, 236, 0.13);
+        pointer-events: none;
+      }
+
+      .crosshair::before,
+      .crosshair::after {
+        content: "";
+        position: absolute;
+        background: rgba(247, 244, 236, 0.1);
+      }
+
+      .crosshair::before {
+        left: 50%;
+        top: -4px;
+        width: 1px;
+        height: calc(100% + 8px);
+      }
+
+      .crosshair::after {
+        top: 50%;
+        left: -4px;
+        height: 1px;
+        width: calc(100% + 8px);
+      }
+
+      .center {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 154px;
+        height: 154px;
+        transform: translate(-50%, -50%);
+        border: 1px solid rgba(216, 255, 243, 0.25);
+        border-radius: 50%;
+        background:
+          radial-gradient(circle at 40% 28%, rgba(216, 255, 243, 0.24), transparent 36%),
+          #101918;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        padding: 18px;
+        box-shadow: 0 16px 44px rgba(0, 0, 0, 0.35);
+        z-index: 4;
+      }
+
+      .center .label {
+        color: var(--ai);
+        font-size: 11px;
+        font-weight: 950;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .center .main {
+        margin-top: 7px;
+        font-size: 20px;
+        font-weight: 950;
+        line-height: 1.08;
+      }
+
+      .center .sub {
+        margin-top: 7px;
+        color: rgba(247, 244, 236, 0.62);
+        font-size: 11px;
+        line-height: 1.25;
+      }
+
+      .zone {
+        position: absolute;
+        display: grid;
+        place-items: center;
+        min-width: 86px;
+        min-height: 70px;
+        border: 1px solid rgba(247, 244, 236, 0.18);
+        border-radius: 18px;
+        background: rgba(8, 11, 13, 0.62);
+        color: white;
+        text-align: center;
+        padding: 9px;
+        z-index: 5;
+        backdrop-filter: blur(16px);
+      }
+
+      .zone strong {
+        display: block;
+        font-size: 22px;
+        line-height: 1;
+      }
+
+      .zone span {
+        display: block;
+        margin-top: 5px;
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .zone.do {
+        top: 18px;
+        left: 50%;
+        transform: translateX(-50%);
+        box-shadow: inset 0 -3px 0 var(--do);
+      }
+
+      .zone.buy {
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        box-shadow: inset 0 -3px 0 var(--buy);
+      }
+
+      .zone.take {
+        bottom: 18px;
+        left: 50%;
+        transform: translateX(-50%);
+        box-shadow: inset 0 -3px 0 var(--take);
+      }
+
+      .zone.watch {
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        box-shadow: inset 0 -3px 0 var(--watch);
+      }
+
+      .zone.active {
+        background: rgba(247, 244, 236, 0.96);
+        color: #101615;
+      }
+
+      .signal {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 2px solid #101615;
+        z-index: 6;
+      }
+
+      .signal::after {
+        content: attr(data-label);
+        position: absolute;
+        left: 19px;
+        top: -6px;
+        min-width: 70px;
+        color: rgba(247, 244, 236, 0.72);
+        font-size: 10px;
+        font-weight: 850;
+        white-space: nowrap;
+      }
+
+      .signal.one {
+        left: 65%;
+        top: 21%;
+        background: var(--do);
+      }
+
+      .signal.two {
+        left: 77%;
+        top: 62%;
+        background: var(--buy);
+      }
+
+      .signal.three {
+        left: 31%;
+        top: 75%;
+        background: var(--take);
+      }
+
+      .signal.four {
+        left: 17%;
+        top: 40%;
+        background: var(--watch);
+      }
+
+      .detail {
+        margin-top: 12px;
+        border-radius: 22px;
+        background: var(--panel);
+        color: var(--ink);
+        overflow: hidden;
+        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
+      }
+
+      .detail-head {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: center;
+        padding: 15px 15px 12px;
+        border-bottom: 1px solid var(--line-dark);
+      }
+
+      .detail-title {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+      }
+
+      .mark {
+        width: 12px;
+        height: 36px;
+        border-radius: 999px;
+        background: var(--do);
+      }
+
+      .detail h2 {
+        font-size: 21px;
+        line-height: 1.1;
+      }
+
+      .detail p {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.35;
+      }
+
+      .mode {
+        border: 1px solid var(--line-dark);
+        border-radius: 12px;
+        background: white;
+        min-height: 42px;
+        padding: 0 11px;
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 950;
+      }
+
+      .detail-body {
+        padding: 13px 15px 15px;
+      }
+
+      .action-line {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 10px;
+        min-height: 54px;
+        border-bottom: 1px solid rgba(17, 23, 23, 0.08);
+      }
+
+      .action-line:last-child {
+        border-bottom: 0;
+      }
+
+      .rank {
+        width: 30px;
+        height: 30px;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        background: #111817;
+        color: white;
+        font-size: 13px;
+        font-weight: 950;
+      }
+
+      .action-line strong {
+        display: block;
+        font-size: 15px;
+        line-height: 1.15;
+      }
+
+      .action-line span {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.25;
+      }
+
+      .mini {
+        border: 0;
+        border-radius: 11px;
+        min-height: 38px;
+        padding: 0 10px;
+        background: #111817;
+        color: white;
+        font-size: 12px;
+        font-weight: 950;
+      }
+
+      .ambient {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .ambient div {
+        min-height: 58px;
+        border: 1px solid rgba(247, 244, 236, 0.14);
+        border-radius: 16px;
+        background: rgba(247, 244, 236, 0.07);
+        padding: 9px;
+      }
+
+      .ambient strong {
+        display: block;
+        font-size: 18px;
+        line-height: 1;
+      }
+
+      .ambient span {
+        display: block;
+        margin-top: 6px;
+        color: rgba(247, 244, 236, 0.62);
+        font-size: 10px;
+        font-weight: 850;
+        line-height: 1.2;
+        text-transform: uppercase;
+      }
+
+      .nav {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 4px;
+        padding: 9px 9px 13px;
+        background: rgba(8, 11, 13, 0.78);
+        border-top: 1px solid var(--line);
+        backdrop-filter: blur(18px);
+      }
+
+      .nav button {
+        border: 0;
+        min-height: 52px;
+        border-radius: 14px;
+        background: transparent;
+        color: rgba(247, 244, 236, 0.62);
+        font-size: 12px;
+        font-weight: 950;
+      }
+
+      .nav .active {
+        background: rgba(216, 255, 243, 0.14);
+        color: white;
+      }
+
+      @media (min-width: 520px) {
+        body {
+          padding: 28px;
+        }
+
+        .phone {
+          min-height: 930px;
+          border-radius: 34px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="phone" aria-label="Command Compass home screen concept">
+      <div class="app">
+        <header class="topbar">
+          <div>
+            <p class="kicker">Command Compass</p>
+            <h1>Mom Home</h1>
+            <p class="sync">Today · live household signal map</p>
+          </div>
+          <button class="quick-add" aria-label="Add">+</button>
+        </header>
+
+        <section class="brief" aria-label="AI daily intelligence">
+          <div>
+            <strong>AI brief: one move unlocks the day.</strong>
+            <span>Buy shelf labels first. It opens the pantry sequence and can be bundled with low-stock paper goods.</span>
+          </div>
+          <button class="ask">Ask</button>
+        </section>
+
+        <section class="compass-shell" aria-label="Command Compass">
+          <div class="ring"></div>
+          <div class="crosshair"></div>
+          <button class="zone do active" data-zone="do"><strong>4</strong><span>Do</span></button>
+          <button class="zone buy" data-zone="buy"><strong>6</strong><span>Buy</span></button>
+          <button class="zone take" data-zone="take"><strong>3</strong><span>Take</span></button>
+          <button class="zone watch" data-zone="watch"><strong>5</strong><span>Watch</span></button>
+          <span class="signal one" data-label="ready task"></span>
+          <span class="signal two" data-label="price shift"></span>
+          <span class="signal three" data-label="dose due"></span>
+          <span class="signal four" data-label="delivery"></span>
+          <div class="center">
+            <div>
+              <div class="label">Now</div>
+              <div class="main">1 best action</div>
+              <div class="sub">4 zones monitored, 2 blocked paths, 1 urgent reorder</div>
+            </div>
+          </div>
+        </section>
+
+        <div class="ambient" aria-label="Compact status">
+          <div><strong>2</strong><span>blocked chains</span></div>
+          <div><strong>11%</strong><span>possible savings</span></div>
+          <div><strong>0</strong><span>vault exposure</span></div>
+        </div>
+
+        <section class="detail" aria-live="polite">
+          <div class="detail-head">
+            <div class="detail-title">
+              <div class="mark" id="zoneMark"></div>
+              <div>
+                <h2 id="zoneTitle">Do next</h2>
+                <p id="zoneSummary">Ready tasks, starred tasks, and dependency-aware next steps.</p>
+              </div>
+            </div>
+            <button class="mode" id="zoneMode">Tune</button>
+          </div>
+          <div class="detail-body" id="detailBody"></div>
+        </section>
+      </div>
+
+      <nav class="nav" aria-label="Main navigation">
+        <button class="active">Compass</button>
+        <button>Tasks</button>
+        <button>Calendar</button>
+        <button>Items</button>
+        <button>More</button>
+      </nav>
+    </main>
+
+    <script>
+      const zoneData = {
+        do: {
+          color: "var(--do)",
+          title: "Do next",
+          summary: "Ready tasks, starred tasks, and dependency-aware next steps.",
+          mode: "Tune",
+          actions: [
+            ["1", "Buy shelf labels", "Ready now · unlocks pantry reset", "Done"],
+            ["2", "Call pharmacy", "Teal flag · remind if not done by 4 PM", "Open"],
+            ["3", "Energy journal", "Record only · no suggestions unless asked", "Log"]
+          ]
+        },
+        buy: {
+          color: "var(--buy)",
+          title: "Buy smarter",
+          summary: "Low stock, saved purchases, receipts, price comparisons, and reorder paths.",
+          mode: "Compare",
+          actions: [
+            ["1", "Paper towels", "Costco history likely beats Amazon by 11%", "Compare"],
+            ["2", "Vitamin D", "Below threshold · verify exact bottle first", "Review"],
+            ["3", "Trash bags", "Can bundle with paper goods", "Add"]
+          ]
+        },
+        take: {
+          color: "var(--take)",
+          title: "Take and track",
+          summary: "Supplement logs, bottle counts, refill timing, and safety notes.",
+          mode: "Log",
+          actions: [
+            ["1", "Vitamin D", "14 left · due today", "Taken"],
+            ["2", "Magnesium", "Last logged yesterday", "Taken"],
+            ["3", "Bottle photos", "2 supplements missing label photos", "Photo"]
+          ]
+        },
+        watch: {
+          color: "var(--watch)",
+          title: "Watch list",
+          summary: "Deliveries, reminders, blocked tasks, nag mode, and assistant handoffs.",
+          mode: "Alert",
+          actions: [
+            ["1", "Home Depot delivery", "Window 1:30-4:30 · screenshot attached", "Track"],
+            ["2", "Pantry reset blocked", "Waiting on shelf labels", "View"],
+            ["3", "Ask Adam", "Send errand list without vault access", "Send"]
+          ]
+        }
+      };
+
+      const buttons = Array.from(document.querySelectorAll(".zone"));
+      const title = document.getElementById("zoneTitle");
+      const summary = document.getElementById("zoneSummary");
+      const mode = document.getElementById("zoneMode");
+      const body = document.getElementById("detailBody");
+      const mark = document.getElementById("zoneMark");
+
+      function render(zone) {
+        const data = zoneData[zone];
+        title.textContent = data.title;
+        summary.textContent = data.summary;
+        mode.textContent = data.mode;
+        mark.style.background = data.color;
+        body.innerHTML = data.actions
+          .map(([rank, name, meta, action]) => `
+            <div class="action-line">
+              <div class="rank">${rank}</div>
+              <div>
+                <strong>${name}</strong>
+                <span>${meta}</span>
+              </div>
+              <button class="mini">${action}</button>
+            </div>
+          `)
+          .join("");
+        buttons.forEach((button) => button.classList.toggle("active", button.dataset.zone === zone));
+      }
+
+      buttons.forEach((button) => {
+        button.addEventListener("click", () => render(button.dataset.zone));
+      });
+
+      render("do");
+    </script>
+  </body>
+</html>
