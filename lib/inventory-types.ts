@@ -1,4 +1,4 @@
-export type View = "home" | "tasks" | "calendar" | "items" | "low" | "places" | "orders" | "purchases" | "supplements" | "more" | "help" | "report";
+export type View = "home" | "tasks" | "calendar" | "items" | "ideas" | "low" | "places" | "orders" | "purchases" | "supplements" | "calm" | "alerts" | "vault" | "more" | "help" | "report";
 
 export type QuantityStatus =
   | "Unknown"
@@ -44,6 +44,95 @@ export type TaskStatus = "Open" | "Doing" | "Waiting" | "Done" | "Skipped" | "Ca
 export type TaskEffort = "Tiny" | "Quick win" | "Medium" | "Big project" | "Needs help" | "Unsorted";
 export type FlagShape = "Flag" | "Circle" | "Square" | "Diamond" | "Star" | "Heart" | "Custom";
 export type CalendarRepeat = "Never" | "Daily" | "Weekly" | "Monthly" | "Yearly";
+
+
+export type IdeaContentType = "Photo" | "Screenshot" | "Web link" | "Product" | "Note" | "Recipe" | "Document" | "Inventory item" | "Task" | "Project";
+export type IdeaStatus = "Saved" | "Considering" | "Approved" | "Buying" | "Purchased" | "Completed" | "Rejected";
+export type IdeaPriority = "None" | "Low" | "Medium" | "High";
+export type IdeaPurpose = "Buy later" | "Copy this idea" | "Research" | "Ask someone" | "Gift idea" | "Repair reference" | "Compare later" | "Use for project";
+
+export type IdeaBoard = {
+  id: string;
+  householdId: string;
+  name: string;
+  description?: string;
+  roomLocationId?: string;
+  archivedAt?: string;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type IdeaBoardSection = {
+  id: string;
+  householdId: string;
+  boardId: string;
+  name: string;
+  description?: string;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type IdeaCard = {
+  id: string;
+  householdId: string;
+  title: string;
+  contentType: IdeaContentType;
+  status: IdeaStatus;
+  priority: IdeaPriority;
+  notes?: string;
+  imageUrls: string[];
+  imageSignature?: string;
+  colorPalette?: string[];
+  sourceUrl?: string;
+  sourceTitle?: string;
+  sourceSite?: string;
+  storeOrSeller?: string;
+  price?: string;
+  priceCheckedAt?: string;
+  targetPrice?: string;
+  priceHistory?: { price: string; checkedAt: string }[];
+  dimensions?: string;
+  color?: string;
+  quantity?: string;
+  purpose?: IdeaPurpose;
+  expirationDate?: string;
+  seasonalMonth?: string;
+  budgetCategory?: string;
+  alternativeForCardId?: string;
+  stackName?: string;
+  currentPhotoUrl?: string;
+  completedPhotoUrl?: string;
+  actualCost?: string;
+  completedAt?: string;
+  availabilityStatus?: string;
+  fitNotes?: string;
+  tags: string[];
+  roomLocationId?: string;
+  relatedItemId?: string;
+  relatedTaskId?: string;
+  relatedProjectId?: string;
+  relatedCalendarEntryId?: string;
+  relatedOrderEntryId?: string;
+  relatedPurchaseRecordId?: string;
+  archivedAt?: string;
+  deletedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type IdeaBoardPlacement = {
+  id: string;
+  householdId: string;
+  cardId: string;
+  boardId: string;
+  sectionId?: string;
+  favorite: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+};
 
 export type Item = {
   id: string;
@@ -120,6 +209,31 @@ export type OrderEntry = {
   updatedAt: string;
 };
 
+export type ReplacementOption = {
+  id: string;
+  title: string;
+  storeName?: string;
+  productUrl?: string;
+  estimatedPrice?: string;
+  notes?: string;
+  confidence: "Low" | "Medium" | "High";
+  checkedAt: string;
+};
+
+export type PurchaseImportReview = {
+  id: string;
+  householdId: string;
+  source: "Receipt text" | "Email text" | "Manual note";
+  rawText: string;
+  suggestedProductName?: string;
+  suggestedStoreName?: string;
+  suggestedTotalPrice?: string;
+  suggestedPurchasedAt?: string;
+  status: "Needs review" | "Imported" | "Dismissed";
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type PurchaseRecord = {
   id: string;
   householdId: string;
@@ -136,8 +250,13 @@ export type PurchaseRecord = {
   productUrl?: string;
   receiptUrl?: string;
   receiptPhotoUrl?: string;
+  receiptText?: string;
   orderNumber?: string;
   notes?: string;
+  aiSummary?: string;
+  aiConfidence?: "Low" | "Medium" | "High";
+  checkedAt?: string;
+  replacementOptions?: ReplacementOption[];
   purchasePreference: PurchasePreference;
   reorderRecommendation: ReorderRecommendation;
   createdAt: string;
@@ -254,9 +373,57 @@ export type SupplementLog = {
   createdAt: string;
 };
 
+
+export type HelperContact = {
+  id: string;
+  householdId: string;
+  name: string;
+  phone?: string;
+  email?: string;
+  relationship?: string;
+  preferred: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type HelpRequest = {
+  id: string;
+  householdId: string;
+  title: string;
+  details?: string;
+  urgency: "Question" | "Soon" | "Urgent";
+  status: "Open" | "Sent" | "Resolved" | "Cancelled";
+  contactId?: string;
+  relatedTaskId?: string;
+  relatedOrderEntryId?: string;
+  createdAt: string;
+  updatedAt: string;
+  sentAt?: string;
+  resolvedAt?: string;
+};
+
+export type VaultRecord = {
+  id: string;
+  householdId: string;
+  title: string;
+  category: "Account" | "Document" | "Medical" | "Home" | "Other";
+  encryptedPayload: string;
+  salt: string;
+  iv: string;
+  kdf: "PBKDF2-SHA256";
+  noteHint?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CalmSound = "chime" | "rain" | "waves" | "birds" | "silent";
+
 export type AppSettings = {
   starMode: StarMode;
   todayLens: TodayLens;
+  calmSound: CalmSound;
+  defaultNagIntervalMinutes: number;
+  helperAlertDisclaimerAccepted: boolean;
 };
 
 export type FocusSeason = {
@@ -280,6 +447,7 @@ export type AppState = {
   containers: Container[];
   orderEntries: OrderEntry[];
   purchaseRecords: PurchaseRecord[];
+  purchaseImportQueue: PurchaseImportReview[];
   tasks: CommandTask[];
   calendarEntries: CalendarEntry[];
   taskProjects: TaskProject[];
@@ -288,6 +456,13 @@ export type AppState = {
   energyJournal: EnergyJournalEntry[];
   supplementItems: SupplementItem[];
   supplementLogs: SupplementLog[];
+  helperContacts: HelperContact[];
+  helpRequests: HelpRequest[];
+  vaultRecords: VaultRecord[];
+  ideaBoards: IdeaBoard[];
+  ideaBoardSections: IdeaBoardSection[];
+  ideaCards: IdeaCard[];
+  ideaBoardPlacements: IdeaBoardPlacement[];
   focusSeason: FocusSeason;
   settings: AppSettings;
 };

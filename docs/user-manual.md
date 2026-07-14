@@ -12,6 +12,7 @@ Main sections:
 - Inventory: household items, photos, quantities, locations, and purchase history.
 - Purchases: saved receipts, vendors, order numbers, screenshots, and reorder notes.
 - Supplements: bottles, remaining count, reorder timing, and taken logs.
+- Ideas: visual planning boards for inspiration, future purchases, repairs, recipes, and projects.
 - More: cloud protection, settings, exports, backup restore, helper handoff text, iPhone install steps, and extra household areas.
 
 ## Today
@@ -21,7 +22,7 @@ Use Today when she opens the app and wants to understand what matters now.
 - Tap Task to add anything that needs doing.
 - Tap Event to add something to the calendar.
 - Tap Order to add something to buy.
-- Tap Energy to record how she feels. This is only a journal entry. It does not make the app suggest tasks unless she asks for that later.
+- Tap Energy to record how she feels. This is only a journal entry. Recent notes can be reviewed for memory, but they do not make the app suggest, rank, or alert on tasks unless she asks for that later.
 
 The daily brief currently summarizes saved app data directly. It does not call an AI service yet. A later AI connection can rewrite and expand the summary without changing the underlying household records.
 
@@ -69,6 +70,20 @@ Focus Season is an adjustable timer on Today. It can be used for a specific open
 
 The timer keeps its place if the page refreshes. While Mom Home is open, it can play a gentle chime and show a device notification when alerts have been enabled. It is not a background iPhone timer yet.
 
+## Help Requests And Alerts
+
+Use Help requests when Mom needs another person to step in. This area is for human handoff, not emergency dispatch.
+
+1. From Today, tap `Ask help`, or open More → Help requests.
+2. Add trusted helper contacts with phone and/or email.
+3. Create a help request with a title, details, urgency, optional related task, and optional related order.
+4. Use `Copy`, `Text`, or `Email` to send the prepared message through the device. Mom Home does not silently send messages.
+5. Mark the request resolved or cancelled when it is handled.
+
+The urgent helper alert is clearly labeled as not 911. If there is a real emergency, call 911 or local emergency services.
+
+Delivery watch lists ordered or purchased items with expected delivery dates. Late or due-today deliveries can become help requests.
+
 ## Tasks
 
 Tasks can be simple or detailed.
@@ -113,7 +128,7 @@ Use the Next up filter to see tasks that are not blocked by unfinished earlier t
 
 Mom Home prevents circular waiting loops. For example, if Task A already waits on Task B, the app will not let Task B be changed to wait on Task A.
 
-The Project map shows each project as a simple readable tree/list. A fuller flowchart view can be added later.
+The Project map shows each project as a readable tree/list plus a small flowchart preview of which tasks unlock other tasks.
 
 ## Custom Flags
 
@@ -190,7 +205,7 @@ To add an entry:
 4. Enter only the details that are useful.
 5. Tap Save entry.
 
-Device alerts require permission. In this local MVP, reminders and nag mode can alert while Mom Home is open. True background iPhone push notifications require the later cloud notification service. Calendar entries are already structured for that upgrade.
+Device alerts require permission. In this local MVP, reminders and repeat alerts can alert while Mom Home is open. True background iPhone push notifications require the later cloud notification service. Calendar entries are already structured for that upgrade.
 
 Task reminders use the Reminder field inside the task editor and appear alongside calendar entries.
 
@@ -329,6 +344,30 @@ The main search also finds saved order number, tracking link, expected delivery 
 
 For an active order with an expected delivery date, Mom Home shows `Expected today`, `Expected tomorrow`, or `Past expected date`. This is a reminder based on the saved date, not a live carrier-status claim.
 
+## Purchase Import And Local AI Docket
+
+Purchases can store receipt links, receipt photos, receipt/email text, notes, recommendations, and local AI-style summaries.
+
+1. Go to Purchases.
+2. Tap `Import text` to paste receipt text, email text, or a manual purchase note.
+3. Review the suggested product, store, price, and date before saving it as a purchase.
+4. Use the local Purchase AI docket to find missing receipts, compare-first purchases, avoid/do-not-buy records, and unchecked records.
+5. Open a purchase and tap `Refresh local matches` to build replacement/substitute options from saved item links and prior purchases.
+
+No remote AI, inbox reader, or retailer API is called by this local docket. Provider-backed automation can be added later after explicit setup.
+
+## Private Vault
+
+The Private Vault stores encrypted notes in this browser.
+
+1. Go to More → Private vault.
+2. Add a title, optional visible hint, private note, and passphrase.
+3. Tap `Encrypt and save`.
+4. To read a note, type the passphrase and tap `Unlock`.
+5. Tap `Lock` to hide the plaintext again.
+
+If the passphrase is forgotten, Mom Home cannot recover the vault note. Vault plaintext is not included in helper handoff, AI-style summaries, or normal reports.
+
 ## Supplements
 
 Supplements track bottles and simple taken history.
@@ -407,6 +446,19 @@ Each purchase card separates vendor, total price, brand, amount, receipt status,
 
 Inside an inventory item's Purchase history, Mom Home shows the number of recorded purchases and the lowest saved total price. This is a simple record of what was entered, not an automatic store-price comparison. Check package size and unit size before deciding that one saved total is the better deal.
 
+
+## Ideas
+
+Ideas is the visual planning area. Use it for boards like Kitchen Ideas, Garden, Gifts, Recipes, Repairs, Future Purchases, Decorating, or Seasonal Plans.
+
+Current actions:
+
+1. Tap Ideas in the bottom navigation.
+2. Add boards and optional sections.
+3. Add cards from a photo, screenshot, link, note, product, recipe, document, inventory item, task, or project. When an image is added, Mom Home extracts a small color palette and creates a simple local image fingerprint for duplicate warnings.
+4. Search, filter, sort, favorite, compare, archive, restore, copy to another board, export, or print board ideas.
+5. Convert useful cards into tasks, orders, inventory items, projects, or calendar reminders while keeping the original idea card saved.
+
 ## Assistant Handoff
 
 More includes a clean helper summary.
@@ -425,9 +477,9 @@ Nothing is shortened.
 
 ## Export And Backup
 
-More can export:
+More can export dated files so backups and reports are easier to compare later. The Export panel also shows the approximate current local backup size, which helps explain when photos are making the browser backup large:
 
-- Printable PDF report.
+- Printable report and report text.
 - Full JSON backup.
 - Item CSV.
 - To-order CSV, including delivery details when saved.
@@ -436,9 +488,13 @@ More can export:
 - Supplement CSV.
 - Assistant handoff text.
 
-More can also restore a JSON backup made by this app. First choose the backup file and review its household name, file date, record counts, and any warnings. Nothing changes during that review. Mom can download the current data first, then tap Restore this backup and confirm the final replacement.
+More can also restore a JSON backup made by this app. First choose the backup file and review its household name, file date, record counts, and any warnings. Nothing changes during that review. Mom can download the current data first, then tap Restore this backup and confirm the final replacement. CSV files are helpful for spreadsheets, but the full JSON backup is the restore file. If restoring, use Download current data first so the current browser data has its own dated safety copy.
 
 The PDF report opens a print screen. Choose Save as PDF if the browser asks for a printer.
+
+## Calm Screen
+
+The Calm screen is a quiet reset page. It can play the selected local sound, switch to silent mode, open quick wins, open help, or let Mom log energy. The Focus Season timer also uses the selected calm sound when it finishes while Mom Home is open.
 
 ## iPhone Home Screen
 
@@ -454,7 +510,7 @@ After the app has opened successfully once while connected, its basic app shell 
 
 ## Cloud Protection
 
-Mom Home always saves locally in the browser. If Supabase has been connected, More also shows account and cloud protection controls.
+Mom Home always saves locally in the browser. If Firebase or Supabase has been connected, More also shows account and cloud protection controls. Cloud protection shows whether the device is online, the latest cloud revision, and whether a failed cloud backup is queued for retry.
 
 To create the first cloud household:
 
@@ -468,7 +524,7 @@ If the account password is forgotten, open **More > Cloud protection**, type the
 
 To protect newer changes, tap Back up this device. Photos saved inside the app are copied to private cloud storage during that backup.
 
-Mom Home automatically reduces oversized camera photos before saving them locally or sending them to cloud storage. Small images, GIFs, and files a browser cannot safely process are kept as originally selected.
+Mom Home automatically reduces oversized camera photos before saving them locally or sending them to cloud storage. Most large item, bin, receipt, and bottle photos are downscaled and saved as compact JPEGs. GIFs, SVGs, and files a browser cannot safely process are kept as originally selected.
 
 To restore:
 

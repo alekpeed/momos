@@ -1,5 +1,7 @@
 # Mom Home Roadmap
 
+Current progress snapshot: see [Mom Home Project Status](./project-status.md). Current continuation instructions are in [Mom Home Handoff](./HANDOFF.md). Speculative and provider-dependent ideas are tracked in [Future Ideas / Backlog](./future-backlog.md).
+
 ## Design Direction Hold
 
 Visual home-screen concepts and graphical interface exploration are intentionally
@@ -11,6 +13,8 @@ contracts remain active so a future design can be installed without rewriting
 the household engine.
 
 ## Phase 1: Local MVP
+
+Status: complete from the repository/code side. See [Phase 1 Local MVP Audit](./phase-1-audit.md) and [Phase 1 Completion Note](./phase-1-completion.md) for implementation status and final live validation steps.
 
 - iPhone-first PWA.
 - Local browser storage.
@@ -30,56 +34,75 @@ the household engine.
 
 ## Phase 2: Mom-Ready Polish
 
-- iPhone visual QA.
+Status: complete from the repository/code side. See [Phase 2 Completion Note](./phase-2-completion.md).
+
+- iPhone visual QA preparation and responsive polish.
 - Larger tap targets where needed.
 - More forgiving empty states.
 - Better photo compression.
-- Backup import.
+- Backup import/restore confidence.
 - User manual refinements.
 - Supplement tracker.
 - Calm screen with selected sound options.
 - Adjustable focus timer.
-- Task sequencing design: prerequisites, blocked-by counts, project trees, branch views, and Everything Map.
+- Task sequencing design: prerequisites, blocked-by counts, project trees, branch views, and unlock-path review.
+
+
+## Ideas / Visual Planner Track
+
+Status tracking: see [Ideas / Visual Planner](./ideas-visual-planner.md). First local board-list UI is started.
+
+This is a new planning track for Pinterest-like boards that connect visual ideas
+to tasks, inventory, purchases, rooms, and projects. The first version should be
+local-first and action-oriented: boards, sections, idea cards, fast capture,
+search/filtering, archive/restore, and links into existing Mom Home records.
 
 ## Phase 3: Cloud Sync And Sharing
 
+Status: complete from the repository/code side. See [Phase 3 Completion Note](./phase-3-completion.md).
+
 - Secure Firebase integration, membership roles, Firestore security rules, private media storage, and manual backup/restore foundation completed in code.
-- Firebase production configuration and deployment verification.
+- Firebase production configuration readiness and deployment verification checklist.
 - Login.
 - Cloud database.
 - Cloud photo storage.
 - Shared access for son/helper.
-- Explicit admin toggle.
+- Explicit admin/helper/viewer roles.
 - Permission model.
 - Audit log for helper actions.
 - Offline-friendly sync strategy.
 
 ## Phase 4: Reminders And Help
 
-- Push reminders.
-- Nag mode settings.
-- Help request button.
-- Emergency-style helper alert.
-- SMS/email handoff fallback.
+Status: complete from the repository/code side. See [Phase 4 Completion Note](./phase-4-completion.md).
+
+- Device/browser reminder foundation and permission status.
+- Default nag/repeat interval setting for open-app reminders.
+- Help request button from Today and the Alerts screen.
+- Emergency-style helper alert with clear non-911 wording.
+- SMS/email/copy handoff fallback through the device apps.
 - Delivery reminder tracking from manually entered orders.
-- Flowchart view for dependent tasks and project unlocks.
+- Flowchart preview for dependent tasks and project unlocks.
 
 ## Phase 5: Purchases And AI
 
-- Receipt screenshot capture.
+Status: complete from the repository/code side as a local-first, review-first purchase intelligence layer. See [Phase 5 Completion Note](./phase-5-completion.md).
+
+- Receipt screenshot and receipt/email text capture.
 - Digital receipt links.
-- Email parsing pipeline.
 - Purchase import review queue.
-- AI daily docket summary.
-- AI search for same items, substitutes, price comparisons, and outliers.
-- Store/provider adapter layer for Amazon, Walmart, Home Depot, and other retailers.
+- Local AI-style daily purchase docket summary.
+- Local search for same items, substitutes, comparison candidates, and avoid/outlier records.
+- Provider adapter placeholders and boundaries for Amazon, Walmart, Home Depot, and other retailers.
 - Confidence labels and checked-at timestamps.
 
 ## Phase 6: Vault
 
-- Client-side encrypted vault.
+Status: complete from the repository/code side as a local encrypted vault foundation. See [Phase 6 Completion Note](./phase-6-completion.md).
+
+- Client-side encrypted vault records.
 - Alphanumeric passphrase.
 - No biometrics by default.
-- Lockdown mode.
-- Recovery-key workflow.
-- Vault excluded from helper/admin access by default.
+- Local lock/unlock controls.
+- Recovery-key workflow documented as future live/security validation.
+- Vault excluded from helper/admin access, AI summaries, and normal reports by default.

@@ -6,12 +6,21 @@ import { addMonths, format, parseISO, subMonths } from "date-fns";
 import {
   blankCalendarEntry,
   blankContainer,
+  blankHelpRequest,
+  blankHelperContact,
+  calmSounds,
   blankEnergyJournalEntry,
+  blankIdeaBoard,
+  blankIdeaBoardPlacement,
+  blankIdeaBoardSection,
+  blankIdeaCard,
   blankItem,
   blankLocation,
   blankOrder,
   blankPurchase,
+  blankPurchaseImportReview,
   blankSupplementItem,
+  blankVaultRecord,
   blankSupplementLog,
   blankTask,
   blankTaskFlag,
@@ -22,6 +31,10 @@ import {
   conditionValues,
   flagShapes,
   fileToDataUrl,
+  ideaContentTypes,
+  ideaPriorities,
+  ideaPurposes,
+  ideaStatuses,
   getLastPurchase,
   getPurchasePriceSummary,
   HOUSEHOLD_ID,
@@ -48,23 +61,34 @@ import { normalizeWebUrl } from "@/lib/web-url";
 import { isTodayInterfaceId, todayInterfaceOptions, type TodayInterfaceId } from "@/lib/today-interface-registry";
 import { TodayLenses, type TodayFocus, type TodaySignal, type TodaySignalKind, type TodayStat } from "@/app/today-lenses";
 import { HelpCenter } from "@/app/help-center";
-import { FocusSeason } from "@/app/focus-season";
+import { FocusSeason, playCalmSound } from "@/app/focus-season";
 import { CloudSettings } from "@/app/cloud-settings";
 import { CloudImage, CloudMediaLink } from "@/app/cloud-media";
 import type {
   AppState,
   CalendarEntry,
   CalendarRepeat,
+  CalmSound,
   Condition,
   Container,
   CommandTask,
   EnergyJournalEntry,
   FlagShape,
+  HelpRequest,
+  HelperContact,
+  IdeaBoard,
+  IdeaBoardPlacement,
+  IdeaBoardSection,
+  IdeaCard,
+  IdeaContentType,
+  IdeaPriority,
+  IdeaStatus,
   Item,
   Location,
   LocationType,
   OrderEntry,
   OrderStatus,
+  PurchaseImportReview,
   PurchasePreference,
   PurchaseRecord,
   QuantityStatus,
@@ -79,6 +103,7 @@ import type {
   TaskTag,
   TodayLens,
   Urgency,
+  VaultRecord,
   View
 } from "@/lib/inventory-types";
 
@@ -94,6 +119,61 @@ function money(value?: string) {
   if (!value) return "";
   const number = Number(value);
   return Number.isFinite(number) ? `$${number.toFixed(2)}` : value;
+}
+
+function rgbToHex(red: number, green: number, blue: number) {
+  return `#${[red, green, blue].map((value) => value.toString(16).padStart(2, "0")).join("")}`;
+}
+
+function loadDataUrlImage(dataUrl: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Image could not be read"));
+    image.src = dataUrl;
+  });
+}
+
+async function inspectIdeaImage(dataUrl: string) {
+  const image = await loadDataUrlImage(dataUrl);
+  const canvas = document.createElement("canvas");
+  const sampleSize = 12;
+  canvas.width = sampleSize;
+  canvas.height = sampleSize;
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (!context) return { palette: [] as string[], signature: "" };
+  context.drawImage(image, 0, 0, sampleSize, sampleSize);
+  const pixels = context.getImageData(0, 0, sampleSize, sampleSize).data;
+  const buckets = new Map<string, { count: number; red: number; green: number; blue: number }>();
+  const signatureBits: string[] = [];
+  for (let index = 0; index < pixels.length; index += 4) {
+    const alpha = pixels[index + 3];
+    if (alpha < 40) continue;
+    const red = pixels[index];
+    const green = pixels[index + 1];
+    const blue = pixels[index + 2];
+    const brightness = (red + green + blue) / 3;
+    signatureBits.push(brightness > 128 ? "1" : "0");
+    const key = `${Math.round(red / 32) * 32}-${Math.round(green / 32) * 32}-${Math.round(blue / 32) * 32}`;
+    const bucket = buckets.get(key) ?? { count: 0, red: 0, green: 0, blue: 0 };
+    bucket.count += 1;
+    bucket.red += red;
+    bucket.green += green;
+    bucket.blue += blue;
+    buckets.set(key, bucket);
+  }
+  const palette = Array.from(buckets.values())
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5)
+    .map((bucket) => rgbToHex(Math.round(bucket.red / bucket.count), Math.round(bucket.green / bucket.count), Math.round(bucket.blue / bucket.count)));
+  return { palette, signature: signatureBits.join("").slice(0, 144) };
+}
+
+function signatureSimilarity(a?: string, b?: string) {
+  if (!a || !b || a.length !== b.length) return 0;
+  let matches = 0;
+  for (let index = 0; index < a.length; index += 1) if (a[index] === b[index]) matches += 1;
+  return matches / a.length;
 }
 
 function deliveryDateSignal(expectedDate: string | undefined, status: OrderStatus, todayIso: string) {
@@ -115,10 +195,25 @@ type BackupPreflight = {
   warnings: string[];
 };
 
+const unreadableLocalBackupPrefix = `${STORAGE_KEY}-unreadable`;
+
+function preserveUnreadableLocalBackup(rawState: string) {
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  localStorage.setItem(`${unreadableLocalBackupPrefix}-${stamp}`, rawState);
+}
+
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} bytes`;
+  const kilobytes = bytes / 1024;
+  if (kilobytes < 1024) return `${kilobytes.toFixed(kilobytes >= 100 ? 0 : 1)} KB`;
+  const megabytes = kilobytes / 1024;
+  return `${megabytes.toFixed(megabytes >= 10 ? 1 : 2)} MB`;
+}
+
 function inspectBackup(file: File, input: unknown): BackupPreflight {
   if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error("Backup is not an object.");
   const source = input as Record<string, unknown>;
-  const collections = ["items", "locations", "containers", "orderEntries", "purchaseRecords", "tasks", "calendarEntries", "supplementItems"];
+  const collections = ["items", "locations", "containers", "orderEntries", "purchaseRecords", "purchaseImportQueue", "tasks", "calendarEntries", "supplementItems", "ideaBoards", "ideaCards", "helperContacts", "helpRequests"];
   const recognizedCollections = collections.filter((key) => Array.isArray(source[key]));
   const warnings: string[] = [];
   if (!recognizedCollections.length) warnings.push("This file does not contain recognizable Mom Home record lists.");
@@ -136,6 +231,9 @@ function inspectBackup(file: File, input: unknown): BackupPreflight {
 export default function Home() {
   const seeded = useMemo(() => seedState(), []);
   const [state, setState] = useState<AppState>(() => seeded);
+  const localBackupSize = useMemo(() => new Blob([JSON.stringify(state)]).size, [state]);
+  const localBackupSizeLabel = formatBytes(localBackupSize);
+  const localBackupSizeTone = localBackupSize > 4 * 1024 * 1024 ? "attention" : localBackupSize > 2 * 1024 * 1024 ? "watch" : "ok";
   const [loaded, setLoaded] = useState(false);
   const [view, setView] = useState<View>("home");
   const [search, setSearch] = useState("");
@@ -151,6 +249,16 @@ export default function Home() {
   const [showFlagForm, setShowFlagForm] = useState(false);
   const [showTagForm, setShowTagForm] = useState(false);
   const [showEnergyForm, setShowEnergyForm] = useState(false);
+  const [showVaultForm, setShowVaultForm] = useState(false);
+  const [showIdeaBoardForm, setShowIdeaBoardForm] = useState(false);
+  const [showIdeaSectionForm, setShowIdeaSectionForm] = useState(false);
+  const [showIdeaCardForm, setShowIdeaCardForm] = useState(false);
+  const [showIdeaTrash, setShowIdeaTrash] = useState(false);
+  const [showIdeaCompare, setShowIdeaCompare] = useState(false);
+  const [showHelpRequestForm, setShowHelpRequestForm] = useState(false);
+  const [showHelperContactForm, setShowHelperContactForm] = useState(false);
+  const [editingHelpRequestId, setEditingHelpRequestId] = useState("");
+  const [editingHelperContactId, setEditingHelperContactId] = useState("");
   const [showSupplementForm, setShowSupplementForm] = useState(false);
   const [showSupplementLogForm, setShowSupplementLogForm] = useState(false);
   const [backupMessage, setBackupMessage] = useState("");
@@ -162,12 +270,33 @@ export default function Home() {
   const [containerDraft, setContainerDraft] = useState<Partial<Container>>(() => blankContainer(seeded.locations));
   const [orderDraft, setOrderDraft] = useState<Partial<OrderEntry>>(() => blankOrder());
   const [purchaseDraft, setPurchaseDraft] = useState<Partial<PurchaseRecord>>(() => blankPurchase());
+  const [purchaseImportDraft, setPurchaseImportDraft] = useState<Partial<PurchaseImportReview>>(() => blankPurchaseImportReview());
+  const [showPurchaseImportForm, setShowPurchaseImportForm] = useState(false);
   const [taskDraft, setTaskDraft] = useState<Partial<CommandTask>>(() => blankTask());
+  const [vaultDraft, setVaultDraft] = useState<Partial<VaultRecord>>(() => blankVaultRecord());
+  const [vaultPlaintext, setVaultPlaintext] = useState("");
+  const [vaultPassphrase, setVaultPassphrase] = useState("");
+  const [vaultUnlockPassphrase, setVaultUnlockPassphrase] = useState("");
+  const [unlockedVaultText, setUnlockedVaultText] = useState<Record<string, string>>({});
+  const [vaultMessage, setVaultMessage] = useState("");
   const [taskFormMessage, setTaskFormMessage] = useState("");
   const [projectDraft, setProjectDraft] = useState<Partial<TaskProject>>(() => blankTaskProject());
   const [flagDraft, setFlagDraft] = useState<Partial<TaskFlag>>(() => blankTaskFlag());
   const [tagDraft, setTagDraft] = useState<Partial<TaskTag>>(() => blankTaskTag());
   const [energyDraft, setEnergyDraft] = useState<Partial<EnergyJournalEntry>>(() => blankEnergyJournalEntry());
+  const [ideaBoardDraft, setIdeaBoardDraft] = useState<Partial<IdeaBoard>>(() => blankIdeaBoard());
+  const [ideaSectionDraft, setIdeaSectionDraft] = useState<Partial<IdeaBoardSection>>(() => blankIdeaBoardSection());
+  const [ideaCardDraft, setIdeaCardDraft] = useState<Partial<IdeaCard>>(() => blankIdeaCard());
+  const [ideaPlacementDraft, setIdeaPlacementDraft] = useState<Partial<IdeaBoardPlacement>>(() => blankIdeaBoardPlacement());
+  const [activeIdeaBoardId, setActiveIdeaBoardId] = useState("");
+  const [ideaStatusFilter, setIdeaStatusFilter] = useState<IdeaStatus | "All">("All");
+  const [ideaPriorityFilter, setIdeaPriorityFilter] = useState<IdeaPriority | "All">("All");
+  const [ideaContentFilter, setIdeaContentFilter] = useState<IdeaContentType | "All">("All");
+  const [ideaTagFilter, setIdeaTagFilter] = useState("");
+  const [ideaPriceFilter, setIdeaPriceFilter] = useState<"All" | "Under50" | "MissingPrice">("All");
+  const [ideaSort, setIdeaSort] = useState<"custom" | "newest" | "oldest" | "priority" | "price" | "status" | "updated" | "alpha">("custom");
+  const [helpRequestDraft, setHelpRequestDraft] = useState<Partial<HelpRequest>>(() => blankHelpRequest());
+  const [helperContactDraft, setHelperContactDraft] = useState<Partial<HelperContact>>(() => blankHelperContact());
   const [supplementDraft, setSupplementDraft] = useState<Partial<SupplementItem>>(() => blankSupplementItem());
   const [supplementLogDraft, setSupplementLogDraft] = useState<Partial<SupplementLog>>(() => blankSupplementLog());
   const [taskScope, setTaskScope] = useState<"open" | "next" | "today" | "starred" | "quick" | "help" | "all">("open");
@@ -186,19 +315,31 @@ export default function Home() {
   const sentReminders = useRef(new Set<string>());
 
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        setState(migrateState(JSON.parse(saved)));
-      } catch {
-        setState(seedState());
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          setState(migrateState(JSON.parse(saved)));
+        } catch {
+          preserveUnreadableLocalBackup(saved);
+          setState(seedState());
+          setBackupMessage("Mom Home could not read the saved browser data, so it opened a fresh local copy and preserved the unreadable data under a recovery key.");
+        }
       }
+    } catch {
+      setBackupMessage("Mom Home could not open browser storage. Export a backup before making important changes if this message keeps appearing.");
+    } finally {
+      setLoaded(true);
     }
-    setLoaded(true);
   }, []);
 
   useEffect(() => {
-    if (loaded) localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    if (!loaded) return;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      setBackupMessage("Mom Home could not save to browser storage. Download a JSON backup before closing this page.");
+    }
   }, [loaded, state]);
 
   useEffect(() => {
@@ -283,6 +424,77 @@ export default function Home() {
   const outItems = useMemo(() => state.items.filter((item) => item.quantityStatus === "Out"), [state.items]);
   const runningLowItems = useMemo(() => state.items.filter((item) => item.quantityStatus === "Low" || item.quantityStatus === "Very low"), [state.items]);
   const overstockItems = useMemo(() => state.items.filter((item) => item.quantityStatus === "Too much"), [state.items]);
+  const activeIdeaBoards = useMemo(
+    () => state.ideaBoards.filter((board) => !board.archivedAt).sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)),
+    [state.ideaBoards]
+  );
+  const archivedIdeaBoards = useMemo(
+    () => state.ideaBoards.filter((board) => board.archivedAt).sort((a, b) => a.name.localeCompare(b.name)),
+    [state.ideaBoards]
+  );
+  const selectedIdeaBoard = activeIdeaBoards.find((board) => board.id === activeIdeaBoardId) ?? activeIdeaBoards[0];
+  const selectedIdeaBoardId = selectedIdeaBoard?.id ?? "";
+  const selectedIdeaSections = useMemo(
+    () => state.ideaBoardSections.filter((section) => section.boardId === selectedIdeaBoardId).sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)),
+    [selectedIdeaBoardId, state.ideaBoardSections]
+  );
+  const activeIdeaCards = useMemo(() => state.ideaCards.filter((card) => !card.deletedAt), [state.ideaCards]);
+  const archivedIdeaCards = useMemo(() => activeIdeaCards.filter((card) => card.archivedAt), [activeIdeaCards]);
+  const activeIdeaTags = useMemo(
+    () => Array.from(new Set(activeIdeaCards.flatMap((card) => card.tags))).sort((a, b) => a.localeCompare(b)),
+    [activeIdeaCards]
+  );
+  const ideaBoardCards = useMemo(() => {
+    const placements = state.ideaBoardPlacements.filter((placement) => placement.boardId === selectedIdeaBoardId);
+    const query = normalize(search);
+    const priorityWeight: Record<IdeaPriority, number> = { High: 0, Medium: 1, Low: 2, None: 3 };
+    const withPlacement = placements
+      .map((placement) => {
+        const card = state.ideaCards.find((entry) => entry.id === placement.cardId);
+        return card && !card.deletedAt && !card.archivedAt ? { card, placement } : undefined;
+      })
+      .filter(Boolean) as { card: IdeaCard; placement: IdeaBoardPlacement }[];
+    const filtered = withPlacement.filter(({ card, placement }) => {
+      const linkedItem = card.relatedItemId ? state.items.find((item) => item.id === card.relatedItemId)?.name ?? "" : "";
+      const haystack = [card.title, card.notes ?? "", card.sourceUrl ?? "", card.sourceSite ?? "", card.storeOrSeller ?? "", card.color ?? "", card.dimensions ?? "", card.stackName ?? "", linkedItem, ...card.tags].join(" ");
+      if (query && !normalize(haystack).includes(query)) return false;
+      if (ideaStatusFilter !== "All" && card.status !== ideaStatusFilter) return false;
+      if (ideaPriorityFilter !== "All" && card.priority !== ideaPriorityFilter) return false;
+      if (ideaContentFilter !== "All" && card.contentType !== ideaContentFilter) return false;
+      if (ideaTagFilter && !card.tags.includes(ideaTagFilter)) return false;
+      const numericPrice = Number(String(card.price ?? "").replace(/[$,\s]/g, ""));
+      if (ideaPriceFilter === "Under50" && (!Number.isFinite(numericPrice) || numericPrice > 50)) return false;
+      if (ideaPriceFilter === "MissingPrice" && card.price) return false;
+      return Boolean(placement.boardId === selectedIdeaBoardId);
+    });
+    return [...filtered].sort((a, b) => {
+      if (ideaSort === "newest") return b.card.createdAt.localeCompare(a.card.createdAt);
+      if (ideaSort === "oldest") return a.card.createdAt.localeCompare(b.card.createdAt);
+      if (ideaSort === "priority") return priorityWeight[a.card.priority] - priorityWeight[b.card.priority];
+      if (ideaSort === "price") return Number(String(a.card.price ?? "").replace(/[$,\s]/g, "") || Infinity) - Number(String(b.card.price ?? "").replace(/[$,\s]/g, "") || Infinity);
+      if (ideaSort === "status") return a.card.status.localeCompare(b.card.status);
+      if (ideaSort === "updated") return b.card.updatedAt.localeCompare(a.card.updatedAt);
+      if (ideaSort === "alpha") return a.card.title.localeCompare(b.card.title);
+      return a.placement.sortOrder - b.placement.sortOrder || a.card.title.localeCompare(b.card.title);
+    });
+  }, [ideaContentFilter, ideaPriceFilter, ideaPriorityFilter, ideaSort, ideaStatusFilter, ideaTagFilter, search, selectedIdeaBoardId, state.ideaBoardPlacements, state.ideaCards, state.items]);
+  const favoriteIdeaCards = ideaBoardCards.filter(({ placement }) => placement.favorite).slice(0, 4);
+  const filteredIdeaBoards = useMemo(() => {
+    const query = normalize(search);
+    if (!query) return activeIdeaBoards;
+    return activeIdeaBoards.filter((board) => {
+      const room = board.roomLocationId ? state.locations.find((location) => location.id === board.roomLocationId)?.name ?? "" : "";
+      return [board.name, board.description ?? "", room].some((value) => normalize(value).includes(query));
+    });
+  }, [activeIdeaBoards, search, state.locations]);
+  const ideaBoardBudget = useMemo(() => {
+    const priced = ideaBoardCards
+      .map(({ card }) => ({ card, price: Number(String(card.price ?? "").replace(/[$,\s]/g, "")) }))
+      .filter((entry) => Number.isFinite(entry.price));
+    const total = priced.reduce((sum, entry) => sum + entry.price, 0);
+    const purchased = priced.filter((entry) => entry.card.status === "Purchased" || entry.card.status === "Completed").reduce((sum, entry) => sum + entry.price, 0);
+    return { total, purchased, remaining: Math.max(0, total - purchased) };
+  }, [ideaBoardCards]);
   const todayIso = localDateIso(new Date());
   const activeTasks = useMemo(
     () => state.tasks.filter((task) => !["Done", "Skipped", "Cancelled"].includes(task.status)),
@@ -402,6 +614,17 @@ export default function Home() {
         detail: [calendarTimeLabel(entry), entry.location].filter(Boolean).join(" | "),
         actionLabel: "Calendar"
       }));
+
+    state.orderEntries
+      .filter((entry) => ["Ordered", "Purchased"].includes(entry.status) && entry.expectedDeliveryDate && entry.expectedDeliveryDate <= todayIso)
+      .slice(0, 2)
+      .forEach((entry) => signals.push({
+        id: `watch-order-${entry.id}`,
+        kind: "watch",
+        title: `${entry.name} delivery`,
+        detail: entry.expectedDeliveryDate === todayIso ? "Expected today" : `Expected ${entry.expectedDeliveryDate}`,
+        actionLabel: "Orders"
+      }));
     activeTasks
       .filter((task) => (task.dependencyIds ?? []).some((dependencyId) => {
         const dependency = state.tasks.find((entry) => entry.id === dependencyId);
@@ -432,6 +655,17 @@ export default function Home() {
     if (todayFocus === "quiet") return todaySignals.filter((signal) => signal.kind === "take" || signal.kind === "watch");
     return todaySignals;
   }, [todayFocus, todaySignals]);
+
+  const deliveryWatchOrders = useMemo(() => state.orderEntries
+    .filter((entry) => ["Ordered", "Purchased"].includes(entry.status) && Boolean(entry.expectedDeliveryDate))
+    .sort((a, b) => (a.expectedDeliveryDate ?? "9999-12-31").localeCompare(b.expectedDeliveryDate ?? "9999-12-31")), [state.orderEntries]);
+
+  const openHelpRequests = useMemo(() => state.helpRequests
+    .filter((request) => !["Resolved", "Cancelled"].includes(request.status))
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), [state.helpRequests]);
+
+  const preferredHelperContacts = useMemo(() => [...state.helperContacts]
+    .sort((a, b) => Number(b.preferred) - Number(a.preferred) || a.name.localeCompare(b.name)), [state.helperContacts]);
 
   const todayBrief = useMemo(() => {
     if (todayFocus === "quiet") {
@@ -648,6 +882,14 @@ export default function Home() {
     [state.purchaseRecords]
   );
 
+  const purchaseDocket = useMemo(() => {
+    const missingReceipts = state.purchaseRecords.filter((purchase) => !purchase.receiptUrl && !purchase.receiptPhotoUrl && !purchase.receiptText);
+    const compareFirst = state.purchaseRecords.filter((purchase) => purchase.reorderRecommendation === "Compare first");
+    const avoid = state.purchaseRecords.filter((purchase) => purchase.reorderRecommendation === "Avoid" || purchase.purchasePreference === "Do not buy again");
+    const unchecked = state.purchaseRecords.filter((purchase) => !purchase.checkedAt);
+    return { missingReceipts, compareFirst, avoid, unchecked };
+  }, [state.purchaseRecords]);
+
   const filteredSupplements = useMemo(() => {
     const q = normalize(search);
     if (!q) return state.supplementItems;
@@ -696,15 +938,24 @@ export default function Home() {
     return state.items.find((item) => item.id === entry.itemId);
   }
 
+  function exportFilename(label: string, extension: string) {
+    return `mom-home-${label}-${todayIso}.${extension}`;
+  }
+
+  function downloadJsonBackup(filename = exportFilename("full-backup", "json")) {
+    downloadText(filename, JSON.stringify(state, null, 2), "application/json");
+  }
+
   function taskEmptyMessage() {
-    if (search.trim()) return "Nothing matches that search.";
-    if (taskScope === "next") return "Nothing is ready right now. Check the project map below for what is waiting.";
-    if (taskScope === "today") return "Nothing is due today.";
-    if (taskScope === "starred") return "No starred tasks yet.";
-    if (taskScope === "quick") return "No quick wins marked yet.";
-    if (taskScope === "help") return "No help requests right now.";
-    if (taskScope === "all") return "No tasks saved yet.";
-    return "No open tasks right now.";
+    if (search.trim()) return "No tasks match that search. Try a shorter word, a flag name, a tag, or a project name.";
+    if (!state.tasks.length) return "No tasks yet. Add one small task, then use stars, flags, tags, or a project only if they help.";
+    if (taskScope === "next") return "Nothing is ready right now. Waiting tasks below name what has to happen first.";
+    if (taskScope === "today") return "Nothing is due today. Add a due date to a task if it should show here and on Calendar.";
+    if (taskScope === "starred") return "No starred tasks yet. Edit a task and choose stars for anything that should stand out.";
+    if (taskScope === "quick") return "No quick wins marked yet. Edit a task and set effort to Tiny or Quick win.";
+    if (taskScope === "help") return "No help requests right now. Edit a task and mark it as needing help when someone else should step in.";
+    if (taskScope === "all") return "No tasks saved yet. Add one small task to get started.";
+    return "No open tasks right now. Use All if you want to see finished, skipped, or cancelled tasks.";
   }
 
   function changeTodayLens(lens: TodayInterfaceId) {
@@ -734,14 +985,19 @@ export default function Home() {
       return;
     }
     if (signal.kind === "watch") {
-      setView("calendar");
+      if (signal.id.startsWith("watch-order")) {
+        setOrderScope("ordered");
+        setView("orders");
+      } else {
+        setView("calendar");
+      }
       return;
     }
     if (helpTasks.length) {
       setTaskScope("help");
       setView("tasks");
     } else {
-      setView("more");
+      setView("alerts");
     }
   }
 
@@ -830,6 +1086,210 @@ export default function Home() {
     setNotificationPermission(permission);
   }
 
+  function helperContactLabel(contactId?: string) {
+    const contact = state.helperContacts.find((entry) => entry.id === contactId) ?? preferredHelperContacts[0];
+    if (!contact) return "No helper selected";
+    return [contact.name, contact.relationship].filter(Boolean).join(" - ");
+  }
+
+  function helpRequestText(request: HelpRequest) {
+    const relatedTask = state.tasks.find((task) => task.id === request.relatedTaskId);
+    const relatedOrder = state.orderEntries.find((order) => order.id === request.relatedOrderEntryId);
+    return [
+      request.urgency === "Urgent" ? "URGENT helper request from Mom Home (not a 911/emergency service)." : "Helper request from Mom Home.",
+      `Need: ${request.title}`,
+      request.details ? `Details: ${request.details}` : "",
+      relatedTask ? `Related task: ${relatedTask.title}` : "",
+      relatedOrder ? `Related order/delivery: ${relatedOrder.name}${relatedOrder.expectedDeliveryDate ? `, expected ${relatedOrder.expectedDeliveryDate}` : ""}` : "",
+      "If this is a real emergency, call 911 or local emergency services."
+    ].filter(Boolean).join("\n");
+  }
+
+  function openHelpRequestForm(request?: HelpRequest, seed?: Partial<HelpRequest>) {
+    setEditingHelpRequestId(request?.id ?? "");
+    setHelpRequestDraft(request ? { ...request } : { ...blankHelpRequest(), ...seed });
+    setShowHelpRequestForm(true);
+    setView("alerts");
+  }
+
+  function saveHelpRequest(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!helpRequestDraft.title?.trim()) return;
+    const now = nowIso();
+    const request: HelpRequest = {
+      id: helpRequestDraft.id ?? makeId("help-request"),
+      householdId: HOUSEHOLD_ID,
+      title: helpRequestDraft.title.trim(),
+      details: helpRequestDraft.details?.trim() || undefined,
+      urgency: helpRequestDraft.urgency ?? "Soon",
+      status: helpRequestDraft.status ?? "Open",
+      contactId: helpRequestDraft.contactId || undefined,
+      relatedTaskId: helpRequestDraft.relatedTaskId || undefined,
+      relatedOrderEntryId: helpRequestDraft.relatedOrderEntryId || undefined,
+      createdAt: helpRequestDraft.createdAt ?? now,
+      updatedAt: now,
+      sentAt: helpRequestDraft.sentAt,
+      resolvedAt: helpRequestDraft.resolvedAt
+    };
+    setState((current) => ({
+      ...current,
+      helpRequests: editingHelpRequestId
+        ? current.helpRequests.map((entry) => entry.id === request.id ? request : entry)
+        : [request, ...current.helpRequests]
+    }));
+    setHelpRequestDraft(blankHelpRequest());
+    setEditingHelpRequestId("");
+    setShowHelpRequestForm(false);
+  }
+
+  function updateHelpRequestStatus(request: HelpRequest, status: HelpRequest["status"]) {
+    const now = nowIso();
+    setState((current) => ({
+      ...current,
+      helpRequests: current.helpRequests.map((entry) => entry.id === request.id ? {
+        ...entry,
+        status,
+        updatedAt: now,
+        sentAt: status === "Sent" ? now : entry.sentAt,
+        resolvedAt: status === "Resolved" ? now : entry.resolvedAt
+      } : entry)
+    }));
+  }
+
+  function openHelperContactForm(contact?: HelperContact) {
+    setEditingHelperContactId(contact?.id ?? "");
+    setHelperContactDraft(contact ? { ...contact } : blankHelperContact());
+    setShowHelperContactForm(true);
+    setView("alerts");
+  }
+
+  function saveHelperContact(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!helperContactDraft.name?.trim()) return;
+    const now = nowIso();
+    const contact: HelperContact = {
+      id: helperContactDraft.id ?? makeId("helper"),
+      householdId: HOUSEHOLD_ID,
+      name: helperContactDraft.name.trim(),
+      phone: helperContactDraft.phone?.trim() || undefined,
+      email: helperContactDraft.email?.trim() || undefined,
+      relationship: helperContactDraft.relationship?.trim() || undefined,
+      preferred: Boolean(helperContactDraft.preferred),
+      createdAt: helperContactDraft.createdAt ?? now,
+      updatedAt: now
+    };
+    setState((current) => ({
+      ...current,
+      helperContacts: editingHelperContactId
+        ? current.helperContacts.map((entry) => entry.id === contact.id ? contact : entry)
+        : [contact, ...current.helperContacts]
+    }));
+    setHelperContactDraft(blankHelperContact());
+    setEditingHelperContactId("");
+    setShowHelperContactForm(false);
+  }
+
+  function deleteHelperContact(contactId: string) {
+    const contact = state.helperContacts.find((entry) => entry.id === contactId);
+    if (!window.confirm(`Delete helper contact${contact ? `: ${contact.name}` : ""}? Help requests will stay saved.`)) return;
+    setState((current) => ({
+      ...current,
+      helperContacts: current.helperContacts.filter((entry) => entry.id !== contactId),
+      helpRequests: current.helpRequests.map((request) => request.contactId === contactId ? { ...request, contactId: undefined, updatedAt: nowIso() } : request)
+    }));
+  }
+
+  function copyHelpRequest(request: HelpRequest) {
+    navigator.clipboard?.writeText(helpRequestText(request)).catch(() => undefined);
+  }
+
+  function helpRequestHref(request: HelpRequest, channel: "email" | "sms") {
+    const contact = state.helperContacts.find((entry) => entry.id === request.contactId) ?? preferredHelperContacts[0];
+    const body = encodeURIComponent(helpRequestText(request));
+    if (channel === "email") return `mailto:${contact?.email ?? ""}?subject=${encodeURIComponent(request.title)}&body=${body}`;
+    return `sms:${contact?.phone ?? ""}?&body=${body}`;
+  }
+
+  function updateDefaultNagIntervalMinutes(minutes: number) {
+    setState((current) => ({ ...current, settings: { ...current.settings, defaultNagIntervalMinutes: Math.max(5, Math.min(120, minutes)) } }));
+  }
+
+  function bytesToBase64(bytes: Uint8Array) {
+    return btoa(String.fromCharCode(...bytes));
+  }
+
+  function base64ToBytes(value: string) {
+    return Uint8Array.from(atob(value), (char) => char.charCodeAt(0)) as Uint8Array<ArrayBuffer>;
+  }
+
+  async function deriveVaultKey(passphrase: string, salt: Uint8Array<ArrayBuffer>) {
+    const material = await crypto.subtle.importKey("raw", new TextEncoder().encode(passphrase), "PBKDF2", false, ["deriveKey"]);
+    return crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: 150000, hash: "SHA-256" }, material, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+  }
+
+  async function encryptVaultText(plaintext: string, passphrase: string) {
+    const salt = crypto.getRandomValues(new Uint8Array(16)) as Uint8Array<ArrayBuffer>;
+    const iv = crypto.getRandomValues(new Uint8Array(12)) as Uint8Array<ArrayBuffer>;
+    const key = await deriveVaultKey(passphrase, salt);
+    const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(plaintext));
+    return { encryptedPayload: bytesToBase64(new Uint8Array(encrypted)), salt: bytesToBase64(salt), iv: bytesToBase64(iv) };
+  }
+
+  async function decryptVaultText(record: VaultRecord, passphrase: string) {
+    const key = await deriveVaultKey(passphrase, base64ToBytes(record.salt));
+    const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: base64ToBytes(record.iv) }, key, base64ToBytes(record.encryptedPayload));
+    return new TextDecoder().decode(decrypted);
+  }
+
+  async function saveVaultRecord(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!vaultDraft.title?.trim() || !vaultPlaintext.trim() || vaultPassphrase.length < 8) {
+      setVaultMessage("Add a title, private note, and passphrase of at least 8 characters.");
+      return;
+    }
+    const now = nowIso();
+    const encrypted = await encryptVaultText(vaultPlaintext, vaultPassphrase);
+    const record: VaultRecord = {
+      id: vaultDraft.id ?? makeId("vault"),
+      householdId: HOUSEHOLD_ID,
+      title: vaultDraft.title.trim(),
+      category: vaultDraft.category ?? "Other",
+      encryptedPayload: encrypted.encryptedPayload,
+      salt: encrypted.salt,
+      iv: encrypted.iv,
+      kdf: "PBKDF2-SHA256",
+      noteHint: vaultDraft.noteHint?.trim() || undefined,
+      createdAt: vaultDraft.createdAt ?? now,
+      updatedAt: now
+    };
+    setState((current) => ({ ...current, vaultRecords: [record, ...current.vaultRecords.filter((entry) => entry.id !== record.id)] }));
+    setVaultDraft(blankVaultRecord());
+    setVaultPlaintext("");
+    setVaultPassphrase("");
+    setShowVaultForm(false);
+    setVaultMessage("Encrypted vault note saved locally. Keep the passphrase somewhere safe; it cannot be recovered from the app.");
+  }
+
+  async function unlockVaultRecord(record: VaultRecord) {
+    try {
+      const plaintext = await decryptVaultText(record, vaultUnlockPassphrase);
+      setUnlockedVaultText((current) => ({ ...current, [record.id]: plaintext }));
+      setVaultMessage("Vault note unlocked on this screen only.");
+    } catch {
+      setVaultMessage("Could not unlock that vault note. Check the passphrase.");
+    }
+  }
+
+  function deleteVaultRecord(recordId: string) {
+    if (!window.confirm("Delete this encrypted vault note? This cannot be undone unless you have a backup.")) return;
+    setState((current) => ({ ...current, vaultRecords: current.vaultRecords.filter((entry) => entry.id !== recordId) }));
+    setUnlockedVaultText((current) => {
+      const next = { ...current };
+      delete next[recordId];
+      return next;
+    });
+  }
+
   function openCalendarForm(entry?: CalendarEntry) {
     const draft = entry ? { ...entry } : blankCalendarEntry(selectedCalendarDate);
     setCalendarDraft(draft);
@@ -857,7 +1317,7 @@ export default function Home() {
       repeatUntil: calendarDraft.repeat === "Never" ? undefined : calendarDraft.repeatUntil || undefined,
       reminderMinutesBefore: calendarDraft.reminderMinutesBefore,
       nagEnabled: calendarDraft.reminderMinutesBefore !== undefined && Boolean(calendarDraft.nagEnabled),
-      nagIntervalMinutes: calendarDraft.nagEnabled ? calendarDraft.nagIntervalMinutes || 15 : undefined,
+      nagIntervalMinutes: calendarDraft.nagEnabled ? calendarDraft.nagIntervalMinutes || state.settings.defaultNagIntervalMinutes : undefined,
       linkedTaskId: calendarDraft.linkedTaskId || undefined,
       createdAt: calendarDraft.createdAt ?? now,
       updatedAt: now
@@ -1063,6 +1523,270 @@ export default function Home() {
     }));
   }
 
+  function openIdeaBoardForm(board?: IdeaBoard) {
+    setIdeaBoardDraft(board ? { ...board } : { ...blankIdeaBoard(), sortOrder: state.ideaBoards.length });
+    setShowIdeaBoardForm(true);
+    setView("ideas");
+  }
+
+  function saveIdeaBoard(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!ideaBoardDraft.name?.trim()) return;
+    const now = nowIso();
+    const isEdit = Boolean(ideaBoardDraft.id);
+    const board: IdeaBoard = {
+      id: ideaBoardDraft.id ?? makeId("idea-board"),
+      householdId: HOUSEHOLD_ID,
+      name: ideaBoardDraft.name.trim(),
+      description: ideaBoardDraft.description || undefined,
+      roomLocationId: ideaBoardDraft.roomLocationId || undefined,
+      archivedAt: ideaBoardDraft.archivedAt || undefined,
+      sortOrder: ideaBoardDraft.sortOrder ?? state.ideaBoards.length,
+      createdAt: ideaBoardDraft.createdAt ?? now,
+      updatedAt: now
+    };
+    setState((current) => ({
+      ...current,
+      ideaBoards: isEdit ? current.ideaBoards.map((entry) => (entry.id === board.id ? board : entry)) : [board, ...current.ideaBoards]
+    }));
+    setActiveIdeaBoardId(board.id);
+    setIdeaBoardDraft(blankIdeaBoard());
+    setShowIdeaBoardForm(false);
+  }
+
+  function archiveIdeaBoard(boardId: string) {
+    const board = state.ideaBoards.find((entry) => entry.id === boardId);
+    const ok = window.confirm(`Archive idea board: ${board?.name ?? "this board"}? Cards will stay saved and searchable.`);
+    if (!ok) return;
+    const now = nowIso();
+    setState((current) => ({
+      ...current,
+      ideaBoards: current.ideaBoards.map((entry) => entry.id === boardId ? { ...entry, archivedAt: now, updatedAt: now } : entry)
+    }));
+  }
+
+  function restoreIdeaBoard(boardId: string) {
+    const now = nowIso();
+    setState((current) => ({
+      ...current,
+      ideaBoards: current.ideaBoards.map((entry) => entry.id === boardId ? { ...entry, archivedAt: undefined, updatedAt: now } : entry)
+    }));
+  }
+
+  function openIdeaSectionForm(section?: IdeaBoardSection) {
+    if (!selectedIdeaBoardId && !section?.boardId) return;
+    setIdeaSectionDraft(section ? { ...section } : { ...blankIdeaBoardSection(selectedIdeaBoardId), sortOrder: selectedIdeaSections.length });
+    setShowIdeaSectionForm(true);
+    setView("ideas");
+  }
+
+  function saveIdeaSection(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!ideaSectionDraft.name?.trim() || !ideaSectionDraft.boardId) return;
+    const now = nowIso();
+    const isEdit = Boolean(ideaSectionDraft.id);
+    const section: IdeaBoardSection = {
+      id: ideaSectionDraft.id ?? makeId("idea-section"),
+      householdId: HOUSEHOLD_ID,
+      boardId: ideaSectionDraft.boardId,
+      name: ideaSectionDraft.name.trim(),
+      description: ideaSectionDraft.description || undefined,
+      sortOrder: ideaSectionDraft.sortOrder ?? selectedIdeaSections.length,
+      createdAt: ideaSectionDraft.createdAt ?? now,
+      updatedAt: now
+    };
+    setState((current) => ({
+      ...current,
+      ideaBoardSections: isEdit ? current.ideaBoardSections.map((entry) => entry.id === section.id ? section : entry) : [section, ...current.ideaBoardSections]
+    }));
+    setIdeaSectionDraft(blankIdeaBoardSection(selectedIdeaBoardId));
+    setShowIdeaSectionForm(false);
+  }
+
+  function deleteIdeaSection(sectionId: string) {
+    const section = state.ideaBoardSections.find((entry) => entry.id === sectionId);
+    const ok = window.confirm(`Remove section: ${section?.name ?? "this section"}? Cards stay on the board.`);
+    if (!ok) return;
+    setState((current) => ({
+      ...current,
+      ideaBoardSections: current.ideaBoardSections.filter((entry) => entry.id !== sectionId),
+      ideaBoardPlacements: current.ideaBoardPlacements.map((placement) => placement.sectionId === sectionId ? { ...placement, sectionId: undefined, updatedAt: nowIso() } : placement)
+    }));
+  }
+
+  function openIdeaCardForm(card?: IdeaCard, placement?: IdeaBoardPlacement) {
+    if (!selectedIdeaBoardId && !placement?.boardId) return;
+    setIdeaCardDraft(card ? { ...card, tags: card.tags } : blankIdeaCard());
+    setIdeaPlacementDraft(placement ? { ...placement } : { ...blankIdeaBoardPlacement(selectedIdeaBoardId), sortOrder: ideaBoardCards.length });
+    setShowIdeaCardForm(true);
+    setView("ideas");
+  }
+
+  async function saveIdeaCard(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!ideaCardDraft.title?.trim() || !ideaPlacementDraft.boardId) return;
+    const form = new FormData(event.currentTarget);
+    const imageFile = form.get("ideaImage") as File;
+    const now = nowIso();
+    const isEdit = Boolean(ideaCardDraft.id);
+    const cardId = ideaCardDraft.id ?? makeId("idea-card");
+    const imageUrl = await fileToDataUrl(imageFile?.size ? imageFile : undefined);
+    const imageInspection = imageUrl ? await inspectIdeaImage(imageUrl).catch(() => ({ palette: [] as string[], signature: "" })) : undefined;
+    const price = ideaCardDraft.price || undefined;
+    const previous = ideaCardDraft.id ? state.ideaCards.find((card) => card.id === ideaCardDraft.id) : undefined;
+    const priceHistory = [...(previous?.priceHistory ?? ideaCardDraft.priceHistory ?? [])];
+    if (price && price !== previous?.price) priceHistory.unshift({ price, checkedAt: now });
+    const card: IdeaCard = {
+      id: cardId,
+      householdId: HOUSEHOLD_ID,
+      title: ideaCardDraft.title.trim(),
+      contentType: ideaCardDraft.contentType || "Note",
+      status: ideaCardDraft.status || "Saved",
+      priority: ideaCardDraft.priority || "None",
+      notes: ideaCardDraft.notes || undefined,
+      imageUrls: imageUrl ? [imageUrl, ...(ideaCardDraft.imageUrls ?? [])] : (ideaCardDraft.imageUrls ?? []),
+      imageSignature: imageInspection?.signature || ideaCardDraft.imageSignature || undefined,
+      colorPalette: imageInspection?.palette.length ? imageInspection.palette : (ideaCardDraft.colorPalette ?? []),
+      sourceUrl: normalizeWebUrl(ideaCardDraft.sourceUrl || "") || undefined,
+      sourceTitle: ideaCardDraft.sourceTitle || undefined,
+      sourceSite: ideaCardDraft.sourceSite || undefined,
+      storeOrSeller: ideaCardDraft.storeOrSeller || undefined,
+      price,
+      priceCheckedAt: price ? now : ideaCardDraft.priceCheckedAt,
+      targetPrice: ideaCardDraft.targetPrice || undefined,
+      priceHistory,
+      dimensions: ideaCardDraft.dimensions || undefined,
+      color: ideaCardDraft.color || imageInspection?.palette[0] || undefined,
+      quantity: ideaCardDraft.quantity || undefined,
+      purpose: ideaCardDraft.purpose,
+      expirationDate: ideaCardDraft.expirationDate || undefined,
+      seasonalMonth: ideaCardDraft.seasonalMonth || undefined,
+      budgetCategory: ideaCardDraft.budgetCategory || undefined,
+      alternativeForCardId: ideaCardDraft.alternativeForCardId || undefined,
+      stackName: ideaCardDraft.stackName || undefined,
+      currentPhotoUrl: ideaCardDraft.currentPhotoUrl || undefined,
+      completedPhotoUrl: ideaCardDraft.completedPhotoUrl || undefined,
+      actualCost: ideaCardDraft.actualCost || undefined,
+      completedAt: ideaCardDraft.completedAt || undefined,
+      availabilityStatus: ideaCardDraft.availabilityStatus || undefined,
+      fitNotes: ideaCardDraft.fitNotes || undefined,
+      tags: Array.from(new Set((ideaCardDraft.tags ?? []).map((tag: string) => tag.trim()).filter(Boolean))),
+      roomLocationId: ideaCardDraft.roomLocationId || undefined,
+      relatedItemId: ideaCardDraft.relatedItemId || undefined,
+      relatedTaskId: ideaCardDraft.relatedTaskId || undefined,
+      relatedProjectId: ideaCardDraft.relatedProjectId || undefined,
+      relatedCalendarEntryId: ideaCardDraft.relatedCalendarEntryId || undefined,
+      relatedOrderEntryId: ideaCardDraft.relatedOrderEntryId || undefined,
+      relatedPurchaseRecordId: ideaCardDraft.relatedPurchaseRecordId || undefined,
+      archivedAt: ideaCardDraft.archivedAt || undefined,
+      deletedAt: ideaCardDraft.deletedAt || undefined,
+      createdAt: ideaCardDraft.createdAt ?? now,
+      updatedAt: now
+    };
+    const placement: IdeaBoardPlacement = {
+      id: ideaPlacementDraft.id ?? makeId("idea-placement"),
+      householdId: HOUSEHOLD_ID,
+      cardId,
+      boardId: ideaPlacementDraft.boardId,
+      sectionId: ideaPlacementDraft.sectionId || undefined,
+      favorite: Boolean(ideaPlacementDraft.favorite),
+      sortOrder: ideaPlacementDraft.sortOrder ?? ideaBoardCards.length,
+      createdAt: ideaPlacementDraft.createdAt ?? now,
+      updatedAt: now
+    };
+    setState((current) => {
+      const withoutDuplicatePlacements = current.ideaBoardPlacements.filter((entry) => !(entry.cardId === cardId && entry.boardId === placement.boardId && entry.id !== placement.id));
+      return {
+        ...current,
+        ideaCards: isEdit ? current.ideaCards.map((entry) => entry.id === card.id ? card : entry) : [card, ...current.ideaCards],
+        ideaBoardPlacements: isEdit && current.ideaBoardPlacements.some((entry) => entry.id === placement.id)
+          ? withoutDuplicatePlacements.map((entry) => entry.id === placement.id ? placement : entry)
+          : [placement, ...withoutDuplicatePlacements]
+      };
+    });
+    setActiveIdeaBoardId(placement.boardId);
+    setIdeaCardDraft(blankIdeaCard());
+    setIdeaPlacementDraft(blankIdeaBoardPlacement(placement.boardId));
+    setShowIdeaCardForm(false);
+  }
+
+  function updateIdeaCard(cardId: string, updates: Partial<IdeaCard>) {
+    const now = nowIso();
+    setState((current) => ({ ...current, ideaCards: current.ideaCards.map((card) => card.id === cardId ? { ...card, ...updates, updatedAt: now } : card) }));
+  }
+
+  function deleteIdeaCard(card: IdeaCard) {
+    const ok = window.confirm(`Delete idea card: ${card.title}? It can be restored from archive/trash.`);
+    if (!ok) return;
+    updateIdeaCard(card.id, { deletedAt: nowIso() });
+  }
+
+  function toggleIdeaFavorite(placementId: string) {
+    const now = nowIso();
+    setState((current) => ({
+      ...current,
+      ideaBoardPlacements: current.ideaBoardPlacements.map((placement) => placement.id === placementId ? { ...placement, favorite: !placement.favorite, updatedAt: now } : placement)
+    }));
+  }
+
+  function copyIdeaToBoard(cardId: string, boardId: string) {
+    if (!boardId || state.ideaBoardPlacements.some((placement) => placement.cardId === cardId && placement.boardId === boardId)) return;
+    const now = nowIso();
+    setState((current) => ({
+      ...current,
+      ideaBoardPlacements: [{ id: makeId("idea-placement"), householdId: HOUSEHOLD_ID, cardId, boardId, favorite: false, sortOrder: current.ideaBoardPlacements.length, createdAt: now, updatedAt: now }, ...current.ideaBoardPlacements]
+    }));
+  }
+
+  function convertIdeaToTask(card: IdeaCard) {
+    const now = nowIso();
+    const taskId = makeId("task");
+    const task: CommandTask = { id: taskId, householdId: HOUSEHOLD_ID, title: card.title, notes: card.notes || `From idea: ${card.sourceUrl ?? card.sourceTitle ?? "saved idea"}`, status: "Open", starCount: card.priority === "High" ? Math.min(1, maxStars()) : 0, flagIds: [], tagIds: [], effort: "Unsorted", projectId: card.relatedProjectId, dependencyIds: [], relatedItemId: card.relatedItemId, relatedOrderEntryId: card.relatedOrderEntryId, relatedPurchaseRecordId: card.relatedPurchaseRecordId, helpRequested: false, createdAt: now, updatedAt: now };
+    setState((current) => ({ ...current, tasks: [task, ...current.tasks], ideaCards: current.ideaCards.map((entry) => entry.id === card.id ? { ...entry, relatedTaskId: taskId, updatedAt: now } : entry) }));
+  }
+
+  function convertIdeaToOrder(card: IdeaCard) {
+    const now = nowIso();
+    const orderId = makeId("order");
+    const order: OrderEntry = { id: orderId, householdId: HOUSEHOLD_ID, itemId: card.relatedItemId, name: card.title, quantity: card.quantity, urgency: card.priority === "High" ? "Buy now" : "Watch only", preferredStore: card.storeOrSeller, estimatedPrice: card.price, replacementUrl: card.sourceUrl, notes: card.notes, status: "Needed", createdAt: now, updatedAt: now };
+    setState((current) => ({ ...current, orderEntries: [order, ...current.orderEntries], ideaCards: current.ideaCards.map((entry) => entry.id === card.id ? { ...entry, relatedOrderEntryId: orderId, status: "Buying", updatedAt: now } : entry) }));
+  }
+
+  function convertIdeaToProject(card: IdeaCard) {
+    const now = nowIso();
+    const projectId = makeId("project");
+    const project: TaskProject = { id: projectId, householdId: HOUSEHOLD_ID, name: card.title, color: "#37685f", notes: card.notes || "Created from an Ideas card.", createdAt: now, updatedAt: now };
+    setState((current) => ({ ...current, taskProjects: [project, ...current.taskProjects], ideaCards: current.ideaCards.map((entry) => entry.id === card.id ? { ...entry, relatedProjectId: projectId, updatedAt: now } : entry) }));
+  }
+
+  function convertIdeaToInventoryItem(card: IdeaCard) {
+    const now = nowIso();
+    const itemId = makeId("item");
+    const item: Item = { id: itemId, householdId: HOUSEHOLD_ID, locationId: card.roomLocationId || state.locations[0]?.id || "", name: card.title, normalizedName: normalize(card.title), category: "Miscellaneous", brand: card.storeOrSeller, quantityStatus: "Unknown", quantityNumber: card.quantity, condition: "Unknown", notes: card.notes, photoUrl: card.imageUrls[0], preferredStore: card.storeOrSeller, replacementUrl: card.sourceUrl, createdAt: now, updatedAt: now };
+    setState((current) => ({ ...current, items: [item, ...current.items], ideaCards: current.ideaCards.map((entry) => entry.id === card.id ? { ...entry, relatedItemId: itemId, updatedAt: now } : entry) }));
+  }
+
+  function addIdeaCalendarReminder(card: IdeaCard) {
+    const now = nowIso();
+    const entryId = makeId("calendar");
+    const entry: CalendarEntry = { id: entryId, householdId: HOUSEHOLD_ID, title: card.expirationDate ? `${card.title} deadline` : `Review idea: ${card.title}`, date: card.expirationDate || todayIso, startTime: "09:00", allDay: false, color: "#37685f", repeat: "Never", nagEnabled: false, notes: [card.notes, card.sourceUrl].filter(Boolean).join("\n"), createdAt: now, updatedAt: now };
+    setState((current) => ({ ...current, calendarEntries: [entry, ...current.calendarEntries], ideaCards: current.ideaCards.map((candidate) => candidate.id === card.id ? { ...candidate, relatedCalendarEntryId: entryId, updatedAt: now } : candidate) }));
+  }
+
+  function ideaBoardExportText(board: IdeaBoard) {
+    const rows = ideaBoardCards.map(({ card }) => `- ${card.title} [${card.status}/${card.priority}] ${card.price ? `$${card.price}` : ""}\n  ${[card.notes, card.sourceUrl, card.storeOrSeller, card.dimensions, card.color].filter(Boolean).join(" | ")}`);
+    return [`${board.name} Ideas`, board.description ?? "", `Estimated total: ${money(String(ideaBoardBudget.total))}`, ...rows].filter(Boolean).join("\n\n");
+  }
+
+  function resetIdeaFilters() {
+    setIdeaStatusFilter("All");
+    setIdeaPriorityFilter("All");
+    setIdeaContentFilter("All");
+    setIdeaTagFilter("");
+    setIdeaPriceFilter("All");
+    setIdeaSort("custom");
+  }
+
   function saveEnergyJournal(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!energyDraft.energyLabel?.trim() && !energyDraft.notes?.trim()) return;
@@ -1093,6 +1817,13 @@ export default function Home() {
     setState((current) => ({
       ...current,
       settings: { ...current.settings, todayLens }
+    }));
+  }
+
+  function updateCalmSound(calmSound: CalmSound) {
+    setState((current) => ({
+      ...current,
+      settings: { ...current.settings, calmSound }
     }));
   }
 
@@ -1454,8 +2185,13 @@ export default function Home() {
       productUrl: normalizeWebUrl(purchaseDraft.productUrl),
       receiptUrl: normalizeWebUrl(purchaseDraft.receiptUrl),
       receiptPhotoUrl: (await fileToDataUrl(receiptFile?.size ? receiptFile : undefined)) ?? purchaseDraft.receiptPhotoUrl,
+      receiptText: purchaseDraft.receiptText?.trim() || undefined,
       orderNumber: purchaseDraft.orderNumber || undefined,
       notes: purchaseDraft.notes || undefined,
+      aiSummary: purchaseDraft.aiSummary || buildPurchaseSummary(purchaseDraft),
+      aiConfidence: purchaseDraft.aiConfidence || "Medium",
+      checkedAt: purchaseDraft.checkedAt || now,
+      replacementOptions: purchaseDraft.replacementOptions ?? [],
       purchasePreference: purchaseDraft.purchasePreference || "Unknown",
       reorderRecommendation: purchaseDraft.reorderRecommendation || "Compare first",
       createdAt: purchaseDraft.createdAt ?? now,
@@ -1481,6 +2217,103 @@ export default function Home() {
     }));
     setShowPurchaseForm(false);
     setPurchaseDraft(blankPurchase(selectedItem));
+  }
+
+  function buildPurchaseSummary(purchase: Partial<PurchaseRecord>) {
+    const facts = [
+      purchase.storeName ? `Vendor: ${purchase.storeName}` : "",
+      purchase.totalPrice ? `Price: ${money(purchase.totalPrice)}` : "",
+      purchase.reorderRecommendation ? `Recommendation: ${purchase.reorderRecommendation}` : "",
+      purchase.purchasePreference ? `Preference: ${purchase.purchasePreference}` : ""
+    ].filter(Boolean);
+    return facts.length ? facts.join(" | ") : "Saved purchase memory; review before reordering.";
+  }
+
+  function buildReplacementOptions(purchase: PurchaseRecord): NonNullable<PurchaseRecord["replacementOptions"]> {
+    const item = state.items.find((entry) => entry.id === purchase.itemId);
+    const similarPurchases = state.purchaseRecords
+      .filter((entry) => entry.id !== purchase.id)
+      .filter((entry) => normalize(entry.productName).includes(normalize(item?.name ?? purchase.productName).slice(0, 8)) || entry.itemId === purchase.itemId)
+      .slice(0, 3);
+    const options: NonNullable<PurchaseRecord["replacementOptions"]> = similarPurchases.map((entry) => ({
+      id: makeId("replacement-option"),
+      title: entry.productName,
+      storeName: purchaseSource(entry),
+      productUrl: entry.productUrl,
+      estimatedPrice: entry.totalPrice,
+      notes: entry.reorderRecommendation,
+      confidence: entry.itemId === purchase.itemId ? "High" as const : "Medium" as const,
+      checkedAt: nowIso()
+    }));
+    if (item?.replacementUrl) {
+      options.unshift({ id: makeId("replacement-option"), title: `${item.name} saved replacement link`, productUrl: item.replacementUrl, storeName: item.preferredStore || undefined, confidence: "High", checkedAt: nowIso() });
+    }
+    return options;
+  }
+
+  function refreshPurchaseIntelligence(purchase: PurchaseRecord) {
+    const options = buildReplacementOptions(purchase);
+    const summary = buildPurchaseSummary({ ...purchase, replacementOptions: options });
+    setState((current) => ({
+      ...current,
+      purchaseRecords: current.purchaseRecords.map((entry) => entry.id === purchase.id ? { ...entry, replacementOptions: options, aiSummary: summary, aiConfidence: options.length ? "High" : "Medium", checkedAt: nowIso(), updatedAt: nowIso() } : entry)
+    }));
+  }
+
+  function parsePurchaseImportText(text: string) {
+    const lines = text.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+    const priceMatch = text.match(/\$?([0-9]+\.[0-9]{2})/);
+    const dateMatch = text.match(/(20\d{2}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/20\d{2})/);
+    return {
+      productName: lines.find((line) => !/total|subtotal|visa|mastercard|receipt/i.test(line)) ?? lines[0] ?? "Imported purchase",
+      storeName: lines[0] ?? "",
+      totalPrice: priceMatch?.[1],
+      purchasedAt: dateMatch?.[1]?.includes("/") ? format(new Date(dateMatch[1]), "yyyy-MM-dd") : dateMatch?.[1]
+    };
+  }
+
+  function savePurchaseImport(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!purchaseImportDraft.rawText?.trim()) return;
+    const parsed = parsePurchaseImportText(purchaseImportDraft.rawText);
+    const now = nowIso();
+    const review: PurchaseImportReview = {
+      id: purchaseImportDraft.id ?? makeId("purchase-import"),
+      householdId: HOUSEHOLD_ID,
+      source: purchaseImportDraft.source ?? "Receipt text",
+      rawText: purchaseImportDraft.rawText.trim(),
+      suggestedProductName: parsed.productName,
+      suggestedStoreName: parsed.storeName,
+      suggestedTotalPrice: parsed.totalPrice,
+      suggestedPurchasedAt: parsed.purchasedAt,
+      status: "Needs review",
+      createdAt: purchaseImportDraft.createdAt ?? now,
+      updatedAt: now
+    };
+    setState((current) => ({ ...current, purchaseImportQueue: [review, ...current.purchaseImportQueue] }));
+    setPurchaseImportDraft(blankPurchaseImportReview());
+    setShowPurchaseImportForm(false);
+  }
+
+  function startPurchaseFromImport(review: PurchaseImportReview) {
+    const item = selectedItem ?? state.items[0];
+    if (!item) return;
+    setSelectedItemId(item.id);
+    setPurchaseDraft({
+      ...blankPurchase(item),
+      productName: review.suggestedProductName ?? "Imported purchase",
+      storeName: review.suggestedStoreName ?? "",
+      totalPrice: review.suggestedTotalPrice ?? "",
+      purchasedAt: review.suggestedPurchasedAt ?? localDateIso(new Date()),
+      receiptText: review.rawText,
+      notes: `Imported from ${review.source}. Review before saving.`
+    });
+    setShowPurchaseForm(true);
+    setState((current) => ({ ...current, purchaseImportQueue: current.purchaseImportQueue.map((entry) => entry.id === review.id ? { ...entry, status: "Imported", updatedAt: nowIso() } : entry) }));
+  }
+
+  function dismissPurchaseImport(reviewId: string) {
+    setState((current) => ({ ...current, purchaseImportQueue: current.purchaseImportQueue.map((entry) => entry.id === reviewId ? { ...entry, status: "Dismissed", updatedAt: nowIso() } : entry) }));
   }
 
   function updateItemStatus(itemId: string, quantityStatus: QuantityStatus) {
@@ -1729,7 +2562,7 @@ export default function Home() {
         <div className="calendar-entry-meta">
           {entry.location ? <span>{entry.location}</span> : null}
           {entry.reminderMinutesBefore !== undefined ? <span>{reminderLabel(entry.reminderMinutesBefore)}</span> : null}
-          {entry.nagEnabled ? <span>Nag every {entry.nagIntervalMinutes || 15} min</span> : null}
+          {entry.nagEnabled ? <span>Repeats every {entry.nagIntervalMinutes || 15} min while open</span> : null}
           {linkedTask ? <span>Task: {linkedTask.title}</span> : null}
         </div>
         {entry.notes ? <p className="calendar-entry-note">{entry.notes}</p> : null}
@@ -1748,7 +2581,7 @@ export default function Home() {
         <div className="section-head">
           <div>
             <h2>{calendarDraft.id ? "Edit calendar entry" : "Add calendar entry"}</h2>
-            <p className="muted">No category is required. Use only the details that help.</p>
+            <p className="muted">Only title and date are required. Times, repeats, reminders, linked tasks, and notes are optional.</p>
           </div>
           <button className="ghost-button" type="button" onClick={() => setShowCalendarForm(false)}>Close</button>
         </div>
@@ -1798,6 +2631,7 @@ export default function Home() {
               <label className="label">
                 <span>Repeat until</span>
                 <input className="field" type="date" min={calendarDraft.date} value={calendarDraft.repeatUntil ?? ""} onChange={(event) => setCalendarDraft({ ...calendarDraft, repeatUntil: event.target.value })} />
+                <span className="hint">Optional. Leave blank if the repeat should keep showing.</span>
               </label>
             ) : null}
           </div>
@@ -1811,18 +2645,19 @@ export default function Home() {
               <option value="60">1 hour before</option>
               <option value="1440">1 day before</option>
             </select>
+            <span className="hint">Alerts work while Mom Home is open or installed. Use Help requests for human follow-up; provider-backed remote push is tracked separately.</span>
           </label>
           {calendarDraft.reminderMinutesBefore !== undefined ? (
             <div className="nag-settings">
               <label className="check-label">
                 <input type="checkbox" checked={Boolean(calendarDraft.nagEnabled)} onChange={(event) => setCalendarDraft({ ...calendarDraft, nagEnabled: event.target.checked })} />
-                <span>Nag mode</span>
+                <span>Repeat the reminder while Mom Home is open</span>
               </label>
               {calendarDraft.nagEnabled ? (
                 <label className="label">
                   <span>Repeat alert every</span>
-                  <select className="field" value={calendarDraft.nagIntervalMinutes ?? 15} onChange={(event) => setCalendarDraft({ ...calendarDraft, nagIntervalMinutes: Number(event.target.value) })}>
-                    {[5, 10, 15, 30, 60].map((minutes) => <option value={minutes} key={minutes}>{minutes} minutes</option>)}
+                  <select className="field" value={calendarDraft.nagIntervalMinutes ?? state.settings.defaultNagIntervalMinutes} onChange={(event) => setCalendarDraft({ ...calendarDraft, nagIntervalMinutes: Number(event.target.value) })}>
+                    {[5, 10, 15, 30, 60, 120].map((minutes) => <option value={minutes} key={minutes}>{minutes} minutes</option>)}
                   </select>
                 </label>
               ) : null}
@@ -1849,12 +2684,168 @@ export default function Home() {
     );
   }
 
+  function renderIdeaBoardForm() {
+    const isEdit = Boolean(ideaBoardDraft.id);
+    return (
+      <form className="form-panel" onSubmit={saveIdeaBoard}>
+        <div className="section-head">
+          <div>
+            <h3>{isEdit ? "Edit idea board" : "Add idea board"}</h3>
+            <p className="muted">Start with the collection name. Cards, sections, and comparisons come next.</p>
+          </div>
+        </div>
+        <div className="form-grid">
+          <label className="label">
+            <span>Board name</span>
+            <input className="field" required value={ideaBoardDraft.name ?? ""} onChange={(event) => setIdeaBoardDraft({ ...ideaBoardDraft, name: event.target.value })} placeholder="Kitchen Ideas" />
+          </label>
+          <label className="label">
+            <span>Room or area</span>
+            <select className="field" value={ideaBoardDraft.roomLocationId ?? ""} onChange={(event) => setIdeaBoardDraft({ ...ideaBoardDraft, roomLocationId: event.target.value })}>
+              <option value="">No room yet</option>
+              {state.locations.map((location) => <option value={location.id} key={location.id}>{location.name}</option>)}
+            </select>
+          </label>
+        </div>
+        <label className="label">
+          <span>Notes</span>
+          <textarea className="textarea" value={ideaBoardDraft.description ?? ""} onChange={(event) => setIdeaBoardDraft({ ...ideaBoardDraft, description: event.target.value })} placeholder="What this board is for, what Mom is deciding, or who to ask." />
+        </label>
+        <div className="form-actions">
+          <button className="button" type="submit">{isEdit ? "Save board" : "Add board"}</button>
+          <button className="ghost-button" type="button" onClick={() => { setShowIdeaBoardForm(false); setIdeaBoardDraft(blankIdeaBoard()); }}>Cancel</button>
+        </div>
+      </form>
+    );
+  }
+
+  function renderIdeaBoardCard(board: IdeaBoard) {
+    const room = board.roomLocationId ? state.locations.find((location) => location.id === board.roomLocationId)?.name : undefined;
+    const placementCount = state.ideaBoardPlacements.filter((placement) => placement.boardId === board.id).length;
+    const sectionCount = state.ideaBoardSections.filter((section) => section.boardId === board.id).length;
+    return (
+      <article className={`mini-card idea-board-card ${selectedIdeaBoardId === board.id ? "active" : ""}`} key={board.id}>
+        <div className="card-row">
+          <div>
+            <h3>{board.name}</h3>
+            <p className="meta">{room ? `${room} · ` : ""}{placementCount} cards · {sectionCount} sections</p>
+          </div>
+          <span className="badge">Board</span>
+        </div>
+        {board.description ? <p>{board.description}</p> : <p className="muted">No notes yet. Use this board to collect photos, links, products, and project ideas.</p>}
+        <div className="inline-actions">
+          <button className="small-button" onClick={() => setActiveIdeaBoardId(board.id)}>Open</button>
+          <button className="small-button" onClick={() => openIdeaBoardForm(board)}>Edit</button>
+          <button className="ghost-button" onClick={() => archiveIdeaBoard(board.id)}>Archive</button>
+        </div>
+      </article>
+    );
+  }
+
+  function renderIdeaSectionForm() {
+    return (
+      <form className="form-panel" onSubmit={saveIdeaSection}>
+        <h3>{ideaSectionDraft.id ? "Edit section" : "Add section"}</h3>
+        <div className="form-grid">
+          <label className="label"><span>Section name</span><input className="field" required value={ideaSectionDraft.name ?? ""} onChange={(event) => setIdeaSectionDraft({ ...ideaSectionDraft, name: event.target.value })} placeholder="Lighting" /></label>
+          <label className="label"><span>Notes</span><input className="field" value={ideaSectionDraft.description ?? ""} onChange={(event) => setIdeaSectionDraft({ ...ideaSectionDraft, description: event.target.value })} /></label>
+        </div>
+        <div className="form-actions"><button className="button" type="submit">Save section</button><button className="ghost-button" type="button" onClick={() => setShowIdeaSectionForm(false)}>Cancel</button></div>
+      </form>
+    );
+  }
+
+  function renderIdeaCardForm() {
+    const duplicateLink = ideaCardDraft.sourceUrl ? state.ideaCards.find((card) => card.id !== ideaCardDraft.id && card.sourceUrl && normalize(card.sourceUrl) === normalize(normalizeWebUrl(ideaCardDraft.sourceUrl || "") || "")) : undefined;
+    const duplicateTitle = ideaCardDraft.title ? state.ideaCards.find((card) => card.id !== ideaCardDraft.id && normalize(card.title) === normalize(ideaCardDraft.title || "")) : undefined;
+    const duplicateImage = ideaCardDraft.imageSignature ? state.ideaCards.find((card) => card.id !== ideaCardDraft.id && signatureSimilarity(card.imageSignature, ideaCardDraft.imageSignature) > 0.9) : undefined;
+    return (
+      <form className="form-panel idea-card-form" onSubmit={saveIdeaCard}>
+        <div className="section-head">
+          <div><h3>{ideaCardDraft.id ? "Edit idea card" : "Add idea card"}</h3><p className="muted">Save quickly now. Details, links, comparisons, and connected tasks can be filled in when useful.</p></div>
+        </div>
+        {duplicateLink || duplicateTitle || duplicateImage ? <p className="notice">Possible duplicate: {duplicateLink?.title ?? duplicateTitle?.title ?? duplicateImage?.title}. You can still keep both.</p> : null}
+        <div className="form-grid">
+          <label className="label"><span>Title</span><textarea className="textarea title-area" required value={ideaCardDraft.title ?? ""} onChange={(event) => setIdeaCardDraft({ ...ideaCardDraft, title: event.target.value })} placeholder="Blue storage cabinet" /></label>
+          <label className="label"><span>Board</span><select className="field" value={ideaPlacementDraft.boardId ?? selectedIdeaBoardId} onChange={(event) => setIdeaPlacementDraft({ ...ideaPlacementDraft, boardId: event.target.value, sectionId: "" })}>{activeIdeaBoards.map((board) => <option value={board.id} key={board.id}>{board.name}</option>)}</select></label>
+          <label className="label"><span>Section</span><select className="field" value={ideaPlacementDraft.sectionId ?? ""} onChange={(event) => setIdeaPlacementDraft({ ...ideaPlacementDraft, sectionId: event.target.value })}><option value="">No section</option>{state.ideaBoardSections.filter((section) => section.boardId === (ideaPlacementDraft.boardId || selectedIdeaBoardId)).map((section) => <option value={section.id} key={section.id}>{section.name}</option>)}</select></label>
+          <label className="label"><span>Type</span><select className="field" value={ideaCardDraft.contentType ?? "Note"} onChange={(event) => setIdeaCardDraft({ ...ideaCardDraft, contentType: event.target.value as IdeaContentType })}>{ideaContentTypes.map((type) => <option key={type}>{type}</option>)}</select></label>
+          <label className="label"><span>Status</span><select className="field" value={ideaCardDraft.status ?? "Saved"} onChange={(event) => setIdeaCardDraft({ ...ideaCardDraft, status: event.target.value as IdeaStatus })}>{ideaStatuses.map((status) => <option key={status}>{status}</option>)}</select></label>
+          <label className="label"><span>Priority</span><select className="field" value={ideaCardDraft.priority ?? "None"} onChange={(event) => setIdeaCardDraft({ ...ideaCardDraft, priority: event.target.value as IdeaPriority })}>{ideaPriorities.map((priority) => <option key={priority}>{priority}</option>)}</select></label>
+          <label className="label"><span>Reason saved</span><select className="field" value={ideaCardDraft.purpose ?? "Research"} onChange={(event) => setIdeaCardDraft({ ...ideaCardDraft, purpose: event.target.value as IdeaCard["purpose"] })}>{ideaPurposes.map((purpose) => <option key={purpose}>{purpose}</option>)}</select></label>
+          <label className="label"><span>Image / screenshot</span><input className="field" type="file" name="ideaImage" accept="image/*" capture="environment" /><span className="hint">Take a photo or upload a saved screenshot.</span></label>
+          <label className="label"><span>Source link</span><input className="field" value={ideaCardDraft.sourceUrl ?? ""} onChange={(event) => setIdeaCardDraft({ ...ideaCardDraft, sourceUrl: event.target.value })} placeholder="https://..." /></label>
+          <label className="label"><span>Source title</span><input className="field" value={ideaCardDraft.sourceTitle ?? ""} onChange={(event) => setIdeaCardDraft({ ...ideaCardDraft, sourceTitle: event.target.value })} /></label>
+          <label className="label"><span>Website / store / seller</span><input className="field" value={ideaCardDraft.storeOrSeller ?? ""} onChange={(event) => setIdeaCardDraft({ ...ideaCardDraft, storeOrSeller: event.target.value, sourceSite: event.target.value })} /></label>
+          <label className="label"><span>Price</span><input className="field" value={ideaCardDraft.price ?? ""} onChange={(event) => setIdeaCardDraft({ ...ideaCardDraft, price: event.target.value })} placeholder="49.99" /></label>
+          <label className="label"><span>Target price</span><input className="field" value={ideaCardDraft.targetPrice ?? ""} onChange={(event) => setIdeaCardDraft({ ...ideaCardDraft, targetPrice: event.target.value })} /></label>
+          <label className="label"><span>Dimensions</span><input className="field" value={ideaCardDraft.dimensions ?? ""} onChange={(event) => setIdeaCardDraft({ ...ideaCardDraft, dimensions: event.target.value })} /></label>
+          <label className="label"><span>Color</span><input className="field" value={ideaCardDraft.color ?? ""} onChange={(event) => setIdeaCardDraft({ ...ideaCardDraft, color: event.target.value })} /><span className="hint">If an image is added, Mom Home extracts a palette and fills this with the first color.</span></label>
+          <label className="label"><span>Quantity</span><input className="field" value={ideaCardDraft.quantity ?? ""} onChange={(event) => setIdeaCardDraft({ ...ideaCardDraft, quantity: event.target.value })} /></label>
+          <label className="label"><span>Room / area</span><select className="field" value={ideaCardDraft.roomLocationId ?? ""} onChange={(event) => setIdeaCardDraft({ ...ideaCardDraft, roomLocationId: event.target.value })}><option value="">No room yet</option>{state.locations.map((location) => <option value={location.id} key={location.id}>{location.name}</option>)}</select></label>
+          <label className="label"><span>Tags</span><input className="field" value={(ideaCardDraft.tags ?? []).join(", ")} onChange={(event) => setIdeaCardDraft({ ...ideaCardDraft, tags: event.target.value.split(",").map((tag) => tag.trim()).filter(Boolean) })} placeholder="Gift, Kitchen, Under $50" /></label>
+          <label className="label"><span>Sale / return / deadline</span><input className="field" type="date" value={ideaCardDraft.expirationDate ?? ""} onChange={(event) => setIdeaCardDraft({ ...ideaCardDraft, expirationDate: event.target.value })} /></label>
+          <label className="label"><span>Seasonal month</span><input className="field" value={ideaCardDraft.seasonalMonth ?? ""} onChange={(event) => setIdeaCardDraft({ ...ideaCardDraft, seasonalMonth: event.target.value })} placeholder="November" /></label>
+          <label className="label"><span>Budget group</span><input className="field" value={ideaCardDraft.budgetCategory ?? ""} onChange={(event) => setIdeaCardDraft({ ...ideaCardDraft, budgetCategory: event.target.value })} /></label>
+          <label className="label"><span>Idea stack</span><input className="field" value={ideaCardDraft.stackName ?? ""} onChange={(event) => setIdeaCardDraft({ ...ideaCardDraft, stackName: event.target.value })} placeholder="Guest room plan" /></label>
+          <label className="label"><span>Availability / link note</span><input className="field" value={ideaCardDraft.availabilityStatus ?? ""} onChange={(event) => setIdeaCardDraft({ ...ideaCardDraft, availabilityStatus: event.target.value })} placeholder="In stock, sold out, link changed" /></label>
+          <label className="label"><span>Fit / measurement notes</span><input className="field" value={ideaCardDraft.fitNotes ?? ""} onChange={(event) => setIdeaCardDraft({ ...ideaCardDraft, fitNotes: event.target.value })} /></label>
+          <label className="label"><span>Related inventory</span><select className="field" value={ideaCardDraft.relatedItemId ?? ""} onChange={(event) => setIdeaCardDraft({ ...ideaCardDraft, relatedItemId: event.target.value })}><option value="">None</option>{state.items.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
+          <label className="label"><span>Related task</span><select className="field" value={ideaCardDraft.relatedTaskId ?? ""} onChange={(event) => setIdeaCardDraft({ ...ideaCardDraft, relatedTaskId: event.target.value })}><option value="">None</option>{state.tasks.map((task) => <option value={task.id} key={task.id}>{task.title}</option>)}</select></label>
+          <label className="label"><span>Related project</span><select className="field" value={ideaCardDraft.relatedProjectId ?? ""} onChange={(event) => setIdeaCardDraft({ ...ideaCardDraft, relatedProjectId: event.target.value })}><option value="">None</option>{state.taskProjects.map((project) => <option value={project.id} key={project.id}>{project.name}</option>)}</select></label>
+        </div>
+        <label className="label"><span>Notes / recipe / saved description</span><textarea className="textarea" value={ideaCardDraft.notes ?? ""} onChange={(event) => setIdeaCardDraft({ ...ideaCardDraft, notes: event.target.value })} /></label>
+        <label className="check-label"><input type="checkbox" checked={Boolean(ideaPlacementDraft.favorite)} onChange={(event) => setIdeaPlacementDraft({ ...ideaPlacementDraft, favorite: event.target.checked })} /><span>Favorite on this board</span></label>
+        <div className="form-actions"><button className="button" type="submit">Save idea</button><button className="ghost-button" type="button" onClick={() => { setShowIdeaCardForm(false); setIdeaCardDraft(blankIdeaCard()); }}>Cancel</button></div>
+      </form>
+    );
+  }
+
+  function renderIdeaCard({ card, placement }: { card: IdeaCard; placement: IdeaBoardPlacement }) {
+    const section = placement.sectionId ? state.ideaBoardSections.find((entry) => entry.id === placement.sectionId)?.name : "Unsectioned";
+    const similarItems = state.items.filter((item) => normalize(item.name).includes(normalize(card.title)) || normalize(card.title).includes(normalize(item.name))).slice(0, 3);
+    const similarCards = state.ideaCards.filter((candidate) => candidate.id !== card.id && !candidate.deletedAt && (normalize(candidate.title) === normalize(card.title) || (card.sourceUrl && candidate.sourceUrl === card.sourceUrl) || signatureSimilarity(candidate.imageSignature, card.imageSignature) > 0.9)).slice(0, 3);
+    const target = Number(String(card.targetPrice ?? "").replace(/[$,\s]/g, ""));
+    const current = Number(String(card.price ?? "").replace(/[$,\s]/g, ""));
+    const targetReached = Number.isFinite(target) && Number.isFinite(current) && current <= target;
+    return (
+      <article className="idea-card" key={placement.id}>
+        {card.imageUrls[0] ? <CloudImage className="idea-card-image" src={card.imageUrls[0]} alt="" /> : <div className="idea-card-image empty-image">{card.contentType}</div>}
+        <div className="idea-card-body">
+          <div className="card-row"><h3>{card.title}</h3><button className="small-button" onClick={() => toggleIdeaFavorite(placement.id)}>{placement.favorite ? "★" : "☆"}</button></div>
+          <p className="meta">{section} · {card.contentType} · {card.status} · {card.priority}</p>
+          {card.notes ? <p>{card.notes}</p> : null}
+          <div className="token-row">{card.tags.map((tag) => <button className="filter-chip" key={tag} onClick={() => setIdeaTagFilter(tag)}>#{tag}</button>)}</div>
+          <div className="idea-facts"><span>{card.storeOrSeller || card.sourceSite || "No source"}</span><span>{card.price ? money(card.price) : "No price"}</span><span>{card.dimensions || "No dimensions"}</span><span>{card.color || "No color"}</span></div>
+          {targetReached ? <p className="notice">Target price reached.</p> : null}
+          {similarItems.length ? <p className="notice">Already-owned check: similar inventory may exist — {similarItems.map((item) => item.name).join(", ")}.</p> : null}
+          {similarCards.length ? <p className="notice">Duplicate check: similar saved ideas — {similarCards.map((idea) => idea.title).join(", ")}.</p> : null}
+          {card.colorPalette?.length ? <div className="palette-row" aria-label="Extracted colors">{card.colorPalette.map((color) => <span key={color} title={color} style={{ background: color }} />)}</div> : null}
+          {card.availabilityStatus ? <p className="meta">Availability/link note: {card.availabilityStatus}</p> : null}
+          {card.fitNotes ? <p className="meta">Fit notes: {card.fitNotes}</p> : null}
+          <div className="inline-actions">
+            <button className="small-button" onClick={() => openIdeaCardForm(card, placement)}>Edit</button>
+            <button className="small-button" onClick={() => updateIdeaCard(card.id, { archivedAt: nowIso() })}>Archive</button>
+            <button className="danger-button" onClick={() => deleteIdeaCard(card)}>Delete</button>
+            <button className="ghost-button" disabled={Boolean(card.relatedTaskId)} onClick={() => convertIdeaToTask(card)}>{card.relatedTaskId ? "Task linked" : "Make task"}</button>
+            <button className="ghost-button" disabled={Boolean(card.relatedOrderEntryId)} onClick={() => convertIdeaToOrder(card)}>{card.relatedOrderEntryId ? "Order linked" : "Make order"}</button>
+            <button className="ghost-button" disabled={Boolean(card.relatedItemId)} onClick={() => convertIdeaToInventoryItem(card)}>{card.relatedItemId ? "Item linked" : "Make item"}</button>
+            <button className="ghost-button" disabled={Boolean(card.relatedProjectId)} onClick={() => convertIdeaToProject(card)}>{card.relatedProjectId ? "Project linked" : "Make project"}</button>
+            <button className="ghost-button" disabled={Boolean(card.relatedCalendarEntryId)} onClick={() => addIdeaCalendarReminder(card)}>{card.relatedCalendarEntryId ? "Reminder linked" : "Add reminder"}</button>
+            {card.sourceUrl ? <CloudMediaLink className="small-button link-button" href={card.sourceUrl} target="_blank" rel="noreferrer">Open source</CloudMediaLink> : null}
+          </div>
+          <label className="label compact-label"><span>Copy to another board</span><select className="field" defaultValue="" onChange={(event) => { copyIdeaToBoard(card.id, event.target.value); event.currentTarget.value = ""; }}><option value="">Choose board</option>{activeIdeaBoards.filter((board) => board.id !== placement.boardId).map((board) => <option value={board.id} key={board.id}>{board.name}</option>)}</select></label>
+        </div>
+      </article>
+    );
+  }
+
   function renderTaskForm() {
     const max = maxStars();
     return (
       <form className="form-panel" onSubmit={saveTask}>
         <h2>{taskDraft.id ? "Edit task" : "Add task"}</h2>
-        <p className="muted">Flags, tags, and stars can all stack. Mom decides what they mean.</p>
+        <p className="muted">Only the task name is required. Use dates, reminders, stars, flags, tags, and projects when they make the task easier to find.</p>
         <div className="form-grid">
           <label className="label">
             <span>Task</span>
@@ -1914,6 +2905,7 @@ export default function Home() {
           </label>
           <div className="choice-panel">
             <strong>Do these first</strong>
+            <p className="meta">Choose another task only when this task cannot start until that one is finished.</p>
             {state.tasks.filter((task) => task.id !== taskDraft.id).length ? (
               <div className="token-row">
                 {state.tasks.filter((task) => task.id !== taskDraft.id).map((task) => {
@@ -1944,6 +2936,7 @@ export default function Home() {
           </label>
           <div className="choice-panel">
             <strong>Flags</strong>
+            <p className="meta">Flags are custom visual markers. They do not mean urgent, important, or anything else unless Mom decides that.</p>
             {state.taskFlags.length ? (
               <div className="token-row">
                 {state.taskFlags.map((flag) => (
@@ -1959,6 +2952,7 @@ export default function Home() {
           </div>
           <div className="choice-panel">
             <strong>Tags</strong>
+            <p className="meta">Tags are custom search words for grouping tasks her way.</p>
             {state.taskTags.length ? (
               <div className="token-row">
                 {state.taskTags.map((tag) => (
@@ -2095,8 +3089,45 @@ export default function Home() {
         </li>
       );
     };
+    const activeSequencedTasks = state.tasks.filter((task) => !isFinishedTask(task));
+    const readyTasks = activeSequencedTasks.filter((task) => !activeBlockers(task).length && task.status !== "Waiting");
+    const blockedTasks = activeSequencedTasks.filter((task) => activeBlockers(task).length);
+    const unlockers = activeSequencedTasks
+      .map((task) => ({ task, unlocks: activeSequencedTasks.filter((candidate) => (candidate.dependencyIds ?? []).includes(task.id)) }))
+      .filter((entry) => entry.unlocks.length)
+      .sort((a, b) => b.unlocks.length - a.unlocks.length)
+      .slice(0, 6);
     return (
       <div className="project-map">
+        <article className="project-card task-flow-card">
+          <div className="section-head compact">
+            <div>
+              <h3>Task flow check</h3>
+              <p className="meta">A builder-facing view of what can happen now, what is waiting, and which tasks unlock other tasks.</p>
+            </div>
+          </div>
+          <div className="stats-grid mini-stats">
+            <div><strong>{readyTasks.length}</strong><span>ready now</span></div>
+            <div><strong>{blockedTasks.length}</strong><span>blocked</span></div>
+            <div><strong>{unlockers.length}</strong><span>unlock paths</span></div>
+          </div>
+          {unlockers.length ? (
+            <div className="flowchart-preview" aria-label="Task unlock flowchart">
+              {unlockers.map(({ task, unlocks }) => unlocks.map((unlock) => <div key={`${task.id}-${unlock.id}`}>{task.title} → {unlock.title}</div>))}
+            </div>
+          ) : null}
+          {unlockers.length ? (
+            <div className="flow-list">
+              {unlockers.map(({ task, unlocks }) => (
+                <div className="flow-row" key={task.id}>
+                  <button className="text-button" type="button" onClick={() => openTaskForm(task)}>{task.title}</button>
+                  <span>unlocks</span>
+                  <strong>{unlocks.map((entry) => entry.title).join(", ")}</strong>
+                </div>
+              ))}
+            </div>
+          ) : <p className="meta">No prerequisite chains yet. That is okay; only add dependencies when order matters.</p>}
+        </article>
         {groups.map(({ project, tasks }) => {
           const orderedTasks = orderProjectTasks(tasks);
           const finished = tasks.filter(isFinishedTask);
@@ -2126,7 +3157,7 @@ export default function Home() {
             <ol className="sequence-list">
               {visibleTasks.map(renderSequenceTask)}
               {!showCompletedProjectTasks && finished.length ? <li className="meta">{finished.length} finished task{finished.length === 1 ? "" : "s"} hidden.</li> : null}
-              {!tasks.length ? <li className="meta">No tasks added to this project yet.</li> : null}
+              {!tasks.length ? <li className="meta">No tasks in this project yet. Add the first task, then add prerequisites only when the order truly matters.</li> : null}
             </ol>
             <div className="inline-actions">
               <button className="small-button" type="button" onClick={() => openProjectTaskForm(project.id)}>
@@ -2145,12 +3176,13 @@ export default function Home() {
         {looseTasks.length ? (
           <article className="project-card">
             <h3>Not in a project yet</h3>
+            <p className="meta">Loose tasks are okay. Move a task into a project only when it belongs with a larger goal.</p>
             <ol className="sequence-list">
               {orderProjectTasks(showCompletedProjectTasks ? looseTasks : looseTasks.filter((task) => !isFinishedTask(task))).map(renderSequenceTask)}
             </ol>
           </article>
         ) : null}
-        {!groups.length && !looseTasks.length ? <div className="empty">No projects or tasks yet.</div> : null}
+        {!groups.length && !looseTasks.length ? <div className="empty">No project map yet. Add a task first, then add a project only if several tasks belong together.</div> : null}
       </div>
     );
   }
@@ -2182,10 +3214,12 @@ export default function Home() {
   }
 
   function renderEnergyForm() {
+    const recentEnergyEntries = state.energyJournal.slice(0, 3);
     return (
+      <>
       <form className="form-panel" onSubmit={saveEnergyJournal}>
         <h2>Energy journal</h2>
-        <p className="muted">This is a record only. The app will not suggest tasks from energy unless she asks.</p>
+        <p className="muted">This is a private-feeling note for patterns and memory. It does not create tasks, rank tasks, or alert anyone unless Mom asks for that later.</p>
         <div className="form-grid">
           <label className="label">
             <span>Date</span>
@@ -2193,11 +3227,12 @@ export default function Home() {
           </label>
           <label className="label">
             <span>Energy / motivation note</span>
-            <input className="field" value={energyDraft.energyLabel ?? ""} onChange={(event) => setEnergyDraft({ ...energyDraft, energyLabel: event.target.value })} />
+            <input className="field" placeholder="Example: tired but okay, focused, low-energy morning" value={energyDraft.energyLabel ?? ""} onChange={(event) => setEnergyDraft({ ...energyDraft, energyLabel: event.target.value })} />
+            <span className="hint">Use any words that feel natural. No score is required.</span>
           </label>
           <label className="label">
             <span>Notes</span>
-            <textarea className="textarea" value={energyDraft.notes ?? ""} onChange={(event) => setEnergyDraft({ ...energyDraft, notes: event.target.value })} />
+            <textarea className="textarea" placeholder="Optional: sleep, pain, mood, weather, visitors, or anything worth remembering." value={energyDraft.notes ?? ""} onChange={(event) => setEnergyDraft({ ...energyDraft, notes: event.target.value })} />
           </label>
           <div className="inline-actions">
             <button className="button" type="submit">
@@ -2209,6 +3244,27 @@ export default function Home() {
           </div>
         </div>
       </form>
+      <div className="panel" style={{ marginTop: 12 }}>
+        <div className="section-head">
+          <div>
+            <h2>Recent energy notes</h2>
+            <p className="muted">Shown for memory only. They do not change task suggestions.</p>
+          </div>
+        </div>
+        <div className="grid card-list">
+          {recentEnergyEntries.map((entry) => (
+            <article className="mini-card" key={entry.id}>
+              <div className="card-row">
+                <strong>{entry.recordedAt}</strong>
+                {entry.energyLabel ? <span className="badge">{entry.energyLabel}</span> : null}
+              </div>
+              {entry.notes ? <p className="meta">{entry.notes}</p> : null}
+            </article>
+          ))}
+          {!recentEnergyEntries.length ? <div className="empty">No energy notes yet. Add one if it would help Mom remember patterns later.</div> : null}
+        </div>
+      </div>
+      </>
     );
   }
 
@@ -2272,6 +3328,7 @@ export default function Home() {
           <label className="label">
             <span>Bottle photo</span>
             <input className="field" type="file" name="bottlePhoto" accept="image/*" capture="environment" />
+            <span className="hint">Large photos are reduced before saving so local backups stay smaller.</span>
           </label>
           {supplementDraft.bottlePhotoUrl ? <CloudImage className="photo-preview" src={supplementDraft.bottlePhotoUrl} alt="" /> : null}
           <label className="label">
@@ -2494,6 +3551,7 @@ export default function Home() {
           <label className="label">
             <span>Photo</span>
             <input className="field" type="file" name="photo" accept="image/*" capture="environment" />
+            <span className="hint">Large photos are reduced before saving so local backups stay smaller.</span>
           </label>
           <label className="label">
             <span>Notes</span>
@@ -2622,7 +3680,7 @@ export default function Home() {
 
   function renderPurchaseCard(purchase: PurchaseRecord) {
     const item = state.items.find((entry) => entry.id === purchase.itemId);
-    const hasReceipt = Boolean(purchase.receiptUrl || purchase.receiptPhotoUrl);
+    const hasReceipt = Boolean(purchase.receiptUrl || purchase.receiptPhotoUrl || purchase.receiptText);
     const purchaseCardClass =
       purchase.reorderRecommendation === "Reorder same"
         ? "purchase-card purchase-reorder"
@@ -2679,6 +3737,15 @@ export default function Home() {
           ) : null}
         </div>
 
+        {purchase.aiSummary ? <p className="purchase-note"><strong>Local docket:</strong> {purchase.aiSummary} {purchase.aiConfidence ? `(${purchase.aiConfidence} confidence)` : ""}</p> : null}
+        {purchase.checkedAt ? <p className="meta">Checked {purchase.checkedAt.slice(0, 10)}</p> : null}
+        {purchase.replacementOptions?.length ? (
+          <div className="replacement-options">
+            {purchase.replacementOptions.map((option) => (
+              <span key={option.id}>{option.title} · {option.storeName || "Store unknown"} · {option.estimatedPrice ? money(option.estimatedPrice) : "Price unknown"} · {option.confidence}</span>
+            ))}
+          </div>
+        ) : null}
         {purchase.notes ? <p className="purchase-note">{purchase.notes}</p> : null}
         <div className="purchase-actions">
           {normalizeWebUrl(purchase.productUrl) ? (
@@ -2696,6 +3763,7 @@ export default function Home() {
               Receipt photo
             </CloudMediaLink>
           ) : null}
+          <button className="small-button" onClick={() => refreshPurchaseIntelligence(purchase)}>Refresh local matches</button>
           {item ? (
             <button className="small-button" onClick={() => setItemDetail(item.id)}>
               Open item
@@ -2721,7 +3789,7 @@ export default function Home() {
     return (
       <form className="form-panel nested-form" onSubmit={savePurchase}>
         <h2>{purchaseDraft.id ? "Edit purchase" : "Add purchase"}</h2>
-        <p className="muted">A manual receipt line is enough. Links and photos are optional.</p>
+        <p className="muted">A manual receipt line is enough. Links and photos are optional; use the recommendation to remember whether to reorder or compare later.</p>
         <div className="form-grid">
           <label className="label">
             <span>Product name</span>
@@ -2780,8 +3848,14 @@ export default function Home() {
             <input className="field" inputMode="url" value={purchaseDraft.receiptUrl ?? ""} onChange={(event) => setPurchaseDraft({ ...purchaseDraft, receiptUrl: event.target.value })} />
           </label>
           <label className="label">
+            <span>Receipt or email text</span>
+            <textarea className="textarea" value={purchaseDraft.receiptText ?? ""} onChange={(event) => setPurchaseDraft({ ...purchaseDraft, receiptText: event.target.value })} />
+            <span className="hint">Paste text here when a screenshot is hard to read. This stays local unless included in a backup.</span>
+          </label>
+          <label className="label">
             <span>Receipt or order screenshot</span>
             <input className="field" type="file" name="receiptPhoto" accept="image/*" capture="environment" />
+            <span className="hint">Large receipt photos are reduced before saving. Keep the link too if you have one.</span>
           </label>
           {purchaseDraft.receiptPhotoUrl ? (
             <p className="meta">Receipt photo already saved. Choose a new photo only if replacing it.</p>
@@ -2804,6 +3878,11 @@ export default function Home() {
               </select>
             </label>
           </div>
+          <label className="label">
+            <span>Local AI-style summary</span>
+            <input className="field" value={purchaseDraft.aiSummary ?? ""} onChange={(event) => setPurchaseDraft({ ...purchaseDraft, aiSummary: event.target.value })} />
+            <span className="hint">Generated from saved fields, not from a remote AI provider.</span>
+          </label>
           <label className="label">
             <span>Notes</span>
             <textarea className="textarea" value={purchaseDraft.notes ?? ""} onChange={(event) => setPurchaseDraft({ ...purchaseDraft, notes: event.target.value })} />
@@ -2935,7 +4014,7 @@ export default function Home() {
           <button className="ghost-button" onClick={() => setView("supplements")}>Back to supplements</button>
           <button className="button" onClick={() => window.print()}>Print</button>
           <button className="button secondary" onClick={() => downloadSupplementsPdf(state.supplementItems, state.supplementLogs, state.household.name)}>Download PDF</button>
-          <button className="ghost-button" onClick={() => downloadText("mom-supplements.csv", supplementsToCsv(state.supplementItems, state.supplementLogs), "text/csv")}>Export CSV</button>
+          <button className="ghost-button" onClick={() => downloadText(exportFilename("supplements", "csv"), supplementsToCsv(state.supplementItems, state.supplementLogs), "text/csv")}>Export CSV</button>
         </div>
 
         <article className="report-page">
@@ -3011,7 +4090,7 @@ export default function Home() {
           <button className="button" onClick={() => window.print()}>
             Print / Save PDF
           </button>
-          <button className="button secondary" onClick={() => downloadText("mom-home-report.txt", buildTextReport(), "text/plain")}>
+          <button className="button secondary" onClick={() => downloadText(exportFilename("report", "txt"), buildTextReport(), "text/plain")}>
             Download text
           </button>
         </div>
@@ -3220,6 +4299,201 @@ export default function Home() {
     );
   }
 
+  function renderHelperContactForm() {
+    return (
+      <form className="form-panel" onSubmit={saveHelperContact}>
+        <div className="section-head">
+          <div>
+            <h2>{editingHelperContactId ? "Edit helper contact" : "Add helper contact"}</h2>
+            <p className="muted">Contacts are local. Buttons use this device's Mail or Messages app; Mom Home does not send silently.</p>
+          </div>
+          <button className="ghost-button" type="button" onClick={() => setShowHelperContactForm(false)}>Close</button>
+        </div>
+        <div className="form-grid">
+          <label className="label"><span>Name</span><input className="field" required value={helperContactDraft.name ?? ""} onChange={(event) => setHelperContactDraft({ ...helperContactDraft, name: event.target.value })} /></label>
+          <div className="form-row">
+            <label className="label"><span>Phone</span><input className="field" type="tel" value={helperContactDraft.phone ?? ""} onChange={(event) => setHelperContactDraft({ ...helperContactDraft, phone: event.target.value })} /></label>
+            <label className="label"><span>Email</span><input className="field" type="email" value={helperContactDraft.email ?? ""} onChange={(event) => setHelperContactDraft({ ...helperContactDraft, email: event.target.value })} /></label>
+          </div>
+          <label className="label"><span>Relationship / note</span><input className="field" value={helperContactDraft.relationship ?? ""} onChange={(event) => setHelperContactDraft({ ...helperContactDraft, relationship: event.target.value })} /></label>
+          <label className="check-label"><input type="checkbox" checked={Boolean(helperContactDraft.preferred)} onChange={(event) => setHelperContactDraft({ ...helperContactDraft, preferred: event.target.checked })} /><span>Preferred helper</span></label>
+        </div>
+        <div className="inline-actions"><button className="button" type="submit">Save contact</button></div>
+      </form>
+    );
+  }
+
+  function renderHelpRequestForm() {
+    return (
+      <form className="form-panel" onSubmit={saveHelpRequest}>
+        <div className="section-head">
+          <div>
+            <h2>{editingHelpRequestId ? "Edit help request" : "Ask for help"}</h2>
+            <p className="muted">Use this for helper follow-up. It is not an emergency service or automatic dispatch.</p>
+          </div>
+          <button className="ghost-button" type="button" onClick={() => setShowHelpRequestForm(false)}>Close</button>
+        </div>
+        <div className="form-grid">
+          <label className="label"><span>What is needed?</span><textarea className="textarea title-area" required value={helpRequestDraft.title ?? ""} onChange={(event) => setHelpRequestDraft({ ...helpRequestDraft, title: event.target.value })} /></label>
+          <label className="label"><span>Details</span><textarea className="textarea" value={helpRequestDraft.details ?? ""} onChange={(event) => setHelpRequestDraft({ ...helpRequestDraft, details: event.target.value })} /></label>
+          <div className="form-row">
+            <label className="label"><span>Urgency</span><select className="field" value={helpRequestDraft.urgency ?? "Soon"} onChange={(event) => setHelpRequestDraft({ ...helpRequestDraft, urgency: event.target.value as HelpRequest["urgency"] })}>{["Question", "Soon", "Urgent"].map((urgency) => <option key={urgency}>{urgency}</option>)}</select></label>
+            <label className="label"><span>Helper</span><select className="field" value={helpRequestDraft.contactId ?? ""} onChange={(event) => setHelpRequestDraft({ ...helpRequestDraft, contactId: event.target.value })}><option value="">Choose when sending</option>{preferredHelperContacts.map((contact) => <option value={contact.id} key={contact.id}>{helperContactLabel(contact.id)}</option>)}</select></label>
+          </div>
+          <div className="form-row">
+            <label className="label"><span>Related task</span><select className="field" value={helpRequestDraft.relatedTaskId ?? ""} onChange={(event) => setHelpRequestDraft({ ...helpRequestDraft, relatedTaskId: event.target.value })}><option value="">None</option>{state.tasks.map((task) => <option value={task.id} key={task.id}>{task.title}</option>)}</select></label>
+            <label className="label"><span>Related order/delivery</span><select className="field" value={helpRequestDraft.relatedOrderEntryId ?? ""} onChange={(event) => setHelpRequestDraft({ ...helpRequestDraft, relatedOrderEntryId: event.target.value })}><option value="">None</option>{state.orderEntries.map((order) => <option value={order.id} key={order.id}>{order.name}</option>)}</select></label>
+          </div>
+        </div>
+        <div className="inline-actions"><button className="button" type="submit">Save help request</button></div>
+      </form>
+    );
+  }
+
+  function renderPurchaseImportForm() {
+    return (
+      <form className="form-panel" onSubmit={savePurchaseImport}>
+        <div className="section-head">
+          <div>
+            <h3>Add receipt/email text to review queue</h3>
+            <p className="muted">Paste a receipt, email, or manual note. Mom Home suggests fields locally; nothing is imported until reviewed.</p>
+          </div>
+          <button className="ghost-button" type="button" onClick={() => setShowPurchaseImportForm(false)}>Close</button>
+        </div>
+        <label className="label"><span>Source</span><select className="field" value={purchaseImportDraft.source ?? "Receipt text"} onChange={(event) => setPurchaseImportDraft({ ...purchaseImportDraft, source: event.target.value as PurchaseImportReview["source"] })}>{["Receipt text", "Email text", "Manual note"].map((source) => <option key={source}>{source}</option>)}</select></label>
+        <label className="label"><span>Text to review</span><textarea className="textarea" required value={purchaseImportDraft.rawText ?? ""} onChange={(event) => setPurchaseImportDraft({ ...purchaseImportDraft, rawText: event.target.value })} /></label>
+        <button className="button" type="submit">Add to review queue</button>
+      </form>
+    );
+  }
+
+  function renderVaultView() {
+    return (
+      <section className="vault-page">
+        <div className="section-head">
+          <div>
+            <span className="today-eyebrow">Private vault</span>
+            <h2>Encrypted local notes</h2>
+            <p className="muted">Vault notes are encrypted in this browser before saving. Helpers, cloud handoff, and AI summaries do not receive the plaintext.</p>
+          </div>
+          <div className="inline-actions"><button className="button" onClick={() => setShowVaultForm(true)}>Add vault note</button><button className="ghost-button" onClick={() => setView("more")}>Back</button></div>
+        </div>
+        <div className="notice"><strong>Passphrase warning:</strong> If the passphrase is forgotten, Mom Home cannot recover these notes. Export backups still contain only encrypted vault payloads.</div>
+        {vaultMessage ? <p className="notice">{vaultMessage}</p> : null}
+        {showVaultForm ? (
+          <form className="form-panel" onSubmit={saveVaultRecord}>
+            <div className="form-grid">
+              <label className="label"><span>Title</span><input className="field" required value={vaultDraft.title ?? ""} onChange={(event) => setVaultDraft({ ...vaultDraft, title: event.target.value })} /></label>
+              <label className="label"><span>Category</span><select className="field" value={vaultDraft.category ?? "Other"} onChange={(event) => setVaultDraft({ ...vaultDraft, category: event.target.value as VaultRecord["category"] })}>{["Account", "Document", "Medical", "Home", "Other"].map((category) => <option key={category}>{category}</option>)}</select></label>
+              <label className="label"><span>Hint visible without passphrase</span><input className="field" value={vaultDraft.noteHint ?? ""} onChange={(event) => setVaultDraft({ ...vaultDraft, noteHint: event.target.value })} /></label>
+              <label className="label"><span>Private note</span><textarea className="textarea" required value={vaultPlaintext} onChange={(event) => setVaultPlaintext(event.target.value)} /></label>
+              <label className="label"><span>Passphrase</span><input className="field" type="password" minLength={8} required value={vaultPassphrase} onChange={(event) => setVaultPassphrase(event.target.value)} /></label>
+            </div>
+            <div className="inline-actions"><button className="button" type="submit">Encrypt and save</button><button className="ghost-button" type="button" onClick={() => setShowVaultForm(false)}>Cancel</button></div>
+          </form>
+        ) : null}
+        <div className="grid card-list">
+          {state.vaultRecords.map((record) => (
+            <article className="mini-card vault-card" key={record.id}>
+              <div className="item-title-row"><strong>{record.title}</strong><span className="badge">{record.category}</span></div>
+              <p className="meta">{record.noteHint || "No visible hint."} | {record.kdf}</p>
+              {unlockedVaultText[record.id] ? <pre className="schema vault-plaintext">{unlockedVaultText[record.id]}</pre> : null}
+              <div className="inline-actions"><input className="field compact-pass" type="password" placeholder="Passphrase" value={vaultUnlockPassphrase} onChange={(event) => setVaultUnlockPassphrase(event.target.value)} /><button className="small-button" onClick={() => unlockVaultRecord(record)}>Unlock</button><button className="ghost-button" onClick={() => setUnlockedVaultText((current) => ({ ...current, [record.id]: "" }))}>Lock</button><button className="danger-button" onClick={() => deleteVaultRecord(record.id)}>Delete</button></div>
+            </article>
+          ))}
+          {!state.vaultRecords.length ? <div className="empty">No vault notes yet. Add only information that truly needs extra protection.</div> : null}
+        </div>
+      </section>
+    );
+  }
+
+  function renderAlertsView() {
+    return (
+      <section className="alerts-page">
+        <div className="section-head">
+          <div>
+            <span className="today-eyebrow">Phase 4</span>
+            <h2>Help requests & reminders</h2>
+            <p className="muted">One place for repeat reminders, delivery watch items, and messages Mom can hand to a helper.</p>
+          </div>
+          <button className="ghost-button" onClick={() => setView("home")}>Back to Today</button>
+        </div>
+
+        <div className="alert-warning">
+          <strong>Not for emergencies.</strong> Mom Home can prepare helper text, email, or SMS drafts, but it does not call 911, dispatch help, or guarantee delivery.
+          {!state.settings.helperAlertDisclaimerAccepted ? <button className="small-button" onClick={() => setState((current) => ({ ...current, settings: { ...current.settings, helperAlertDisclaimerAccepted: true } }))}>I understand</button> : null}
+        </div>
+
+        <div className="quick-actions">
+          <button className="button" onClick={() => openHelpRequestForm()}>Ask for help</button>
+          <button className="button secondary" onClick={() => openHelpRequestForm(undefined, { urgency: "Urgent", title: "Please check on this now" })}>Urgent helper alert</button>
+          <button className="ghost-button" onClick={() => openHelperContactForm()}>Add helper contact</button>
+          <button className="ghost-button" onClick={requestNotificationPermission}>Enable device alerts</button>
+        </div>
+        <p className="meta">Device alert status: {notificationPermission}. Default repeat interval: {state.settings.defaultNagIntervalMinutes} minutes.</p>
+
+        {showHelperContactForm ? renderHelperContactForm() : null}
+        {showHelpRequestForm ? renderHelpRequestForm() : null}
+
+        <div className="grid two-col">
+          <div className="panel">
+            <div className="section-head"><div><h3>Helper contacts</h3><p className="muted">Saved locally for fast SMS/email drafts.</p></div></div>
+            <div className="stack-list">
+              {preferredHelperContacts.map((contact) => (
+                <article className="mini-card" key={contact.id}>
+                  <strong>{contact.name}{contact.preferred ? " ★" : ""}</strong>
+                  <p className="meta">{[contact.relationship, contact.phone, contact.email].filter(Boolean).join(" | ") || "No phone/email saved yet."}</p>
+                  <div className="inline-actions"><button className="small-button" onClick={() => openHelperContactForm(contact)}>Edit</button><button className="ghost-button" onClick={() => deleteHelperContact(contact.id)}>Delete</button></div>
+                </article>
+              ))}
+              {!preferredHelperContacts.length ? <div className="empty">No helper contacts yet. Add one trusted person for faster handoff drafts.</div> : null}
+            </div>
+          </div>
+
+          <div className="panel">
+            <div className="section-head"><div><h3>Open help requests</h3><p className="muted">Copy, email, text, resolve, or keep for later.</p></div></div>
+            <div className="stack-list">
+              {openHelpRequests.map((request) => (
+                <article className={`mini-card ${request.urgency === "Urgent" ? "urgent-card" : ""}`} key={request.id}>
+                  <div className="item-title-row"><strong>{request.title}</strong><span className="badge">{request.urgency}</span></div>
+                  <p className="meta">{request.details || "No extra details."}</p>
+                  <p className="meta">Helper: {helperContactLabel(request.contactId)} | Status: {request.status}</p>
+                  <div className="inline-actions">
+                    <button className="small-button" onClick={() => copyHelpRequest(request)}>Copy</button>
+                    <a className="small-button" href={helpRequestHref(request, "sms")} onClick={() => updateHelpRequestStatus(request, "Sent")}>Text</a>
+                    <a className="small-button" href={helpRequestHref(request, "email")} onClick={() => updateHelpRequestStatus(request, "Sent")}>Email</a>
+                    <button className="ghost-button" onClick={() => openHelpRequestForm(request)}>Edit</button>
+                    <button className="ghost-button" onClick={() => updateHelpRequestStatus(request, "Resolved")}>Resolve</button>
+                    <button className="ghost-button" onClick={() => updateHelpRequestStatus(request, "Cancelled")}>Cancel</button>
+                  </div>
+                </article>
+              ))}
+              {!openHelpRequests.length ? <div className="empty">No open help requests. Use Ask for help when someone else should step in.</div> : null}
+            </div>
+          </div>
+        </div>
+
+        <div className="panel">
+          <div className="section-head"><div><h3>Delivery reminder watch</h3><p className="muted">Ordered and purchased items with expected delivery dates are listed here for follow-up.</p></div><button className="ghost-button" onClick={() => { setOrderScope("ordered"); setView("orders"); }}>Open orders</button></div>
+          <div className="stack-list">
+            {deliveryWatchOrders.map((order) => {
+              const late = Boolean(order.expectedDeliveryDate && order.expectedDeliveryDate < todayIso);
+              return <article className={`mini-card ${late ? "urgent-card" : ""}`} key={order.id}>
+                <div className="item-title-row"><strong>{order.name}</strong><span className="badge">{late ? "Late" : order.expectedDeliveryDate === todayIso ? "Today" : "Watching"}</span></div>
+                <p className="meta">Expected: {order.expectedDeliveryDate || "No date"}{order.trackingUrl ? " | Tracking saved" : ""}</p>
+                <div className="inline-actions">
+                  {order.trackingUrl ? <a className="small-button" href={normalizeWebUrl(order.trackingUrl) ?? order.trackingUrl} target="_blank" rel="noreferrer">Track</a> : null}
+                  <button className="small-button" onClick={() => openHelpRequestForm(undefined, { title: `Check delivery: ${order.name}`, details: `Expected delivery: ${order.expectedDeliveryDate || "not set"}.`, relatedOrderEntryId: order.id, urgency: late ? "Soon" : "Question" })}>Ask helper</button>
+                </div>
+              </article>;
+            })}
+            {!deliveryWatchOrders.length ? <div className="empty">No active delivery reminders. Add an expected delivery date to an ordered item.</div> : null}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <main className="app-shell">
       <header className="top-bar">
@@ -3249,6 +4523,7 @@ export default function Home() {
               <button className="small-button" onClick={() => openCalendarForm()}>Add event</button>
               <button className="small-button" onClick={() => openOrderForm()}>Add order</button>
               <button className="small-button" onClick={() => setShowEnergyForm(true)}>Log energy</button>
+              <button className="small-button" onClick={() => openHelpRequestForm()}>Ask help</button>
             </div>
           </div>
 
@@ -3269,8 +4544,10 @@ export default function Home() {
           <FocusSeason
             value={state.focusSeason}
             tasks={state.tasks}
+            calmSound={state.settings.calmSound}
             onChange={(focusSeason) => setState((current) => ({ ...current, focusSeason }))}
             onOpenTask={openTaskForm}
+            onOpenCalm={() => setView("calm")}
           />
 
           {showEnergyForm ? renderEnergyForm() : null}
@@ -3280,6 +4557,8 @@ export default function Home() {
             <button onClick={() => setView("calendar")}>Calendar <strong>{dueTodayTasks.length + state.calendarEntries.filter((entry) => calendarEntryOccursOnDate(entry, todayIso)).length}</strong></button>
             <button onClick={() => setView("low")}>Low stock <strong>{lowItems.length}</strong></button>
             <button onClick={() => setView("purchases")}>Purchases <strong>{state.purchaseRecords.length}</strong></button>
+            <button onClick={() => setView("calm")}>Calm</button>
+            <button onClick={() => setView("alerts")}>Help <strong>{openHelpRequests.length}</strong></button>
           </div>
         </section>
       ) : null}
@@ -3289,10 +4568,10 @@ export default function Home() {
           <div className="section-head">
             <div>
               <h2>Tasks</h2>
-              <p className="muted">Things to do, what matters most, and what has to happen first.</p>
+              <p className="muted">Things to do, what matters most, and what has to happen first. Start simple; organization can be added later.</p>
             </div>
             <button className="button" onClick={() => openTaskForm()}>
-              Add
+              Add task
             </button>
           </div>
 
@@ -3323,7 +4602,7 @@ export default function Home() {
             <div className="section-head">
               <div>
                 <h2>Project map</h2>
-                <p className="muted">Start with ready tasks. Waiting tasks name the prerequisite that needs attention.</p>
+                <p className="muted">A planning view for projects and prerequisites. This is for organizing tasks, not a new page Mom has to manage.</p>
               </div>
               <div className="inline-actions">
                 {finishedTaskCount ? (
@@ -3344,7 +4623,7 @@ export default function Home() {
             <div className="section-head">
               <div>
                 <h2>Custom flags and tags</h2>
-                <p className="muted">No meanings are preset. Mom defines them.</p>
+                <p className="muted">No meanings are preset. Mom defines them, and they can be changed later.</p>
               </div>
             </div>
             <div className="quick-actions">
@@ -3391,8 +4670,98 @@ export default function Home() {
                   </div>
                 </article>
               ))}
-              {!state.taskFlags.length && !state.taskTags.length ? <div className="empty">No custom flags or tags yet.</div> : null}
+              {!state.taskFlags.length && !state.taskTags.length ? <div className="empty">No custom flags or tags yet. Add these only after Mom knows what labels would help her find tasks faster.</div> : null}
             </div>
+          </div>
+        </section>
+      ) : null}
+
+      {view === "ideas" ? (
+        <section>
+          <div className="section-head">
+            <div>
+              <h2>Ideas</h2>
+              <p className="muted">Pinterest-style planning that stays useful: boards, sections, cards, links, decisions, shopping, tasks, and inventory connections.</p>
+            </div>
+            <div className="inline-actions">
+              <button className="button" onClick={() => openIdeaBoardForm()}>Add board</button>
+              <button className="button secondary" disabled={!selectedIdeaBoardId} onClick={() => openIdeaCardForm()}>Add card</button>
+            </div>
+          </div>
+
+          <div className="ideas-dashboard">
+            <article className="stat-card"><span>Active boards</span><strong>{activeIdeaBoards.length}</strong></article>
+            <article className="stat-card"><span>Active cards</span><strong>{activeIdeaCards.filter((card) => !card.archivedAt).length}</strong></article>
+            <article className="stat-card"><span>Archived</span><strong>{archivedIdeaBoards.length + archivedIdeaCards.length}</strong></article>
+            <article className="stat-card"><span>Board estimate</span><strong>{money(String(ideaBoardBudget.total))}</strong></article>
+          </div>
+
+          {showIdeaBoardForm ? renderIdeaBoardForm() : null}
+          {showIdeaSectionForm ? renderIdeaSectionForm() : null}
+          {showIdeaCardForm ? renderIdeaCardForm() : null}
+
+          <div className="panel" style={{ marginTop: 12 }}>
+            <div className="section-head">
+              <div><h2>Boards</h2><p className="muted">Kitchen Ideas, Garden, Gifts, Recipes, Repairs, Future Purchases, Decorating, Seasonal Plans.</p></div>
+            </div>
+            <div className="grid card-list">
+              {filteredIdeaBoards.map(renderIdeaBoardCard)}
+              {!filteredIdeaBoards.length ? <div className="empty">No idea boards yet. Add one board first, then add cards inside it.</div> : null}
+            </div>
+          </div>
+
+          {selectedIdeaBoard ? (
+            <div className="panel idea-board-detail" style={{ marginTop: 12 }}>
+              <div className="section-head">
+                <div>
+                  <span className="cloud-kicker">Selected board</span>
+                  <h2>{selectedIdeaBoard.name}</h2>
+                  <p className="muted">{selectedIdeaBoard.description || "Collect, compare, and turn ideas into real tasks, orders, inventory, or projects."}</p>
+                </div>
+                <div className="inline-actions">
+                  <button className="button" onClick={() => openIdeaCardForm()}>Add card</button>
+                  <button className="button secondary" onClick={() => openIdeaSectionForm()}>Add section</button>
+                  <button className="ghost-button" onClick={() => downloadText(exportFilename(`${selectedIdeaBoard.name}-ideas`, "txt"), ideaBoardExportText(selectedIdeaBoard), "text/plain")}>Export board</button>
+                  <button className="ghost-button" onClick={() => window.print()}>Print</button>
+                </div>
+              </div>
+
+              <div className="idea-board-stats">
+                <span>Total estimate: <strong>{money(String(ideaBoardBudget.total))}</strong></span>
+                <span>Purchased/completed: <strong>{money(String(ideaBoardBudget.purchased))}</strong></span>
+                <span>Remaining estimate: <strong>{money(String(ideaBoardBudget.remaining))}</strong></span>
+              </div>
+
+              <div className="filters ideas-filters">
+                <select className="field" value={ideaStatusFilter} onChange={(event) => setIdeaStatusFilter(event.target.value as typeof ideaStatusFilter)}><option value="All">All statuses</option>{ideaStatuses.map((status) => <option value={status} key={status}>{status}</option>)}</select>
+                <select className="field" value={ideaPriorityFilter} onChange={(event) => setIdeaPriorityFilter(event.target.value as typeof ideaPriorityFilter)}><option value="All">All priorities</option>{ideaPriorities.map((priority) => <option value={priority} key={priority}>{priority}</option>)}</select>
+                <select className="field" value={ideaContentFilter} onChange={(event) => setIdeaContentFilter(event.target.value as typeof ideaContentFilter)}><option value="All">All types</option>{ideaContentTypes.map((type) => <option value={type} key={type}>{type}</option>)}</select>
+                <select className="field" value={ideaTagFilter} onChange={(event) => setIdeaTagFilter(event.target.value)}><option value="">All tags</option>{activeIdeaTags.map((tag) => <option value={tag} key={tag}>{tag}</option>)}</select>
+                <select className="field" value={ideaPriceFilter} onChange={(event) => setIdeaPriceFilter(event.target.value as typeof ideaPriceFilter)}><option value="All">All prices</option><option value="Under50">Under $50</option><option value="MissingPrice">Missing price</option></select>
+                <select className="field" value={ideaSort} onChange={(event) => setIdeaSort(event.target.value as typeof ideaSort)}><option value="custom">Custom order</option><option value="newest">Newest</option><option value="oldest">Oldest</option><option value="priority">Priority</option><option value="price">Price</option><option value="status">Status</option><option value="updated">Recently updated</option><option value="alpha">Alphabetical</option></select><button className="ghost-button" onClick={resetIdeaFilters}>Reset filters</button>
+              </div>
+
+              {selectedIdeaSections.length ? <div className="idea-section-strip">{selectedIdeaSections.map((section) => <span className="filter-chip" key={section.id}>{section.name}<button className="text-button" onClick={() => openIdeaSectionForm(section)}>Edit</button><button className="text-button" onClick={() => deleteIdeaSection(section.id)}>Remove</button></span>)}</div> : <p className="meta">No sections yet. Add sections like Furniture, Lighting, Paint, Storage, Appliances, or Plants if they help.</p>}
+
+              {showIdeaCompare && favoriteIdeaCards.length ? (
+                <div className="comparison-table">
+                  {favoriteIdeaCards.map(({ card }) => <div key={card.id}><strong>{card.title}</strong><span>{card.price ? money(card.price) : "No price"}</span><span>{card.dimensions || "No dimensions"}</span><span>{card.color || "No color"}</span><span>{card.storeOrSeller || card.sourceSite || "No store"}</span><span>{card.status}</span></div>)}
+                </div>
+              ) : null}
+              {showIdeaCompare && !favoriteIdeaCards.length ? <p className="notice">Favorite up to four cards on this board to compare them.</p> : null}
+              <button className="ghost-button" onClick={() => setShowIdeaCompare((current) => !current)}>{showIdeaCompare ? "Hide comparison" : "Compare favorites"}</button>
+
+              <div className="idea-card-grid">
+                {ideaBoardCards.map(renderIdeaCard)}
+                {!ideaBoardCards.length ? <div className="empty">No cards match this board/filter yet. Add a photo, screenshot, link, note, product, recipe, document, inventory item, task, or project.</div> : null}
+              </div>
+            </div>
+          ) : null}
+
+          <div className="panel" style={{ marginTop: 12 }}>
+            <div className="section-head"><div><h2>Smart collections</h2><p className="muted">Automatic views from saved card data.</p></div><button className="ghost-button" onClick={() => setShowIdeaTrash((current) => !current)}>{showIdeaTrash ? "Hide archive/trash" : "Show archive/trash"}</button></div>
+            <div className="quick-actions"><button className="filter-chip" onClick={() => { resetIdeaFilters(); setIdeaPriorityFilter("High"); }}>High priority</button><button className="filter-chip" onClick={() => { resetIdeaFilters(); setIdeaStatusFilter("Approved"); }}>Approved not purchased</button><button className="filter-chip" onClick={() => { resetIdeaFilters(); setIdeaPriceFilter("Under50"); }}>Under $50</button><button className="filter-chip" onClick={() => { resetIdeaFilters(); setIdeaPriceFilter("MissingPrice"); }}>Missing prices</button><button className="filter-chip" onClick={() => { resetIdeaFilters(); setIdeaContentFilter("Product"); }}>Products</button></div>
+            {showIdeaTrash ? <div className="grid">{state.ideaCards.filter((card) => card.archivedAt || card.deletedAt).map((card) => <article className="mini-card" key={card.id}><strong>{card.title}</strong><p className="meta">{card.deletedAt ? "Deleted" : "Archived"}</p><button className="small-button" onClick={() => updateIdeaCard(card.id, { archivedAt: undefined, deletedAt: undefined })}>Restore</button></article>)}{archivedIdeaBoards.map((board) => <article className="mini-card" key={board.id}><strong>{board.name}</strong><p className="meta">Archived board</p><button className="small-button" onClick={() => restoreIdeaBoard(board.id)}>Restore</button></article>)}</div> : null}
           </div>
         </section>
       ) : null}
@@ -3402,7 +4771,7 @@ export default function Home() {
           <div className="section-head calendar-page-head">
             <div>
               <h2>Calendar</h2>
-              <p className="muted">Events and dated tasks in one place.</p>
+              <p className="muted">Events and dated tasks in one place. Reminders are helpful while the app is open; true background push is later.</p>
             </div>
             <div className="inline-actions">
               <button className="button" onClick={() => openCalendarForm()}>Add event</button>
@@ -3413,7 +4782,7 @@ export default function Home() {
           <div className={`calendar-alert-status permission-${notificationPermission}`}>
             <div>
               <strong>{notificationPermission === "granted" ? "Device alerts enabled" : notificationPermission === "denied" ? "Device alerts blocked" : notificationPermission === "unsupported" ? "Device alerts unavailable" : "Device alerts off"}</strong>
-              <span>{notificationPermission === "granted" ? "Reminders and nag mode run while Mom Home is open." : "Calendar entries still appear normally."}</span>
+              <span>{notificationPermission === "granted" ? "Reminders and repeat alerts run while Mom Home is open." : "Calendar entries still appear normally; alerts can be enabled when needed."}</span>
             </div>
             {notificationPermission === "default" ? <button className="small-button" onClick={requestNotificationPermission}>Enable alerts</button> : null}
           </div>
@@ -3463,7 +4832,7 @@ export default function Home() {
                   <span className="calendar-panel-eyebrow">Selected day</span>
                   <h2>{format(parseISO(selectedCalendarDate), "EEEE, MMMM d")}</h2>
                 </div>
-                <button className="small-button" onClick={() => openCalendarForm()}>Add</button>
+                <button className="small-button" onClick={() => openCalendarForm()}>Add event</button>
               </div>
               <div className="calendar-day-agenda">
                 {selectedCalendarEntries.map((entry) => renderCalendarEntryCard(entry))}
@@ -3477,7 +4846,7 @@ export default function Home() {
                     <button className="small-button" onClick={() => openTaskForm(task)}>Open</button>
                   </article>
                 ))}
-                {!selectedCalendarEntries.length && !selectedCalendarTasks.length ? <div className="calendar-empty-day">Nothing scheduled. The day is open.</div> : null}
+                {!selectedCalendarEntries.length && !selectedCalendarTasks.length ? <div className="calendar-empty-day">Nothing scheduled. The day is open. Add an event here, or add a due date to a task.</div> : null}
               </div>
             </div>
           </div>
@@ -3486,7 +4855,7 @@ export default function Home() {
             <div className="section-head">
               <div>
                 <h2>Coming up</h2>
-                <p className="muted">The next twelve events and dated tasks.</p>
+                <p className="muted">The next twelve events and dated tasks in the next sixty days.</p>
               </div>
             </div>
             <div className="calendar-upcoming-list">
@@ -3497,7 +4866,7 @@ export default function Home() {
                   <span className="calendar-upcoming-copy"><strong>{item.title}</strong><small>{[item.kind, item.time].filter(Boolean).join(" | ")}</small></span>
                 </button>
               ))}
-              {!upcomingCalendarItems.length ? <div className="empty">Nothing dated in the next sixty days.</div> : null}
+              {!upcomingCalendarItems.length ? <div className="empty">Nothing dated in the next sixty days. Add a calendar entry or give a task a due date.</div> : null}
             </div>
           </div>
         </section>
@@ -3508,7 +4877,7 @@ export default function Home() {
           <div className="section-head">
             <div>
               <h2>Inventory</h2>
-              <p className="muted">Searchable household items.</p>
+              <p className="muted">Search, count, and locate household items. Add partial records now; details can be filled in later.</p>
             </div>
             <button className="button" onClick={() => openItemForm()}>
               Add
@@ -3527,7 +4896,11 @@ export default function Home() {
           </div>
           <div className="grid card-list">
             {filteredItems.map(renderItemCard)}
-            {!filteredItems.length ? <div className="empty">No matching items yet.</div> : null}
+            {!filteredItems.length ? (
+              <div className="empty">
+                {state.items.length ? "No matching items yet. Try All, Low, Out, Too much, or a simpler search word." : "No items yet. Add the first item with only the name and location if that is all you know."}
+              </div>
+            ) : null}
           </div>
         </section>
       ) : null}
@@ -3537,7 +4910,7 @@ export default function Home() {
           <div className="section-head">
             <div>
               <h2>Low stock</h2>
-              <p className="muted">What needs attention before the next shopping run.</p>
+              <p className="muted">Items that are out, running low, or marked as too much so Mom knows what to buy or avoid.</p>
             </div>
             <button className="ghost-button" onClick={() => setView("more")}>
               Back
@@ -3587,7 +4960,9 @@ export default function Home() {
             </div>
           ) : null}
 
-          {!lowItems.length ? <div className="empty">No low-stock items.</div> : null}
+          {!lowItems.length ? (
+            <div className="empty">Nothing is marked low or out right now. If something should be here, open Inventory and mark it Low, Very low, or Out.</div>
+          ) : null}
 
           {overstockItems.length ? (
             <div className="attention-section">
@@ -3608,7 +4983,7 @@ export default function Home() {
           <div className="section-head">
             <div>
               <h2>Places and bins</h2>
-              <p className="muted">Rooms, shelves, closets, and storage containers.</p>
+              <p className="muted">Rooms, shelves, closets, and bins. Start with broad places first, then add bins when labels would help.</p>
             </div>
             <button className="ghost-button" onClick={() => setView("more")}>
               Back
@@ -3722,10 +5097,12 @@ export default function Home() {
                 <label className="label">
                   <span>Outside photo</span>
                   <input className="field" type="file" name="outsidePhoto" accept="image/*" capture="environment" />
+                  <span className="hint">Large bin photos are reduced before saving.</span>
                 </label>
                 <label className="label">
                   <span>Inside photo</span>
                   <input className="field" type="file" name="insidePhoto" accept="image/*" capture="environment" />
+                  <span className="hint">Use this when the inside view helps identify what belongs here.</span>
                 </label>
                 <label className="label">
                   <span>Contents and notes</span>
@@ -3744,6 +5121,7 @@ export default function Home() {
           ) : null}
 
           <div className="location-tree">
+            {!state.locations.length ? <div className="empty">No places yet. Add a room, closet, shelf, or garage area before assigning items to it.</div> : null}
             {state.locations.map((location) => {
               const children = state.locations.filter((entry) => entry.parentLocationId === location.id);
               const locationItems = state.items.filter((item) => item.locationId === location.id);
@@ -3778,10 +5156,11 @@ export default function Home() {
             <div className="section-head">
               <div>
                 <h2>Storage containers</h2>
-                <p className="muted">Print or save the QR image for labels.</p>
+                <p className="muted">Print or save a label, then scan it later to reopen this bin and see what belongs inside.</p>
               </div>
             </div>
             <div className="grid">
+              {!state.containers.length ? <div className="empty">No bins yet. Add a bin when a container needs a printed label or scan link.</div> : null}
               {state.containers.map((container) => {
                 const contents = state.items.filter((item) => item.containerId === container.id);
                 const isActive = activeContainerCode && activeContainerCode === container.containerCode;
@@ -3815,6 +5194,7 @@ export default function Home() {
                     </div>
                     <div className="qr-box">
                       {qrImages[container.id] ? <img src={qrImages[container.id]} alt={`QR for ${container.name}`} /> : <div className="thumb">QR</div>}
+                      <p className="meta">Scanning this label opens Mom Home directly to this bin.</p>
                       <div className="bin-actions">
                         <button
                           className="small-button"
@@ -3846,7 +5226,7 @@ export default function Home() {
           <div className="section-head">
             <div>
               <h2>To-order list</h2>
-              <p className="muted">Track what needs buying, what is ordered, and what was received.</p>
+              <p className="muted">Track what still needs buying, what is on the way, and what has already arrived.</p>
             </div>
             <div className="inline-actions">
               <button className="ghost-button" onClick={() => setView("more")}>
@@ -3888,6 +5268,7 @@ export default function Home() {
           {showOrderForm ? (
             <form className="form-panel" onSubmit={saveOrder}>
               <h2>{editingOrderId ? "Update order" : "Add to order"}</h2>
+              <p className="muted">Use Needed before buying, Ordered or Purchased after checkout, and Received when it arrives.</p>
               <div className="form-grid">
                 <label className="label">
                   <span>Item</span>
@@ -4038,7 +5419,7 @@ export default function Home() {
                       </button>
                     ) : null}
                     <button className="small-button" onClick={() => editOrder(entry)}>
-                      Edit delivery
+                      Edit order
                     </button>
                     {entry.status !== "Needed" ? (
                       <button className="small-button" onClick={() => markOrderedStatus(entry.id, "Needed")}>
@@ -4064,7 +5445,13 @@ export default function Home() {
                 </article>
               );
             })}
-            {!filteredOrders.length ? <div className="empty">No matching order entries.</div> : null}
+            {!filteredOrders.length ? (
+              <div className="empty">
+                {state.orderEntries.length
+                  ? "No order entries match this filter. Try All, or add a new order from a low-stock item."
+                  : "No order entries yet. Add one manually here, or use Add to order from a low-stock or inventory item."}
+              </div>
+            ) : null}
           </div>
         </section>
       ) : null}
@@ -4074,16 +5461,42 @@ export default function Home() {
           <div className="section-head">
             <div>
               <h2>Purchases</h2>
-              <p className="muted">Receipts, vendors, order numbers, and reorder memory.</p>
+              <p className="muted">Saved purchase memory from inventory items: what worked, what to compare, and what to avoid next time.</p>
             </div>
             <div className="inline-actions">
               <button className="ghost-button" onClick={() => setView("more")}>
                 Back
               </button>
-              <button className="ghost-button" onClick={() => downloadText("mom-inventory-purchases.csv", purchasesToCsv(state.purchaseRecords, state), "text/csv")}>
+              <button className="button" onClick={() => setShowPurchaseImportForm(true)}>
+                Import text
+              </button>
+              <button className="ghost-button" onClick={() => downloadText(exportFilename("purchases", "csv"), purchasesToCsv(state.purchaseRecords, state), "text/csv")}>
                 Export CSV
               </button>
             </div>
+          </div>
+
+          {showPurchaseImportForm ? renderPurchaseImportForm() : null}
+
+          <div className="panel purchase-ai-panel">
+            <div className="section-head compact"><div><h3>Purchase AI docket (local)</h3><p className="muted">A local, review-first summary. Provider AI can replace this later without changing the records.</p></div></div>
+            <div className="stats-grid mini-stats">
+              <div><strong>{purchaseDocket.missingReceipts.length}</strong><span>missing receipts</span></div>
+              <div><strong>{purchaseDocket.compareFirst.length}</strong><span>compare first</span></div>
+              <div><strong>{purchaseDocket.avoid.length}</strong><span>avoid</span></div>
+              <div><strong>{purchaseDocket.unchecked.length}</strong><span>unchecked</span></div>
+            </div>
+            {state.purchaseImportQueue.filter((entry) => entry.status === "Needs review").length ? (
+              <div className="stack-list">
+                {state.purchaseImportQueue.filter((entry) => entry.status === "Needs review").map((entry) => (
+                  <article className="mini-card" key={entry.id}>
+                    <strong>{entry.suggestedProductName || "Imported text"}</strong>
+                    <p className="meta">{[entry.source, entry.suggestedStoreName, entry.suggestedTotalPrice ? money(entry.suggestedTotalPrice) : ""].filter(Boolean).join(" | ")}</p>
+                    <div className="inline-actions"><button className="small-button" onClick={() => startPurchaseFromImport(entry)}>Review as purchase</button><button className="ghost-button" onClick={() => dismissPurchaseImport(entry.id)}>Dismiss</button></div>
+                  </article>
+                ))}
+              </div>
+            ) : <p className="meta">No receipt/email text waiting for review.</p>}
           </div>
 
           <div className="filters">
@@ -4119,7 +5532,13 @@ export default function Home() {
 
           <div className="grid card-list">
             {filteredPurchases.map((purchase) => renderPurchaseCard(purchase))}
-            {!filteredPurchases.length ? <div className="empty">No matching purchases yet.</div> : null}
+            {!filteredPurchases.length ? (
+              <div className="empty">
+                {state.purchaseRecords.length
+                  ? "No purchases match this filter. Try All, or change a saved purchase recommendation from an item record."
+                  : "No purchase history yet. Open an inventory item and choose Add purchase to save where it came from."}
+              </div>
+            ) : null}
           </div>
         </section>
       ) : null}
@@ -4152,7 +5571,7 @@ export default function Home() {
             <button className="button secondary" onClick={() => { setSupplementLogDraft(blankSupplementLog()); setShowSupplementLogForm(true); }}>Log taken</button>
             <button className="button" onClick={() => downloadSupplementsPdf(state.supplementItems, state.supplementLogs, state.household.name)}>Download PDF</button>
             <button className="ghost-button" onClick={() => { setReportScope("supplements"); setView("report"); window.setTimeout(() => window.print(), 250); }}>Print report</button>
-            <button className="ghost-button" onClick={() => downloadText("mom-supplements.csv", supplementsToCsv(state.supplementItems, state.supplementLogs), "text/csv")}>Export CSV</button>
+            <button className="ghost-button" onClick={() => downloadText(exportFilename("supplements", "csv"), supplementsToCsv(state.supplementItems, state.supplementLogs), "text/csv")}>Export CSV</button>
           </div>
 
           {showSupplementForm ? renderSupplementForm() : null}
@@ -4203,6 +5622,69 @@ export default function Home() {
       ) : null}
 
       {view === "report" ? renderReportView() : null}
+
+
+
+      {view === "calm" ? (
+        <section className="calm-page">
+          <div className="section-head">
+            <div>
+              <span className="today-eyebrow">Calm</span>
+              <h2>Take a quiet minute</h2>
+              <p className="muted">A simple screen for a reset, breathing, or waiting for the Focus Season timer. Nothing is logged unless Mom chooses to log energy.</p>
+            </div>
+            <button className="ghost-button" onClick={() => setView("home")}>Back to Today</button>
+          </div>
+
+          <div className="calm-hero" aria-live="polite">
+            <div className="calm-orb" />
+            <h3>Breathe in. Breathe out.</h3>
+            <p>One small next step is enough.</p>
+          </div>
+
+          <div className="grid two-col">
+            <div className="panel">
+              <h3>Sound</h3>
+              <label className="label">
+                <span>Selected sound</span>
+                <select className="field" value={state.settings.calmSound} onChange={(event) => updateCalmSound(event.target.value as CalmSound)}>
+                  {calmSounds.map((sound) => <option value={sound} key={sound}>{sound === "silent" ? "Silent" : sound[0].toUpperCase() + sound.slice(1)}</option>)}
+                </select>
+              </label>
+              <div className="inline-actions" style={{ marginTop: 12 }}>
+                <button className="button" type="button" onClick={() => playCalmSound(state.settings.calmSound)}>Play sound</button>
+                <button className="ghost-button" type="button" onClick={() => updateCalmSound("silent")}>Use silent</button>
+              </div>
+              <p className="meta">Sounds are generated on this device. If the browser blocks audio, tap Play sound once first.</p>
+            </div>
+
+            <div className="panel">
+              <h3>Focus timer</h3>
+              <p className="muted">Use any timer length from 1 to 180 minutes. The timer keeps its place across refreshes while Mom Home stays on this device.</p>
+              <div className="inline-actions">
+                {[5, 10, 25, 45].map((minutes) => (
+                  <button className="small-button" key={minutes} onClick={() => setState((current) => ({ ...current, focusSeason: { ...current.focusSeason, durationMinutes: minutes, remainingSeconds: minutes * 60, running: false, endsAt: undefined, completedAt: undefined } }))}>{minutes} min</button>
+                ))}
+              </div>
+              <button className="button secondary" style={{ marginTop: 12 }} onClick={() => setView("home")}>Open Focus Season</button>
+            </div>
+          </div>
+
+          <div className="panel">
+            <h3>If Mom feels stuck</h3>
+            <div className="quick-actions">
+              <button className="button" onClick={() => { setTaskScope("quick"); setView("tasks"); }}>Show quick wins</button>
+              <button className="ghost-button" onClick={() => setShowEnergyForm(true)}>Log energy</button>
+              <button className="ghost-button" onClick={() => setView("help")}>Open help</button>
+            </div>
+            {showEnergyForm ? renderEnergyForm() : null}
+          </div>
+        </section>
+      ) : null}
+
+      {view === "alerts" ? renderAlertsView() : null}
+
+      {view === "vault" ? renderVaultView() : null}
 
       {view === "help" ? <HelpCenter onBack={() => setView("more")} /> : null}
 
@@ -4261,6 +5743,20 @@ export default function Home() {
               </select>
               <span className="hint">Changes which working Today lens opens by default.</span>
             </label>
+            <label className="label" style={{ marginTop: 12 }}>
+              <span>Calm sound</span>
+              <select className="field" value={state.settings.calmSound} onChange={(event) => updateCalmSound(event.target.value as CalmSound)}>
+                {calmSounds.map((sound) => <option value={sound} key={sound}>{sound === "silent" ? "Silent" : sound[0].toUpperCase() + sound.slice(1)}</option>)}
+              </select>
+              <span className="hint">Used by the Calm screen and the Focus Season finish sound.</span>
+            </label>
+            <label className="label" style={{ marginTop: 12 }}>
+              <span>Default repeat alert interval</span>
+              <select className="field" value={state.settings.defaultNagIntervalMinutes} onChange={(event) => updateDefaultNagIntervalMinutes(Number(event.target.value))}>
+                {[5, 10, 15, 30, 60, 120].map((minutes) => <option value={minutes} key={minutes}>{minutes} minutes</option>)}
+              </select>
+              <span className="hint">Used when a calendar reminder is set to repeat while Mom Home is open.</span>
+            </label>
           </div>
 
           <div className="panel">
@@ -4275,7 +5771,7 @@ export default function Home() {
               <button className="button" onClick={() => navigator.clipboard?.writeText(assistantExportText() || "No priority tasks right now.").catch(() => undefined)}>
                 Copy text
               </button>
-              <button className="ghost-button" onClick={() => downloadText("mom-assistant-docket.txt", assistantExportText() || "No priority tasks right now.", "text/plain")}>
+              <button className="ghost-button" onClick={() => downloadText(exportFilename("assistant-docket", "txt"), assistantExportText() || "No priority tasks right now.", "text/plain")}>
                 Download text
               </button>
             </div>
@@ -4285,29 +5781,34 @@ export default function Home() {
             <div className="section-head">
               <div>
                 <h2>Export</h2>
-                <p className="muted">Keep a backup or move data later.</p>
+                <p className="muted">Downloads are safe copies. Use the full JSON backup before big edits, device changes, or restore tests.</p>
               </div>
             </div>
+            <p className="meta">Full backup is the most important file. Filenames include today's date so backups are easier to compare later. CSV files are for spreadsheets and checking lists; they are not complete restore files.</p>
+            <p className="meta"><strong>Current local backup size:</strong> {localBackupSizeLabel}. {localBackupSizeTone === "attention" ? "Download a backup soon and consider replacing large photos if saving starts failing." : localBackupSizeTone === "watch" ? "Still okay, but photos are the main reason this grows." : "Healthy size for local saving."}</p>
             <div className="quick-actions">
               <button className="button" onClick={() => { setReportScope("all"); setView("report"); }}>
                 View printable report
               </button>
-              <button className="button" onClick={() => downloadText("mom-inventory.json", JSON.stringify(state, null, 2), "application/json")}>
+              <button className="button secondary" onClick={() => downloadText(exportFilename("report", "txt"), buildTextReport(), "text/plain")}>
+                Download report text
+              </button>
+              <button className="button" onClick={() => downloadJsonBackup()}>
                 Download full backup
               </button>
-              <button className="button secondary" onClick={() => downloadText("mom-inventory-items.csv", itemsToCsv(state.items, state.locations, state.containers), "text/csv")}>
+              <button className="button secondary" onClick={() => downloadText(exportFilename("items", "csv"), itemsToCsv(state.items, state.locations, state.containers), "text/csv")}>
                 Item data file
               </button>
-              <button className="ghost-button" onClick={() => downloadText("mom-inventory-purchases.csv", purchasesToCsv(state.purchaseRecords, state), "text/csv")}>
+              <button className="ghost-button" onClick={() => downloadText(exportFilename("purchases", "csv"), purchasesToCsv(state.purchaseRecords, state), "text/csv")}>
                 Purchase data file
               </button>
-              <button className="ghost-button" onClick={() => downloadText("mom-to-order.csv", ordersToCsv(state.orderEntries, state), "text/csv")}>
+              <button className="ghost-button" onClick={() => downloadText(exportFilename("to-order", "csv"), ordersToCsv(state.orderEntries, state), "text/csv")}>
                 To-order data file
               </button>
-              <button className="ghost-button" onClick={() => downloadText("mom-tasks.csv", tasksToCsv(state.tasks, state.taskFlags, state.taskTags, state.taskProjects), "text/csv")}>
+              <button className="ghost-button" onClick={() => downloadText(exportFilename("tasks", "csv"), tasksToCsv(state.tasks, state.taskFlags, state.taskTags, state.taskProjects), "text/csv")}>
                 Task data file
               </button>
-              <button className="ghost-button" onClick={() => downloadText("mom-supplements.csv", supplementsToCsv(state.supplementItems, state.supplementLogs), "text/csv")}>
+              <button className="ghost-button" onClick={() => downloadText(exportFilename("supplements", "csv"), supplementsToCsv(state.supplementItems, state.supplementLogs), "text/csv")}>
                 Supplement data file
               </button>
             </div>
@@ -4317,12 +5818,13 @@ export default function Home() {
             <div className="section-head">
               <div>
                 <h2>Restore backup</h2>
-                <p className="muted">Use this only when putting a saved backup back into this browser.</p>
+                <p className="muted">Restore replaces the data in this browser. Choose a file, review it first, then download the current data before replacing anything.</p>
               </div>
             </div>
             <label className="label">
               <span>Backup file</span>
               <input className="field" type="file" accept="application/json,.json" onChange={importBackup} />
+              <span className="hint">Selecting a file only opens a review. It does not restore yet.</span>
             </label>
             {backupPreflight ? (
               <div className="backup-preflight">
@@ -4331,7 +5833,7 @@ export default function Home() {
                     <span className="cloud-kicker">Review before restore</span>
                     <h3>{backupPreflight.fileName}</h3>
                   </div>
-                  <span className="badge low">Current browser data will be replaced</span>
+                  <span className="badge low">Review only - not restored yet</span>
                 </div>
                 <div className="backup-preflight-facts">
                   <div><span>Household</span><strong>{backupPreflight.state.household.name || "Unnamed household"}</strong></div>
@@ -4343,16 +5845,21 @@ export default function Home() {
                   <span>{backupPreflight.state.tasks.length} tasks</span>
                   <span>{backupPreflight.state.orderEntries.length} orders</span>
                   <span>{backupPreflight.state.purchaseRecords.length} purchases</span>
+                  <span>{backupPreflight.state.purchaseImportQueue.length} purchase imports</span>
                   <span>{backupPreflight.state.supplementItems.length} supplements</span>
                   <span>{backupPreflight.state.calendarEntries.length} calendar entries</span>
+                  <span>{backupPreflight.state.ideaCards.length} idea cards</span>
+                  <span>{backupPreflight.state.helpRequests.length} help requests</span>
+                  <span>{backupPreflight.state.vaultRecords.length} vault records</span>
                 </div>
                 {backupPreflight.warnings.length ? (
                   <ul className="backup-preflight-warnings">
                     {backupPreflight.warnings.map((warning) => <li key={warning}>{warning}</li>)}
                   </ul>
                 ) : <p className="backup-preflight-clear">This looks like a complete Mom Home backup.</p>}
+                <p className="meta"><strong>Before restoring:</strong> download the current data first if there is anything here you may want back.</p>
                 <div className="inline-actions">
-                  <button className="button secondary" onClick={() => downloadText("mom-home-before-restore.json", JSON.stringify(state, null, 2), "application/json")}>Download current data first</button>
+                  <button className="button secondary" onClick={() => downloadJsonBackup(exportFilename("before-restore", "json"))}>Download current data first</button>
                   <button className="button" onClick={confirmBackupRestore}>Restore this backup</button>
                   <button className="ghost-button" onClick={cancelBackupRestore}>Cancel</button>
                 </div>
@@ -4381,11 +5888,23 @@ export default function Home() {
               <button className="ghost-button" onClick={() => setView("low")}>
                 Low stock
               </button>
+              <button className="ghost-button" onClick={() => setView("calm")}>
+                Calm screen
+              </button>
+              <button className="ghost-button" onClick={() => setView("alerts")}>
+                Help requests
+              </button>
               <button className="ghost-button" onClick={() => setView("items")}>
                 Inventory
               </button>
+              <button className="ghost-button" onClick={() => setView("ideas")}>
+                Ideas
+              </button>
               <button className="ghost-button" onClick={() => setView("supplements")}>
                 Supplements
+              </button>
+              <button className="ghost-button" onClick={() => setView("vault")}>
+                Private vault
               </button>
             </div>
           </div>
@@ -4427,9 +5946,10 @@ database context -> provider adapter -> suggested actions -> user confirmation`}
           ["tasks", "Tasks"],
           ["calendar", "Calendar"],
           ["items", "Inventory"],
+          ["ideas", "Ideas"],
           ["more", "More"]
         ].map(([key, label]) => (
-          <button key={key} className={`nav-tab ${view === key || (key === "more" && view === "help") ? "active" : ""}`} onClick={() => setView(key as View)}>
+          <button key={key} className={`nav-tab ${view === key || (key === "more" && (view === "help" || view === "alerts" || view === "vault")) ? "active" : ""}`} onClick={() => setView(key as View)}>
             {label}
           </button>
         ))}

@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { CommandTask, FocusSeason } from "@/lib/inventory-types";
+import type { CalmSound, CommandTask, FocusSeason } from "@/lib/inventory-types";
 
-const durationChoices = [5, 15, 25, 45, 60];
+const durationChoices = [5, 10, 15, 25, 45, 60, 90];
 
 function secondsFrom(value: FocusSeason, now = Date.now()) {
   if (!value.running || !value.endsAt) return Math.max(0, value.remainingSeconds);
@@ -16,8 +16,9 @@ function clock(seconds: number) {
   return `${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`;
 }
 
-function playGentleChime() {
+export function playCalmSound(sound: CalmSound = "chime") {
   try {
+    if (sound === "silent") return;
     const AudioContextClass = window.AudioContext;
     if (!AudioContextClass) return;
     const context = new AudioContextClass();
@@ -26,7 +27,8 @@ function playGentleChime() {
     gain.gain.exponentialRampToValueAtTime(0.05, context.currentTime + 0.03);
     gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.8);
     gain.connect(context.destination);
-    [523.25, 659.25].forEach((frequency, index) => {
+    const frequencies = sound === "rain" ? [196, 247, 294] : sound === "waves" ? [174, 220, 261.63] : sound === "birds" ? [784, 987.77, 1174.66] : [523.25, 659.25];
+    frequencies.forEach((frequency, index) => {
       const oscillator = context.createOscillator();
       oscillator.type = "sine";
       oscillator.frequency.value = frequency;
@@ -43,11 +45,13 @@ function playGentleChime() {
 type FocusSeasonProps = {
   value: FocusSeason;
   tasks: CommandTask[];
+  calmSound: CalmSound;
   onChange: (value: FocusSeason) => void;
   onOpenTask: (task: CommandTask) => void;
+  onOpenCalm: () => void;
 };
 
-export function FocusSeason({ value, tasks, onChange, onOpenTask }: FocusSeasonProps) {
+export function FocusSeason({ value, tasks, calmSound, onChange, onOpenTask, onOpenCalm }: FocusSeasonProps) {
   const [now, setNow] = useState(() => Date.now());
   const completedEndRef = useRef<string>("");
   const remainingSeconds = secondsFrom(value, now);
@@ -65,11 +69,11 @@ export function FocusSeason({ value, tasks, onChange, onOpenTask }: FocusSeasonP
     if (!value.running || remainingSeconds > 0 || !value.endsAt || completedEndRef.current === value.endsAt) return;
     completedEndRef.current = value.endsAt;
     onChange({ ...value, running: false, endsAt: undefined, remainingSeconds: 0, completedAt: new Date().toISOString() });
-    playGentleChime();
+    playCalmSound(calmSound);
     if ("Notification" in window && Notification.permission === "granted") {
       new Notification("Focus Season complete", { body: activeTask ? activeTask.title : "Your timer is finished." });
     }
-  }, [activeTask, onChange, remainingSeconds, value]);
+  }, [activeTask, calmSound, onChange, remainingSeconds, value]);
 
   const taskOptions = useMemo(
     () => tasks.filter((task) => !["Done", "Skipped", "Cancelled"].includes(task.status)),
@@ -130,9 +134,10 @@ export function FocusSeason({ value, tasks, onChange, onOpenTask }: FocusSeasonP
       <div className="focus-actions">
         {value.running ? <button className="button" type="button" onClick={pause}>Pause</button> : <button className="button" type="button" onClick={startOrResume}>{remainingSeconds && remainingSeconds < value.durationMinutes * 60 ? "Resume" : "Start"}</button>}
         <button className="ghost-button" type="button" onClick={restart}>Restart</button>
+        <button className="text-button" type="button" onClick={onOpenCalm}>Calm screen</button>
         {activeTask ? <button className="text-button" type="button" onClick={() => onOpenTask(activeTask)}>Open task</button> : null}
       </div>
-      <p className="focus-note">A gentle chime plays when it ends. Device alerts work while Mom Home is open and alerts are enabled.</p>
+      <p className="focus-note">Timer can be set from 1 to 180 minutes. The selected calm sound plays when it ends. Device alerts work while Mom Home is open and alerts are enabled.</p>
     </section>
   );
 }

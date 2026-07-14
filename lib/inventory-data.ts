@@ -8,12 +8,24 @@ import type {
   CommandTask,
   EnergyJournalEntry,
   FlagShape,
+  CalmSound,
+  HelpRequest,
+  HelperContact,
+  IdeaBoard,
+  IdeaContentType,
+  IdeaPriority,
+  IdeaPurpose,
+  IdeaStatus,
+  IdeaCard,
+  IdeaBoardSection,
+  IdeaBoardPlacement,
   Item,
   Location,
   LocationType,
   OrderEntry,
   OrderStatus,
   PurchasePreference,
+  PurchaseImportReview,
   PurchaseRecord,
   QuantityStatus,
   ReorderRecommendation,
@@ -26,7 +38,8 @@ import type {
   TaskStatus,
   TaskTag,
   TodayLens,
-  Urgency
+  Urgency,
+  VaultRecord
 } from "./inventory-types";
 import { todayInterfaceOptions } from "./today-interface-registry";
 
@@ -77,11 +90,16 @@ export const orderStatuses: OrderStatus[] = ["Needed", "Ordered", "Purchased", "
 export const purchasePreferences: PurchasePreference[] = ["Preferred", "Acceptable", "Do not buy again", "Unknown"];
 export const reorderRecommendations: ReorderRecommendation[] = ["Reorder same", "Compare first", "Substitute okay", "Avoid", "Unknown"];
 export const starModes: StarMode[] = ["0-3", "0-5", "gold", "off"];
+export const calmSounds: CalmSound[] = ["chime", "rain", "waves", "birds", "silent"];
 export const todayLenses: TodayLens[] = [...todayInterfaceOptions.map((option) => option.id), "last-used"];
 export const taskStatuses: TaskStatus[] = ["Open", "Doing", "Waiting", "Done", "Skipped", "Cancelled"];
 export const taskEfforts: TaskEffort[] = ["Unsorted", "Tiny", "Quick win", "Medium", "Big project", "Needs help"];
 export const flagShapes: FlagShape[] = ["Flag", "Circle", "Square", "Diamond", "Star", "Heart", "Custom"];
 export const calendarRepeats: CalendarRepeat[] = ["Never", "Daily", "Weekly", "Monthly", "Yearly"];
+export const ideaContentTypes: IdeaContentType[] = ["Photo", "Screenshot", "Web link", "Product", "Note", "Recipe", "Document", "Inventory item", "Task", "Project"];
+export const ideaStatuses: IdeaStatus[] = ["Saved", "Considering", "Approved", "Buying", "Purchased", "Completed", "Rejected"];
+export const ideaPriorities: IdeaPriority[] = ["None", "Low", "Medium", "High"];
+export const ideaPurposes: IdeaPurpose[] = ["Buy later", "Copy this idea", "Research", "Ask someone", "Gift idea", "Repair reference", "Compare later", "Use for project"];
 
 export const nowIso = () => new Date().toISOString();
 export const makeId = (prefix: string) => `${prefix}-${crypto.randomUUID()}`;
@@ -112,6 +130,60 @@ export const blankContainer = (locations: Location[]): Partial<Container> => ({
   notes: ""
 });
 
+export const blankIdeaBoard = (): Partial<IdeaBoard> => ({
+  name: "",
+  description: "",
+  roomLocationId: "",
+  sortOrder: 0
+});
+
+export const blankIdeaBoardSection = (boardId = ""): Partial<IdeaBoardSection> => ({
+  boardId,
+  name: "",
+  description: "",
+  sortOrder: 0
+});
+
+export const blankIdeaCard = (): Partial<IdeaCard> => ({
+  title: "",
+  contentType: "Note",
+  status: "Saved",
+  priority: "None",
+  notes: "",
+  imageUrls: [],
+  colorPalette: [],
+  sourceUrl: "",
+  sourceTitle: "",
+  sourceSite: "",
+  storeOrSeller: "",
+  price: "",
+  targetPrice: "",
+  dimensions: "",
+  color: "",
+  quantity: "",
+  purpose: "Research",
+  expirationDate: "",
+  seasonalMonth: "",
+  budgetCategory: "",
+  stackName: "",
+  tags: [],
+  roomLocationId: "",
+  relatedItemId: "",
+  relatedTaskId: "",
+  relatedProjectId: "",
+  relatedCalendarEntryId: "",
+  relatedOrderEntryId: "",
+  relatedPurchaseRecordId: ""
+});
+
+export const blankIdeaBoardPlacement = (boardId = "", cardId = ""): Partial<IdeaBoardPlacement> => ({
+  boardId,
+  cardId,
+  sectionId: "",
+  favorite: false,
+  sortOrder: 0
+});
+
 export const blankOrder = (): Partial<OrderEntry> => ({
   name: "",
   quantity: "",
@@ -132,8 +204,41 @@ export const blankPurchase = (item?: Item): Partial<PurchaseRecord> => ({
   brand: item?.brand ?? "",
   purchasedAt: new Date().toISOString().slice(0, 10),
   orderNumber: "",
+  receiptText: "",
+  aiConfidence: "Medium",
   purchasePreference: "Unknown",
-  reorderRecommendation: "Compare first"
+  reorderRecommendation: "Compare first",
+  replacementOptions: []
+});
+
+export const blankPurchaseImportReview = (): Partial<PurchaseImportReview> => ({
+  source: "Receipt text",
+  rawText: "",
+  status: "Needs review"
+});
+
+export const blankVaultRecord = (): Partial<VaultRecord> => ({
+  title: "",
+  category: "Other",
+  noteHint: ""
+});
+
+export const blankHelperContact = (): Partial<HelperContact> => ({
+  name: "",
+  phone: "",
+  email: "",
+  relationship: "",
+  preferred: false
+});
+
+export const blankHelpRequest = (): Partial<HelpRequest> => ({
+  title: "",
+  details: "",
+  urgency: "Soon",
+  status: "Open",
+  contactId: "",
+  relatedTaskId: "",
+  relatedOrderEntryId: ""
 });
 
 export const blankTask = (): Partial<CommandTask> => ({
@@ -338,6 +443,7 @@ export function seedState(): AppState {
         updatedAt: now
       }
     ],
+    purchaseImportQueue: [],
     purchaseRecords: [
       {
         id: "purchase-paper-towels",
@@ -350,6 +456,10 @@ export function seedState(): AppState {
         unitSize: "12 rolls",
         totalPrice: "24.99",
         notes: "Good value. Reorder this if available.",
+        aiSummary: "Known good reorder candidate from saved purchase history.",
+        aiConfidence: "High",
+        checkedAt: now,
+        replacementOptions: [],
         purchasePreference: "Preferred",
         reorderRecommendation: "Reorder same",
         createdAt: now,
@@ -398,6 +508,13 @@ export function seedState(): AppState {
       }
     ],
     supplementLogs: [],
+    helperContacts: [],
+    helpRequests: [],
+    vaultRecords: [],
+    ideaBoards: [],
+    ideaBoardSections: [],
+    ideaCards: [],
+    ideaBoardPlacements: [],
     focusSeason: {
       durationMinutes: 25,
       remainingSeconds: 25 * 60,
@@ -405,7 +522,10 @@ export function seedState(): AppState {
     },
     settings: {
       starMode: "0-5",
-      todayLens: "briefing"
+      todayLens: "briefing",
+      calmSound: "chime",
+      defaultNagIntervalMinutes: 15,
+      helperAlertDisclaimerAccepted: false
     }
   };
 }
@@ -425,6 +545,11 @@ export function migrateState(input: unknown): AppState {
   const purchaseRecords = Array.isArray(partial.purchaseRecords)
     ? partial.purchaseRecords.map((purchase) => ({
         ...purchase,
+        receiptText: purchase.receiptText || undefined,
+        aiSummary: purchase.aiSummary || undefined,
+        aiConfidence: purchase.aiConfidence ?? "Medium",
+        checkedAt: purchase.checkedAt || undefined,
+        replacementOptions: Array.isArray(purchase.replacementOptions) ? purchase.replacementOptions : [],
         purchasePreference: purchase.purchasePreference ?? "Unknown",
         reorderRecommendation: purchase.reorderRecommendation ?? "Compare first"
       }))
@@ -459,6 +584,7 @@ export function migrateState(input: unknown): AppState {
     containers: Array.isArray(partial.containers) ? partial.containers : fallback.containers,
     orderEntries,
     purchaseRecords,
+    purchaseImportQueue: Array.isArray(partial.purchaseImportQueue) ? partial.purchaseImportQueue : [],
     tasks,
     calendarEntries: Array.isArray(partial.calendarEntries)
       ? partial.calendarEntries.map((entry) => ({
@@ -475,8 +601,38 @@ export function migrateState(input: unknown): AppState {
     energyJournal: Array.isArray(partial.energyJournal) ? partial.energyJournal : [],
     supplementItems: Array.isArray(partial.supplementItems) ? partial.supplementItems : fallback.supplementItems,
     supplementLogs: Array.isArray(partial.supplementLogs) ? partial.supplementLogs : [],
+    ideaBoards: Array.isArray(partial.ideaBoards) ? partial.ideaBoards : [],
+    ideaBoardSections: Array.isArray(partial.ideaBoardSections) ? partial.ideaBoardSections : [],
+    ideaCards: Array.isArray(partial.ideaCards)
+      ? partial.ideaCards.map((card) => ({
+          ...card,
+          imageUrls: Array.isArray(card.imageUrls) ? card.imageUrls : [],
+          colorPalette: Array.isArray(card.colorPalette) ? card.colorPalette : [],
+          tags: Array.isArray(card.tags) ? card.tags : [],
+          priceHistory: Array.isArray(card.priceHistory) ? card.priceHistory : [],
+          status: card.status ?? "Saved",
+          priority: card.priority ?? "None",
+          contentType: card.contentType ?? "Note"
+        }))
+      : [],
+    ideaBoardPlacements: Array.isArray(partial.ideaBoardPlacements)
+      ? partial.ideaBoardPlacements.map((placement) => ({
+          ...placement,
+          favorite: Boolean(placement.favorite)
+        }))
+      : [],
     focusSeason,
-    settings: { ...fallback.settings, ...(partial.settings ?? {}) }
+    settings: {
+      ...fallback.settings,
+      ...(partial.settings ?? {}),
+      calmSound: calmSounds.includes((partial.settings as { calmSound?: CalmSound } | undefined)?.calmSound as CalmSound)
+        ? ((partial.settings as { calmSound?: CalmSound }).calmSound as CalmSound)
+        : fallback.settings.calmSound,
+      defaultNagIntervalMinutes: Number.isFinite(Number((partial.settings as { defaultNagIntervalMinutes?: number } | undefined)?.defaultNagIntervalMinutes))
+        ? Math.max(5, Math.min(120, Number((partial.settings as { defaultNagIntervalMinutes?: number }).defaultNagIntervalMinutes)))
+        : fallback.settings.defaultNagIntervalMinutes,
+      helperAlertDisclaimerAccepted: Boolean((partial.settings as { helperAlertDisclaimerAccepted?: boolean } | undefined)?.helperAlertDisclaimerAccepted)
+    }
   };
 }
 
@@ -500,8 +656,9 @@ export function getPurchasePriceSummary(itemId: string, purchases: PurchaseRecor
   };
 }
 
-const CAMERA_IMAGE_MAX_EDGE = 1920;
-const CAMERA_IMAGE_MIN_BYTES = 1024 * 1024;
+const CAMERA_IMAGE_MAX_EDGE = 1600;
+const CAMERA_IMAGE_MIN_BYTES = 512 * 1024;
+const CAMERA_IMAGE_QUALITIES = [0.82, 0.72, 0.62];
 
 function readFileAsDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
@@ -542,15 +699,13 @@ async function compactCameraImage(file: File) {
   const context = canvas.getContext("2d");
   if (!context) return original;
 
-  const isPng = file.type === "image/png";
-  if (!isPng) {
-    context.fillStyle = "#ffffff";
-    context.fillRect(0, 0, canvas.width, canvas.height);
-  }
+  context.fillStyle = "#ffffff";
+  context.fillRect(0, 0, canvas.width, canvas.height);
   context.drawImage(image, 0, 0, canvas.width, canvas.height);
 
-  const compacted = canvas.toDataURL(isPng ? "image/png" : "image/jpeg", isPng ? undefined : 0.82);
-  return compacted.length < original.length ? compacted : original;
+  const compactedCandidates = CAMERA_IMAGE_QUALITIES.map((quality) => canvas.toDataURL("image/jpeg", quality));
+  const smallestCompacted = compactedCandidates.sort((a, b) => a.length - b.length)[0];
+  return smallestCompacted && smallestCompacted.length < original.length ? smallestCompacted : original;
 }
 
 export async function fileToDataUrl(file?: File) {

@@ -14,6 +14,7 @@ import {
   signUpForCloud as signUpForSupabase
 } from "@/lib/cloud-sync";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import { firebaseConfigurationStatus } from "@/lib/firebase/client";
 import {
   createFirebaseHousehold,
   createFirebaseInvite,
@@ -52,6 +53,14 @@ function configuredProvider(): CloudProvider {
 
 export function activeCloudProviderName() {
   return configuredProvider() === "firebase" ? "Firebase" : "Supabase";
+}
+
+export function cloudConfigurationStatus() {
+  const provider = configuredProvider();
+  if (provider === "firebase") {
+    return { provider, providerName: "Firebase", ...firebaseConfigurationStatus() };
+  }
+  return { provider, providerName: "Supabase", configured: isSupabaseConfigured(), missing: isSupabaseConfigured() ? [] : ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"] };
 }
 
 export function isCloudConfigured() {

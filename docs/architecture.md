@@ -1,5 +1,9 @@
 # Mom Home MVP Architecture
 
+## App Map
+
+The current page and button flow is tracked in [Mom Home App Map](./app-map.md). Use that document before changing navigation or adding major new screens.
+
 ## Current MVP
 
 - Next.js, React, and TypeScript.
@@ -93,3 +97,18 @@ Automatic two-way synchronization is deliberately deferred until record-level co
 The next repository layer should split the AppState snapshot into record-level operations while preserving the current local fallback.
 
 AI should sit behind a separate adapter and only create suggested actions until the user confirms them.
+
+## Ideas / Visual Planner Architecture Notes
+
+The Ideas section is being added as a local-first domain before any AI, retail
+search, or scraping features. It uses separate board, section, card, and
+placement records so one idea card can appear on multiple boards without
+duplicating the underlying saved source. Idea cards should link to existing
+inventory, task, calendar, order, purchase, and project records instead of
+replacing those domains.
+
+See [Ideas / Visual Planner](./ideas-visual-planner.md) for the product scope.
+
+## Future backlog note
+
+Speculative visual concepts, provider-dependent automation, AI behavior, and vault/security ideas should be tracked in [Future Ideas / Backlog](./future-backlog.md) until they are promoted into a scoped roadmap phase.

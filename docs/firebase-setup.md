@@ -44,3 +44,19 @@ The owner can change a member's role, remove a member, decline a request, or rev
 ## Current scope
 
 Firebase now supports sign-in, household creation, manual backup/restore, private media URLs, and owner-approved shared household invitations. Push notifications and background automation are next cloud features.
+
+
+## Production readiness checklist
+
+Before treating cloud as live for Mom:
+
+1. Confirm all required `NEXT_PUBLIC_FIREBASE_*` values are present. Cloud protection now lists missing public keys when configuration is incomplete.
+2. Enable Email/Password Authentication.
+3. Publish `firebase/firestore.rules` and `firebase/storage.rules`.
+4. Create a test owner account, create a household, and run **Back up this device**.
+5. Upload at least one item photo and confirm it is moved to private household media storage during cloud backup.
+6. Create helper, admin, and viewer invitations, then verify the owner approval step before access appears.
+7. Confirm recent household activity records backup/access actions.
+8. Turn off network temporarily, try a cloud backup, then reconnect and use the queued backup retry control.
+
+Local browser saving remains the safety net even when cloud is unavailable.

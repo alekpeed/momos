@@ -6,6 +6,7 @@ import type { AppState } from "@/lib/inventory-types";
 import {
   CLOUD_HOUSEHOLD_KEY,
   activeCloudProviderName,
+  cloudConfigurationStatus,
   createCloudHousehold,
   currentCloudUser,
   isCloudConfigured,
@@ -28,6 +29,16 @@ type CloudSettingsProps = {
   onRestore: (state: unknown) => void;
 };
 
+type QueuedCloudBackup = {
+  householdId: string;
+  householdName: string;
+  state: AppState;
+  queuedAt: string;
+  reason: string;
+};
+
+const QUEUED_CLOUD_BACKUP_KEY = "mom-cloud-pending-backup-v1";
+
 function readableDate(value?: string) {
   if (!value) return "No cloud backup yet";
   const date = new Date(value);
@@ -35,6 +46,7 @@ function readableDate(value?: string) {
 }
 
 export function CloudSettings({ state, onRestore }: CloudSettingsProps) {
+  const configuration = cloudConfigurationStatus();
   const configured = isCloudConfigured();
   const providerName = activeCloudProviderName();
   const helperAccessSupported = supportsCloudHelperAccess();
@@ -51,12 +63,34 @@ export function CloudSettings({ state, onRestore }: CloudSettingsProps) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [online, setOnline] = useState(true);
+  const [queuedBackup, setQueuedBackup] = useState<QueuedCloudBackup | null>(null);
 
   const selectedHousehold = useMemo(
     () => households.find((household) => household.id === selectedHouseholdId),
     [households, selectedHouseholdId]
   );
   const canEditSelectedHousehold = selectedHousehold?.role !== "viewer";
+  const canManageSelectedHousehold = selectedHousehold?.role === "owner";
+
+  useEffect(() => {
+    setOnline(typeof navigator === "undefined" ? true : navigator.onLine);
+    try {
+      const saved = localStorage.getItem(QUEUED_CLOUD_BACKUP_KEY);
+      setQueuedBackup(saved ? JSON.parse(saved) as QueuedCloudBackup : null);
+    } catch {
+      setQueuedBackup(null);
+    }
+    function updateOnline() {
+      setOnline(navigator.onLine);
+    }
+    window.addEventListener("online", updateOnline);
+    window.addEventListener("offline", updateOnline);
+    return () => {
+      window.removeEventListener("online", updateOnline);
+      window.removeEventListener("offline", updateOnline);
+    };
+  }, []);
 
   const refreshHouseholds = useCallback(async (preferredId?: string) => {
     const available = await listCloudHouseholds();
@@ -161,17 +195,71 @@ export function CloudSettings({ state, onRestore }: CloudSettingsProps) {
     });
   }
 
+  function saveQueuedBackup(reason: string) {
+    if (!selectedHouseholdId || !selectedHousehold) return;
+    const queued: QueuedCloudBackup = {
+      householdId: selectedHouseholdId,
+      householdName: selectedHousehold.name,
+      state,
+      queuedAt: new Date().toISOString(),
+      reason
+    };
+    try {
+      localStorage.setItem(QUEUED_CLOUD_BACKUP_KEY, JSON.stringify(queued));
+      setQueuedBackup(queued);
+    } catch {
+      setError("Cloud backup failed and this browser could not keep a pending cloud copy. Download a JSON backup before leaving this device.");
+    }
+  }
+
+  async function performBackup(backupState: AppState) {
+    if (!selectedHouseholdId) return;
+    const result = await saveCloudState(selectedHouseholdId, backupState);
+    const latest = await loadCloudState(selectedHouseholdId);
+    setSnapshot(latest);
+    const photoNote = result.uploadedPhotos
+      ? ` ${result.uploadedPhotos} ${result.uploadedPhotos === 1 ? "photo was" : "photos were"} moved to private storage.`
+      : "";
+    setMessage(`Cloud backup saved as revision ${result.revision}.${photoNote}`);
+  }
+
   function backUpNow() {
     if (!selectedHouseholdId) return;
     void run(async () => {
-      const result = await saveCloudState(selectedHouseholdId, state);
-      const latest = await loadCloudState(selectedHouseholdId);
-      setSnapshot(latest);
-      const photoNote = result.uploadedPhotos
-        ? ` ${result.uploadedPhotos} ${result.uploadedPhotos === 1 ? "photo was" : "photos were"} moved to private storage.`
-        : "";
-      setMessage(`Cloud backup saved as revision ${result.revision}.${photoNote}`);
+      if (!online) {
+        saveQueuedBackup("Device appears offline.");
+        setMessage("This device looks offline, so the cloud backup was queued locally. Retry when internet is back.");
+        return;
+      }
+      try {
+        await performBackup(state);
+        localStorage.removeItem(QUEUED_CLOUD_BACKUP_KEY);
+        setQueuedBackup(null);
+      } catch (reason) {
+        saveQueuedBackup(reason instanceof Error ? reason.message : "Cloud backup failed.");
+        throw reason;
+      }
     });
+  }
+
+  function retryQueuedBackup() {
+    if (!queuedBackup) return;
+    void run(async () => {
+      if (!online) {
+        setMessage("Still offline. The queued backup is safe on this device for now.");
+        return;
+      }
+      await performBackup(queuedBackup.state);
+      localStorage.removeItem(QUEUED_CLOUD_BACKUP_KEY);
+      setQueuedBackup(null);
+      setMessage("Queued cloud backup uploaded and cleared from this device.");
+    });
+  }
+
+  function clearQueuedBackup() {
+    localStorage.removeItem(QUEUED_CLOUD_BACKUP_KEY);
+    setQueuedBackup(null);
+    setMessage("Queued cloud backup cleared from this device. Local data was not changed.");
   }
 
   function inspectRestore() {
@@ -225,6 +313,7 @@ export function CloudSettings({ state, onRestore }: CloudSettingsProps) {
         <div className="cloud-setup-note">
           <strong>Ready when the cloud project is created</strong>
           <span>Add the {providerName} web configuration, then restart the app. The account and backup controls will appear here.</span>
+          {configuration.missing.length ? <span>Missing: {configuration.missing.join(", ")}</span> : null}
         </div>
       </div>
     );
@@ -277,6 +366,7 @@ export function CloudSettings({ state, onRestore }: CloudSettingsProps) {
 
       <div className="cloud-account-line">
         <span>{user.email}</span>
+        <span className={`cloud-online ${online ? "connected" : "offline"}`}>{online ? "Online" : "Offline - local still works"}</span>
         <button className="text-button" onClick={signOut} disabled={busy}>Sign out</button>
       </div>
 
@@ -300,6 +390,7 @@ export function CloudSettings({ state, onRestore }: CloudSettingsProps) {
 
           <div className="cloud-summary">
             <div><span>Access</span><strong>{selectedHousehold?.role ?? "member"}</strong></div>
+            <div><span>Can manage access</span><strong>{canManageSelectedHousehold ? "Yes" : "No"}</strong></div>
             <div><span>Cloud revision</span><strong>{snapshot?.revision ?? "None"}</strong></div>
             <div><span>Last protected</span><strong>{readableDate(snapshot?.updatedAt)}</strong></div>
           </div>
@@ -308,6 +399,17 @@ export function CloudSettings({ state, onRestore }: CloudSettingsProps) {
             <button className="button" onClick={backUpNow} disabled={busy || !canEditSelectedHousehold}>{busy ? "Working..." : canEditSelectedHousehold ? "Back up this device" : "Read-only access"}</button>
             <button className="ghost-button" onClick={inspectRestore} disabled={busy}>Check cloud backup</button>
           </div>
+
+          {queuedBackup ? (
+            <div className="cloud-restore-review cloud-queued-backup">
+              <div>
+                <strong>Pending cloud backup</strong>
+                <span>{queuedBackup.householdName} queued {readableDate(queuedBackup.queuedAt)}. Reason: {queuedBackup.reason}</span>
+              </div>
+              <button className="ghost-button" onClick={retryQueuedBackup} disabled={busy || !canEditSelectedHousehold}>Retry upload</button>
+              <button className="text-button" onClick={clearQueuedBackup}>Clear queued copy</button>
+            </div>
+          ) : null}
 
           {pendingRestore ? (
             <div className="cloud-restore-review">
@@ -321,11 +423,11 @@ export function CloudSettings({ state, onRestore }: CloudSettingsProps) {
           ) : null}
 
           <div className="cloud-permissions">
-            <span><strong>Owner</strong> controls access</span>
-            <span><strong>Admin</strong> manages household data</span>
-            <span><strong>Helper</strong> can update shared work</span>
+            <span><strong>Owner</strong> creates households, approves access, and controls roles</span>
+            <span><strong>Admin</strong> can manage household data and access, but cannot replace the owner</span>
+            <span><strong>Helper</strong> can update shared household work</span>
             <span><strong>Viewer</strong> can only read</span>
-            <small>The private vault is never included in helper access.</small>
+            <small>The private vault is never included in helper access. Local saving remains active even when cloud is offline.</small>
           </div>
 
           {helperAccessSupported && selectedHouseholdId && selectedHousehold ? (
