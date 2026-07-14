@@ -2072,6 +2072,12 @@ export default function Home() {
       tasks: state.tasks.filter((task) => task.projectId === project.id)
     }));
     const looseTasks = state.tasks.filter((task) => !task.projectId);
+    const activeTaskCount = activeTasks.length;
+    const blockedTasks = activeTasks.filter((task) => activeBlockers(task).length);
+    const readyTasks = activeTasks.filter((task) => !activeBlockers(task).length && task.status !== "Waiting");
+    const unlockerTasks = orderProjectTasks(state.tasks.filter((task) =>
+      !isFinishedTask(task) && activeTasks.some((candidate) => (candidate.dependencyIds ?? []).includes(task.id))
+    ));
     const renderSequenceTask = (task: CommandTask) => {
       const blockers = activeBlockers(task);
       const finished = isFinishedTask(task);
@@ -2097,6 +2103,51 @@ export default function Home() {
     };
     return (
       <div className="project-map">
+        <article className="project-card everything-map">
+          <div className="card-row">
+            <h3>Everything Map</h3>
+            <span className="badge ready">{readyTasks.length} ready</span>
+            {blockedTasks.length ? <span className="badge blocked">{blockedTasks.length} blocked</span> : null}
+          </div>
+          <p className="meta">A household-wide dependency view that explains what is available now, what is waiting, and which tasks unlock other work.</p>
+          <div className="everything-map-grid">
+            <div>
+              <span>Active tasks</span>
+              <strong>{activeTaskCount}</strong>
+            </div>
+            <div>
+              <span>Ready now</span>
+              <strong>{readyTasks.length}</strong>
+            </div>
+            <div>
+              <span>Waiting paths</span>
+              <strong>{blockedTasks.length}</strong>
+            </div>
+            <div>
+              <span>Unlock keys</span>
+              <strong>{unlockerTasks.length}</strong>
+            </div>
+          </div>
+          {unlockerTasks.length ? (
+            <div className="unlock-list" aria-label="Tasks that unlock other tasks">
+              {unlockerTasks.slice(0, 5).map((task) => {
+                const unlocks = activeTasks.filter((candidate) => (candidate.dependencyIds ?? []).includes(task.id));
+                return (
+                  <div className="unlock-row" key={task.id}>
+                    <div>
+                      <strong>{task.title}</strong>
+                      <p className="meta">Unlocks {unlocks.length}: {unlocks.slice(0, 3).map((entry) => entry.title).join(", ")}{unlocks.length > 3 ? `, +${unlocks.length - 3} more` : ""}</p>
+                    </div>
+                    <button className="text-button" type="button" onClick={() => openTaskForm(task)}>Open</button>
+                  </div>
+                );
+              })}
+              {unlockerTasks.length > 5 ? <p className="meta">{unlockerTasks.length - 5} more unlocking task{unlockerTasks.length - 5 === 1 ? "" : "s"} are lower in the map.</p> : null}
+            </div>
+          ) : (
+            <p className="meta">No active dependencies yet. Add prerequisites on task cards to build the map.</p>
+          )}
+        </article>
         {groups.map(({ project, tasks }) => {
           const orderedTasks = orderProjectTasks(tasks);
           const finished = tasks.filter(isFinishedTask);
