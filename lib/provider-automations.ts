@@ -55,19 +55,21 @@ function configuredEndpoint(envKey: string) {
   return value || undefined;
 }
 
+export function getProviderAutomationStatus(key: ProviderAutomationKey): ProviderAutomationStatus {
+  const definition = providerDefinitions[key];
+  const endpoint = configuredEndpoint(definition.envKey);
+  return {
+    key,
+    label: definition.label,
+    configured: Boolean(endpoint),
+    endpoint,
+    summary: definition.summary,
+    nextStep: definition.nextStep
+  };
+}
+
 export function getProviderAutomationStatuses(): ProviderAutomationStatus[] {
-  return (Object.keys(providerDefinitions) as ProviderAutomationKey[]).map((key) => {
-    const definition = providerDefinitions[key];
-    const endpoint = configuredEndpoint(definition.envKey);
-    return {
-      key,
-      label: definition.label,
-      configured: Boolean(endpoint),
-      endpoint,
-      summary: definition.summary,
-      nextStep: definition.nextStep
-    };
-  });
+  return (Object.keys(providerDefinitions) as ProviderAutomationKey[]).map((key) => getProviderAutomationStatus(key));
 }
 
 export function providerAutomationCounts(state: AppState) {

@@ -24,6 +24,42 @@ These public environment variables are checked at build/deploy time:
 - Urgent helper alerts remain non-911 helper messages and must not claim emergency dispatch.
 - Retailer integrations should prefer official APIs or approved product/search providers instead of brittle scraping.
 
+## Helper Email Endpoint Contract
+
+When `NEXT_PUBLIC_MOM_HOME_EMAIL_ENDPOINT` is configured, open help requests show a **Provider email** action next to the local Email draft fallback. The browser sends a reviewed `POST` request to that endpoint with JSON shaped like:
+
+```json
+{
+  "kind": "help_request",
+  "channel": "email",
+  "request": {
+    "id": "help-request-id",
+    "title": "What Mom needs",
+    "details": "Optional details",
+    "urgency": "Soon",
+    "nonEmergencyNotice": "This is a helper alert from Mom Home, not emergency dispatch or 911.",
+    "createdAt": "ISO timestamp"
+  },
+  "contact": {
+    "name": "Helper name",
+    "phone": "optional",
+    "email": "helper@example.com",
+    "relationship": "optional"
+  },
+  "message": {
+    "to": "helper@example.com",
+    "subject": "What Mom needs",
+    "body": "Reviewed helper message text"
+  },
+  "review": {
+    "reviewedByUser": true,
+    "sentFrom": "Mom Home"
+  }
+}
+```
+
+The endpoint should return any 2xx status for success. Non-2xx responses are shown to Mom as provider send failures, and the request remains available for local copy, SMS draft, or Email draft fallback.
+
 ## Current App Behavior
 
-The More screen shows a Provider automations panel with connection status and counts for records that could use provider support. With no endpoints configured, it acts as a readiness checklist and does not call any live services.
+The More screen shows a Provider automations panel with connection status and counts for records that could use provider support. With no endpoints configured, it acts as a readiness checklist and does not call any live services. When the email endpoint is configured, Help requests can send reviewed provider email while preserving Copy, SMS draft, and Email draft fallbacks.
