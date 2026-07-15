@@ -63,6 +63,7 @@ import { TodayLenses, type TodayFocus, type TodaySignal, type TodaySignalKind, t
 import { HelpCenter } from "@/app/help-center";
 import { FocusSeason, playCalmSound } from "@/app/focus-season";
 import { CloudSettings } from "@/app/cloud-settings";
+import { ProviderAutomationPanel } from "@/app/provider-automation-panel";
 import { CloudImage, CloudMediaLink } from "@/app/cloud-media";
 import type {
   AppState,
@@ -5695,6 +5696,8 @@ export default function Home() {
       {view === "more" ? (
         <section className="grid">
           <CloudSettings state={state} onRestore={(cloudState) => setState(migrateState(cloudState))} />
+
+          <ProviderAutomationPanel state={state} />
 
           <div className="panel">
             <div className="section-head">
