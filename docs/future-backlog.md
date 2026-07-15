@@ -41,20 +41,20 @@ Status: local-first Ideas is implemented; live/provider features remain future.
 
 ## Phase 4 Follow-Ups: Reminders And Help
 
-Status: Phase 4 code is complete; these are provider/live-validation follow-ups.
+Status: Phase 4 code is complete; provider endpoint readiness is visible in the app, but live send/push providers still require protected endpoints and validation.
 
-- Provider-backed true background push beyond the current device/browser notification foundation.
-- Real SMS/email send provider, if drafts through the device apps are not enough.
+- Provider-backed true background push beyond the current device/browser notification foundation using the provider endpoint slot.
+- Real SMS/email send providers, if drafts through the device apps are not enough, using the provider endpoint slots.
 - Escalation/audit provider for helper alerts if Mom needs confirmed receipt.
 - More visual task-map design work only if the current flowchart preview is not enough after live use.
 
 ## Phase 5 Candidates: Purchases And AI
 
-Status: Phase 5 code is complete locally; these are provider/live-validation follow-ups.
+Status: Phase 5 code is complete locally; provider endpoint readiness is visible in the app, but live inbox, retailer, and remote AI providers still require protected endpoints and validation.
 
-- Live email inbox parsing with explicit permission.
-- Remote AI daily docket provider, if local summaries are not enough.
-- Retailer/provider adapters for Amazon, Walmart, Home Depot, Costco, pharmacies, and other stores.
+- Live email inbox parsing with explicit permission using the receipt inbox endpoint slot.
+- Remote AI daily docket provider, if local summaries are not enough, using the remote AI endpoint slot.
+- Retailer/provider adapters for Amazon, Walmart, Home Depot, Costco, pharmacies, and other stores using the retailer endpoint slot.
 - Live price refreshes, availability checks, and checked-at timestamps from provider APIs.
 - AI use of energy journal data only after direct user request.
 
