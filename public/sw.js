@@ -1,5 +1,8 @@
 const CACHE_NAME = "mom-home-v3";
-const APP_SHELL = ["/", "/manifest.webmanifest", "/icon.svg", "/icon-192.png", "/icon-512.png", "/apple-touch-icon.png"];
+const APP_SHELL = ["./", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "apple-touch-icon.png"];
+const scopeUrl = new URL(self.registration.scope);
+const staticPrefix = `${scopeUrl.pathname}_next/static/`;
+const appShellPathnames = new Set(APP_SHELL.map((path) => new URL(path, self.registration.scope).pathname));
 
 async function networkFirst(request) {
   const cache = await caches.open(CACHE_NAME);
@@ -8,7 +11,7 @@ async function networkFirst(request) {
     if (response.ok) cache.put(request, response.clone());
     return response;
   } catch {
-    return (await cache.match(request)) || (await cache.match("/")) || Response.error();
+    return (await cache.match(request)) || (await cache.match(new URL("./", self.registration.scope).toString())) || Response.error();
   }
 }
 
@@ -24,7 +27,8 @@ async function cacheFirst(request) {
 }
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
+  const urls = APP_SHELL.map((path) => new URL(path, self.registration.scope).toString());
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(urls)));
   self.skipWaiting();
 });
 
@@ -47,7 +51,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (url.pathname.startsWith("/_next/static/") || APP_SHELL.includes(url.pathname)) {
+  if (url.pathname.startsWith(staticPrefix) || appShellPathnames.has(url.pathname)) {
     event.respondWith(cacheFirst(event.request));
   }
 });

@@ -107,6 +107,8 @@ import type {
   View
 } from "@/lib/inventory-types";
 
+const appBasePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+
 function statusClass(status: QuantityStatus) {
   if (status === "Low" || status === "Very low") return "badge low";
   if (status === "Out") return "badge out";
@@ -344,7 +346,7 @@ export default function Home() {
 
   useEffect(() => {
     if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+      navigator.serviceWorker.register(`${appBasePath}/sw.js`).catch(() => undefined);
     }
     setNotificationPermission("Notification" in window ? Notification.permission : "unsupported");
   }, []);
