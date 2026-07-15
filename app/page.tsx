@@ -64,6 +64,7 @@ import { HelpCenter } from "@/app/help-center";
 import { FocusSeason, playCalmSound } from "@/app/focus-season";
 import { CloudSettings } from "@/app/cloud-settings";
 import { ProviderAutomationPanel } from "@/app/provider-automation-panel";
+import { buildHelpProviderPayload, getProviderAutomationStatus } from "@/lib/provider-automations";
 import { CloudImage, CloudMediaLink } from "@/app/cloud-media";
 import type {
   AppState,
@@ -259,6 +260,9 @@ export default function Home() {
   const [showIdeaTrash, setShowIdeaTrash] = useState(false);
   const [showIdeaCompare, setShowIdeaCompare] = useState(false);
   const [showHelpRequestForm, setShowHelpRequestForm] = useState(false);
+  const [providerSendMessage, setProviderSendMessage] = useState("");
+  const [providerSendError, setProviderSendError] = useState("");
+  const [providerSendingRequestId, setProviderSendingRequestId] = useState("");
   const [showHelperContactForm, setShowHelperContactForm] = useState(false);
   const [editingHelpRequestId, setEditingHelpRequestId] = useState("");
   const [editingHelperContactId, setEditingHelperContactId] = useState("");
@@ -1089,8 +1093,12 @@ export default function Home() {
     setNotificationPermission(permission);
   }
 
+  function helperContactForRequest(contactId?: string) {
+    return state.helperContacts.find((entry) => entry.id === contactId) ?? preferredHelperContacts[0];
+  }
+
   function helperContactLabel(contactId?: string) {
-    const contact = state.helperContacts.find((entry) => entry.id === contactId) ?? preferredHelperContacts[0];
+    const contact = helperContactForRequest(contactId);
     if (!contact) return "No helper selected";
     return [contact.name, contact.relationship].filter(Boolean).join(" - ");
   }
@@ -1207,10 +1215,60 @@ export default function Home() {
   }
 
   function helpRequestHref(request: HelpRequest, channel: "email" | "sms") {
-    const contact = state.helperContacts.find((entry) => entry.id === request.contactId) ?? preferredHelperContacts[0];
+    const contact = helperContactForRequest(request.contactId);
     const body = encodeURIComponent(helpRequestText(request));
     if (channel === "email") return `mailto:${contact?.email ?? ""}?subject=${encodeURIComponent(request.title)}&body=${body}`;
     return `sms:${contact?.phone ?? ""}?&body=${body}`;
+  }
+
+  async function sendHelpRequestEmailProvider(request: HelpRequest) {
+    const provider = getProviderAutomationStatus("email");
+    const contact = helperContactForRequest(request.contactId);
+    setProviderSendMessage("");
+    setProviderSendError("");
+
+    if (!provider.endpoint) {
+      setProviderSendError("No email provider endpoint is configured. Use the Email draft button instead.");
+      return;
+    }
+    if (!contact?.email) {
+      setProviderSendError("Choose a helper contact with an email address before using provider email.");
+      return;
+    }
+    if (!window.confirm(`Send this helper email to ${contact.name} through the configured provider? Review the draft text first if you are unsure.`)) return;
+
+    setProviderSendingRequestId(request.id);
+    try {
+      const response = await fetch(provider.endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...buildHelpProviderPayload(request, state),
+          channel: "email",
+          message: {
+            to: contact.email,
+            subject: request.title,
+            body: helpRequestText(request)
+          },
+          review: {
+            reviewedByUser: true,
+            sentFrom: "Mom Home"
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const text = await response.text().catch(() => "");
+        throw new Error(text || `Email provider returned ${response.status}.`);
+      }
+
+      updateHelpRequestStatus(request, "Sent");
+      setProviderSendMessage(`Provider email sent to ${contact.name}.`);
+    } catch (reason) {
+      setProviderSendError(reason instanceof Error ? reason.message : "Provider email did not send.");
+    } finally {
+      setProviderSendingRequestId("");
+    }
   }
 
   function updateDefaultNagIntervalMinutes(minutes: number) {
@@ -4420,6 +4478,8 @@ export default function Home() {
             <span className="today-eyebrow">Phase 4</span>
             <h2>Help requests & reminders</h2>
             <p className="muted">One place for repeat reminders, delivery watch items, and messages Mom can hand to a helper.</p>
+            {providerSendMessage ? <p className="success-text">{providerSendMessage}</p> : null}
+            {providerSendError ? <p className="error-text">{providerSendError}</p> : null}
           </div>
           <button className="ghost-button" onClick={() => setView("home")}>Back to Today</button>
         </div>
@@ -4467,6 +4527,11 @@ export default function Home() {
                     <button className="small-button" onClick={() => copyHelpRequest(request)}>Copy</button>
                     <a className="small-button" href={helpRequestHref(request, "sms")} onClick={() => updateHelpRequestStatus(request, "Sent")}>Text</a>
                     <a className="small-button" href={helpRequestHref(request, "email")} onClick={() => updateHelpRequestStatus(request, "Sent")}>Email</a>
+                    {getProviderAutomationStatus("email").configured ? (
+                      <button className="small-button" disabled={providerSendingRequestId === request.id} onClick={() => void sendHelpRequestEmailProvider(request)}>
+                        {providerSendingRequestId === request.id ? "Sending..." : "Provider email"}
+                      </button>
+                    ) : null}
                     <button className="ghost-button" onClick={() => openHelpRequestForm(request)}>Edit</button>
                     <button className="ghost-button" onClick={() => updateHelpRequestStatus(request, "Resolved")}>Resolve</button>
                     <button className="ghost-button" onClick={() => updateHelpRequestStatus(request, "Cancelled")}>Cancel</button>
