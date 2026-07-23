@@ -146,14 +146,20 @@ private struct SignalTile: View {
         Card(padding: Theme.Space.lg) {
             VStack(alignment: .leading, spacing: Theme.Space.sm) {
                 Image(systemName: kind.systemImage)
-                    .font(.title3)
-                    .foregroundStyle(kind.tone.ink)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(kind.color)
+                    .frame(width: 32, height: 32)
+                    .background(kind.color.opacity(0.15), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                 Text("\(count)")
                     .font(.system(.largeTitle, design: .serif).weight(.semibold))
                     .foregroundStyle(Theme.ink)
                     .contentTransition(.numericText())
-                Text("\(kind.rawValue) · \(caption)")
-                    .font(.caption)
+                Text(kind.rawValue.uppercased())
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(kind.color)
+                    .tracking(0.6)
+                Text(caption)
+                    .font(.caption2)
                     .foregroundStyle(Theme.inkSecondary)
             }
         }

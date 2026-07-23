@@ -8,38 +8,46 @@ import UIKit
 /// designed for both appearances rather than naively inverted.
 enum Theme {
 
-    // MARK: Palette
+    // MARK: Palette — "Warm Paper"
 
-    /// Soft warm cream / warm charcoal.
-    static let background = dynamic(light: 0xF7F3EC, dark: 0x1A1712)
-    /// Card / raised surface.
-    static let surface = dynamic(light: 0xFFFFFF, dark: 0x252017)
-    /// A slightly recessed fill for chips and wells.
-    static let surfaceMuted = dynamic(light: 0xF0EAE0, dark: 0x2E2819)
-    /// Deep sage / muted teal — primary action color.
-    static let primary = dynamic(light: 0x4C7A6B, dark: 0x86B3A3)
-    /// Warm gold accent, used sparingly for stars / highlights.
-    static let gold = dynamic(light: 0xC29A45, dark: 0xD9B662)
-    /// Soft clay — warmth and gentle warnings.
-    static let clay = dynamic(light: 0xC1785C, dark: 0xD79372)
-    /// Lavender-gray — quiet secondary accent.
-    static let lavender = dynamic(light: 0x7E7C9C, dark: 0xA6A3C4)
+    /// Warm cream stock / warm charcoal.
+    static let background = dynamic(light: 0xFAF5EA, dark: 0x1A1712)
+    /// Ivory card / raised surface.
+    static let surface = dynamic(light: 0xFFFDF7, dark: 0x252017)
+    /// A slightly recessed warm fill for chips and wells.
+    static let surfaceMuted = dynamic(light: 0xF1E9D6, dark: 0x2E2819)
+    /// Antique gold — the brand thread and primary interactive color.
+    static let primary = dynamic(light: 0xA07D2E, dark: 0xE4C579)
+    /// Lighter gold for decorative labels, stars, and hairlines.
+    static let gold = dynamic(light: 0xB79040, dark: 0xD9B662)
+    /// Soft clay — warmth and gentle accents.
+    static let clay = dynamic(light: 0xB96A4C, dark: 0xD79372)
+    /// Periwinkle — quiet secondary accent.
+    static let lavender = dynamic(light: 0x6D6EA0, dark: 0xA6A3C4)
 
     // MARK: Text
 
-    static let ink = dynamic(light: 0x2B2A26, dark: 0xF1EEE6)
-    static let inkSecondary = dynamic(light: 0x6B675E, dark: 0xB7B2A6)
-    static let inkTertiary = dynamic(light: 0x938E82, dark: 0x847F73)
+    static let ink = dynamic(light: 0x2B2A22, dark: 0xF1EEE6)
+    static let inkSecondary = dynamic(light: 0x857C68, dark: 0xB7B2A6)
+    static let inkTertiary = dynamic(light: 0xA79E86, dark: 0x847F73)
 
     // MARK: Semantic (separate from the accent)
 
-    static let good = dynamic(light: 0x3F7A57, dark: 0x74B48C)
-    static let warning = dynamic(light: 0xB06B1F, dark: 0xD9A159)
-    static let critical = dynamic(light: 0xB0473A, dark: 0xE08A7C)
+    static let good = dynamic(light: 0x4C7A6B, dark: 0x86B3A3)
+    static let warning = dynamic(light: 0xB0791F, dark: 0xD9A159)
+    static let critical = dynamic(light: 0xBF5561, dark: 0xE08A7C)
+
+    // MARK: Category color code (Do / Buy / Take / Watch / Help)
+
+    static let catDo    = dynamic(light: 0x8A5AA5, dark: 0xC0A3DE)
+    static let catBuy   = dynamic(light: 0x4C7A6B, dark: 0x86B3A3)
+    static let catTake  = dynamic(light: 0xB7862A, dark: 0xD9B662)
+    static let catWatch = dynamic(light: 0x6D6EA0, dark: 0xA6A3C4)
+    static let catHelp  = dynamic(light: 0xBF5561, dark: 0xDD8A8A)
 
     // MARK: Lines & shadow
 
-    static let hairline = dynamic(light: 0xE4DDD0, dark: 0x38311F)
+    static let hairline = dynamic(light: 0xECE3D0, dark: 0x38311F)
     static let shadow = Color.black.opacity(0.06)
 
     // MARK: Shape

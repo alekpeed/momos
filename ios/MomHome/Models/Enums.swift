@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 /// On-hand status for an inventory item. Mom-defined meaning stays intact;
 /// these are only coarse buckets for the low-stock path.
@@ -106,18 +107,15 @@ enum TodaySignalKind: String, CaseIterable, Identifiable {
         case .help:  return "hand.raised"
         }
     }
-    var tone: Tone {
+    /// The category's color-code hue (Do purple, Buy sage, Take amber,
+    /// Watch periwinkle, Help rose) — consistent everywhere it appears.
+    var color: Color {
         switch self {
-        case .doIt:  return .primary
-        case .buy:   return .lavender
-        case .take:  return .gold
-        case .watch: return .neutral
-        case .help:  return .clayTone
+        case .doIt:  return Theme.catDo
+        case .buy:   return Theme.catBuy
+        case .take:  return Theme.catTake
+        case .watch: return Theme.catWatch
+        case .help:  return Theme.catHelp
         }
     }
-}
-
-extension Tone {
-    /// Convenience alias so signal tinting reads clearly.
-    static var clayTone: Tone { .warning }
 }
