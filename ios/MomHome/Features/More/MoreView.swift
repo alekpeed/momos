@@ -6,6 +6,9 @@ struct MoreView: View {
 
     var body: some View {
         List {
+            Section {
+                link("Search everything", "magnifyingglass", SearchView())
+            }
             Section("Household") {
                 link("Orders & purchases", "cart", OrdersView())
                 link("Places & bins", "map", PlacesView())

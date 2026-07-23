@@ -4,7 +4,9 @@ import SwiftUI
 /// iOS handoff brief. Uses the modern `Tab` API and a per-tab `NavigationStack`.
 struct RootView: View {
     enum Section: Hashable { case today, tasks, calendar, inventory, ideas, more }
+    @Environment(\.modelContext) private var context
     @State private var selection: Section = .today
+    @State private var showOnboarding = false
 
     var body: some View {
         TabView(selection: $selection) {
@@ -27,6 +29,18 @@ struct RootView: View {
                 NavigationStack { MoreView() }
             }
         }
+        .onAppear {
+            if !AppSettings.current(in: context).hasOnboarded { showOnboarding = true }
+        }
+        .fullScreenCover(isPresented: $showOnboarding) {
+            OnboardingView(onDone: completeOnboarding)
+        }
+    }
+
+    private func completeOnboarding() {
+        AppSettings.current(in: context).hasOnboarded = true
+        try? context.save()
+        showOnboarding = false
     }
 }
 

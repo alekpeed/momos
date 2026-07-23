@@ -64,6 +64,21 @@ Groundwork for shipping through the Apple Developer Program:
 - **Accessibility** — VoiceOver labels on icon-only controls; Dynamic Type via
   system text styles. iPhone-only (`TARGETED_DEVICE_FAMILY = 1`).
 
+## Feature parity (Tier 2)
+
+The engine features from the web app / brief, now native:
+
+- **Calm** screen (breathing + Focus Season countdown) and a private **Energy journal**.
+- **Projects** management and a **task unlock map** (Everything Map): ready / blocked /
+  what-unlocks-what.
+- **Ideas** depth: search, sort, favorites compare, archive/restore, and convert a
+  card into a task / order / item / reminder.
+- **Supplement reports** — export PDF or CSV via the share sheet.
+- **Receipt import** — paste receipt text, auto-extract product/store/price/date,
+  review before saving.
+- **App-wide search** across tasks, inventory, ideas, purchases, and orders.
+- **First-run onboarding**.
+
 ## Architecture
 
 - `MomHomeApp.swift` — app entry, builds the SwiftData `ModelContainer`, seeds on first launch.

@@ -438,6 +438,7 @@ final class AppSettings {
     @Attribute(.unique) var id: String
     var householdName: String
     var seeded: Bool
+    var hasOnboarded: Bool
     var defaultNagIntervalMinutes: Int
     var helperAlertDisclaimerAccepted: Bool
 
@@ -445,12 +446,14 @@ final class AppSettings {
         id: String = "settings",
         householdName: String = "Our Home",
         seeded: Bool = false,
+        hasOnboarded: Bool = false,
         defaultNagIntervalMinutes: Int = 15,
         helperAlertDisclaimerAccepted: Bool = false
     ) {
         self.id = id
         self.householdName = householdName
         self.seeded = seeded
+        self.hasOnboarded = hasOnboarded
         self.defaultNagIntervalMinutes = defaultNagIntervalMinutes
         self.helperAlertDisclaimerAccepted = helperAlertDisclaimerAccepted
     }

@@ -106,6 +106,12 @@ struct TodayView: View {
             .padding(.top, Theme.Space.sm)
         }
         .navigationTitle(householdName)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink { SearchView() } label: { Image(systemName: "magnifyingglass") }
+                    .accessibilityLabel("Search")
+            }
+        }
         .sheet(isPresented: $showingAddTask) {
             NavigationStack { TaskEditorView(task: nil) }
         }
