@@ -25,7 +25,7 @@ The bottom navigation appears everywhere except the printable report view.
 | More | `more` | Settings, help, cloud protection, exports, backup restore, and secondary areas. |
 
 Secondary pages are reached from page buttons rather than the bottom navigation:
-`low`, `places`, `orders`, `purchases`, `supplements`, `help`, and `report`.
+`low`, `places`, `orders`, `purchases`, `supplements`, `mockups`, `help`, and `report`.
 
 ## Visual Navigation Sketch
 
@@ -43,6 +43,7 @@ flowchart TD
   Orders[Orders]
   Purchases[Purchases]
   Supplements[Supplements]
+  Mockups[Interface mockups]
   Help[Help manual]
   Report[Printable report]
 
@@ -71,6 +72,7 @@ flowchart TD
   More --> Inventory
   More --> Ideas
   More --> Supplements
+  More --> Mockups
   More --> Report
   Supplements -->|Print report| Report
   Report --> More
@@ -112,6 +114,29 @@ For click-by-click verification, see [Navigation QA Checklist](./navigation-qa-c
 | Low stock | Opens `low`. |
 | Purchases | Opens `purchases`. |
 | Calm | Opens `calm`. |
+
+### Interface mockups (`mockups`)
+
+**Purpose:** Preview a few temporary graphical placeholder directions without
+replacing the working Today screen or changing the household data engine. The screen can be opened from More or directly from the deployed app with `#mockups` in the URL, such as `https://alekpeed.github.io/momos/#mockups`.
+
+**Shows:**
+
+- Hearth, Quiet command, and Glass dashboard concept cards.
+- Live counts from the current household data.
+- Buttons that route to existing Tasks, Orders, Supplements, Calendar, Low
+  stock, Help requests, Inventory, Ideas, Purchases, and Calm screens.
+
+**Buttons and destinations:**
+
+| Button/action | Destination or result |
+| --- | --- |
+| Back to More | Opens `more`. |
+| Hearth: Quick wins | Opens `tasks` filtered to quick wins. |
+| Hearth: Buy list | Opens `orders`. |
+| Hearth: Supplements | Opens `supplements`. |
+| Quiet command rows | Open the matching Tasks, Calendar, Low stock, or Help requests screen. |
+| Glass dashboard pills | Open Inventory, Ideas, Purchases, or Calm. |
 
 
 ### Calm (`calm`)
@@ -421,6 +446,7 @@ manual/help, and secondary navigation.
 | Places and bins | Opens `places`. |
 | Purchases | Opens `purchases`. |
 | Calm | Opens `calm`. |
+| Interface mockups | Opens `mockups`. |
 | Low stock | Opens `low`. |
 | Inventory | Opens `items`. |
 | Supplements | Opens `supplements`. |

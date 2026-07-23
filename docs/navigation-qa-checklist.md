@@ -74,6 +74,17 @@ expected page, form, or action before larger design changes are made.
 | Tap Log energy | Shows energy journal form. |  |
 | Tap Open help | Opens Help. |  |
 
+## Interface Mockups
+
+| Check | Expected result | Status |
+| --- | --- | --- |
+| Open Interface mockups from More | Hearth, Quiet command, and Glass dashboard placeholders appear. |  |
+| Open the deployed app with `#mockups` in the URL | The app opens directly to Interface mockups without needing an iPhone or local checkout. |  |
+| Tap Back to More | Returns to More. |  |
+| Tap Hearth actions | Existing Tasks, Orders, or Supplements screens open. |  |
+| Tap Quiet command rows | Existing Tasks, Calendar, Low stock, or Help requests screens open. |  |
+| Tap Glass dashboard pills | Existing Inventory, Ideas, Purchases, or Calm screens open. |  |
+
 ## Calendar Page
 
 | Check | Expected result | Status |

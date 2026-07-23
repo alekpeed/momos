@@ -1,4 +1,4 @@
-export type View = "home" | "tasks" | "calendar" | "items" | "ideas" | "low" | "places" | "orders" | "purchases" | "supplements" | "calm" | "alerts" | "vault" | "more" | "help" | "report";
+export type View = "home" | "tasks" | "calendar" | "items" | "ideas" | "low" | "places" | "orders" | "purchases" | "supplements" | "calm" | "alerts" | "vault" | "mockups" | "more" | "help" | "report";
 
 export type QuantityStatus =
   | "Unknown"

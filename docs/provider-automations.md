@@ -6,6 +6,8 @@ Mom Home now has a safe provider-automation readiness layer for optional live se
 
 These public environment variables are checked at build/deploy time:
 
+They must be set before running `next build`. Next.js embeds these public endpoint URLs in the browser bundle; changing them requires a rebuild and redeploy.
+
 | Capability | Environment variable | Purpose |
 | --- | --- | --- |
 | Background push | `NEXT_PUBLIC_MOM_HOME_PUSH_ENDPOINT` | Remote reminder and helper nudges through a protected push service. |
