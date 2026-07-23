@@ -112,7 +112,9 @@ _Last updated: 2026-07-23_
 ---
 
 ## Build & release status (tiers)
-- **Tier 0 — first compile in Xcode:** pending (needs Apple Developer setup)
+- **Tier 0 — compiles:** ✅ done — green on a macOS runner (Xcode 26 / iOS 26
+  Simulator) via `.github/workflows/ios-build.yml`. Device signing / TestFlight
+  still needs your Apple Developer account.
 - **Tier 1 — submission readiness:** done
 - **Tier 2 — feature parity:** done
 - **Tier 3 — cloud + sharing:** planned (needs accounts)
