@@ -418,6 +418,22 @@ final class VaultRecord {
 }
 
 @Model
+final class EnergyEntry {
+    @Attribute(.unique) var id: String
+    var date: Date
+    /// 1 (drained) … 5 (great).
+    var level: Int
+    var note: String
+
+    init(id: String = UUID().uuidString, date: Date = .now, level: Int = 3, note: String = "") {
+        self.id = id
+        self.date = date
+        self.level = level
+        self.note = note
+    }
+}
+
+@Model
 final class AppSettings {
     @Attribute(.unique) var id: String
     var householdName: String

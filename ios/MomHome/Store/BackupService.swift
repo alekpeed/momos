@@ -25,6 +25,7 @@ struct BackupSnapshot: Codable {
     var helperContacts: [ContactDTO] = []
     var helpRequests: [RequestDTO] = []
     var vaultRecords: [VaultDTO] = []
+    var energyEntries: [EnergyDTO] = []
 
     struct ItemDTO: Codable { var id, name, category, quantityStatus: String; var locationId, binId: String?; var lowStockThreshold, quantity: Int; var preferredStore, replacementURL: String; var photo: Data? }
     struct LocationDTO: Codable { var id, name, note: String; var sortIndex: Int }
@@ -40,6 +41,7 @@ struct BackupSnapshot: Codable {
     struct ContactDTO: Codable { var id, name, phone, email, relationship: String }
     struct RequestDTO: Codable { var id, title, detail, urgency, status: String; var contactId: String? }
     struct VaultDTO: Codable { var id, title: String; var ciphertext, salt: Data }
+    struct EnergyDTO: Codable { var id: String; var date: Date; var level: Int; var note: String }
 }
 
 @MainActor
@@ -76,6 +78,7 @@ enum BackupService {
         snap.helperContacts = fetch(context).map { (c: HelperContact) in .init(id: c.id, name: c.name, phone: c.phone, email: c.email, relationship: c.relationship) }
         snap.helpRequests = fetch(context).map { (r: HelpRequest) in .init(id: r.id, title: r.title, detail: r.detail, urgency: r.urgency.rawValue, status: r.status.rawValue, contactId: r.contactId) }
         snap.vaultRecords = fetch(context).map { (v: VaultRecord) in .init(id: v.id, title: v.title, ciphertext: v.ciphertext, salt: v.salt) }
+        snap.energyEntries = fetch(context).map { (e: EnergyEntry) in .init(id: e.id, date: e.date, level: e.level, note: e.note) }
         return snap
     }
 
@@ -103,6 +106,7 @@ enum BackupService {
         snap.helperContacts.forEach { context.insert(HelperContact(id: $0.id, name: $0.name, phone: $0.phone, email: $0.email, relationship: $0.relationship)) }
         snap.helpRequests.forEach { context.insert(HelpRequest(id: $0.id, title: $0.title, detail: $0.detail, urgency: HelpUrgency(rawValue: $0.urgency) ?? .normal, status: HelpStatus(rawValue: $0.status) ?? .open, contactId: $0.contactId)) }
         snap.vaultRecords.forEach { context.insert(VaultRecord(id: $0.id, title: $0.title, ciphertext: $0.ciphertext, salt: $0.salt)) }
+        snap.energyEntries.forEach { context.insert(EnergyEntry(id: $0.id, date: $0.date, level: $0.level, note: $0.note)) }
         try? context.save()
     }
 
@@ -127,5 +131,6 @@ enum BackupService {
         for x: HelperContact in fetch(context) { context.delete(x) }
         for x: HelpRequest in fetch(context) { context.delete(x) }
         for x: VaultRecord in fetch(context) { context.delete(x) }
+        for x: EnergyEntry in fetch(context) { context.delete(x) }
     }
 }

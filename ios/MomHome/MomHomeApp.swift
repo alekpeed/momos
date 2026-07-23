@@ -22,6 +22,7 @@ struct MomHomeApp: App {
             HelperContact.self,
             HelpRequest.self,
             VaultRecord.self,
+            EnergyEntry.self,
             AppSettings.self
         ])
         do {

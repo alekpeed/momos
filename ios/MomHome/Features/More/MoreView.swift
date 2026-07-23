@@ -13,6 +13,10 @@ struct MoreView: View {
                 link("Supplements", "pills", SupplementsView())
                 link("Help & alerts", "hand.raised", HelpView())
             }
+            Section("For you") {
+                link("Calm", "leaf", CalmView())
+                link("Energy journal", "waveform.path.ecg", EnergyJournalView())
+            }
             Section("Private") {
                 NavigationLink { VaultView() } label: {
                     Label {

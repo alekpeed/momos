@@ -37,6 +37,11 @@ struct TodayView: View {
                 .font(.subheadline)
                 .foregroundStyle(Theme.inkSecondary)
 
+            HStack(spacing: Theme.Space.sm) {
+                todayTool(title: "Calm", icon: "leaf", destination: CalmView())
+                todayTool(title: "Log energy", icon: "waveform.path.ecg", destination: EnergyJournalView())
+            }
+
             signalsGrid
 
             if !quickWins.isEmpty {
@@ -116,6 +121,20 @@ struct TodayView: View {
                 SignalTile(kind: .help, count: helpCount, caption: "needs a hand")
             }
         }
+    }
+
+    private func todayTool<D: View>(title: String, icon: String, destination: D) -> some View {
+        NavigationLink { destination } label: {
+            HStack(spacing: 8) {
+                Image(systemName: icon).font(.subheadline).foregroundStyle(Theme.primary)
+                Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, Theme.Space.md)
+            .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.controlRadius, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: Theme.controlRadius, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
     }
 
     private var todayLine: String {

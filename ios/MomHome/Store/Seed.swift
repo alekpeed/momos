@@ -48,6 +48,8 @@ enum Seed {
 
         context.insert(HelperContact(name: "Sam", phone: "(555) 201-8830", email: "sam@example.com", relationship: "Son"))
 
+        context.insert(EnergyEntry(level: 4, note: "A short morning walk helped."))
+
         settings.householdName = "Our Home"
         settings.seeded = true
         try? context.save()
