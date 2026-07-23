@@ -59,6 +59,15 @@ struct BoardDetailView: View {
     let board: IdeaBoard
     @Query private var cards: [IdeaCard]
     @State private var showingAdd = false
+    @State private var search = ""
+    @State private var sort: SortMode = .recent
+    @State private var favoritesOnly = false
+    @State private var showArchived = false
+
+    enum SortMode: String, CaseIterable, Identifiable {
+        case recent = "Recent", title = "A–Z", favorite = "Favorites"
+        var id: String { rawValue }
+    }
 
     init(board: IdeaBoard) {
         self.board = board
@@ -66,32 +75,46 @@ struct BoardDetailView: View {
         _cards = Query(filter: #Predicate<IdeaCard> { $0.boardId == id }, sort: \IdeaCard.createdAt, order: .reverse)
     }
 
+    private var favoriteCount: Int { cards.filter { $0.favorite && $0.status != .archived }.count }
+
+    private var visible: [IdeaCard] {
+        var list = showArchived ? cards.filter { $0.status == .archived } : cards.filter { $0.status != .archived }
+        if favoritesOnly { list = list.filter(\.favorite) }
+        if !search.isEmpty {
+            list = list.filter { $0.title.localizedCaseInsensitiveContains(search) || $0.note.localizedCaseInsensitiveContains(search) }
+        }
+        switch sort {
+        case .recent: return list
+        case .title: return list.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+        case .favorite: return list.sorted { ($0.favorite ? 0 : 1) < ($1.favorite ? 0 : 1) }
+        }
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.Space.md) {
-                if cards.isEmpty {
-                    EmptyStateView(systemImage: "square.on.square", title: "No ideas yet", message: "Add a card with a note, link, or photo.", actionTitle: "Add idea") { showingAdd = true }
-                } else {
-                    ForEach(cards) { card in
-                        Card {
-                            VStack(alignment: .leading, spacing: Theme.Space.sm) {
-                                HStack {
-                                    Text(card.title).font(.body.weight(.medium)).foregroundStyle(Theme.ink)
-                                    Spacer()
-                                    Button { card.favorite.toggle(); try? context.save() } label: {
-                                        Image(systemName: card.favorite ? "heart.fill" : "heart").foregroundStyle(card.favorite ? Theme.clay : Theme.inkTertiary)
-                                    }.buttonStyle(.plain)
-                                }
-                                if !card.note.isEmpty { Text(card.note).font(.subheadline).foregroundStyle(Theme.inkSecondary) }
-                                HStack {
-                                    StatusPill(text: card.status.rawValue, tone: .primary)
-                                    if !card.link.isEmpty, let url = URL(string: card.link) {
-                                        Link(destination: url) { StatusPill(text: "Open link", tone: .lavender, systemImage: "link") }
-                                    }
-                                }
-                            }
-                        }
+                if favoriteCount > 0 || favoritesOnly {
+                    Button { favoritesOnly.toggle() } label: {
+                        Label(favoritesOnly ? "Showing \(favoriteCount) favorites" : "Compare \(favoriteCount) favorites",
+                              systemImage: favoritesOnly ? "heart.fill" : "heart")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(favoritesOnly ? .white : Theme.clay)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, Theme.Space.sm + 2)
+                            .background(favoritesOnly ? Theme.clay : Theme.clay.opacity(0.12), in: RoundedRectangle(cornerRadius: Theme.controlRadius, style: .continuous))
                     }
+                    .buttonStyle(.plain)
+                }
+
+                if visible.isEmpty {
+                    EmptyStateView(
+                        systemImage: showArchived ? "archivebox" : "square.on.square",
+                        title: showArchived ? "No archived ideas" : "No ideas yet",
+                        message: showArchived ? "Cards you archive show up here." : "Add a card with a note, link, or photo.",
+                        actionTitle: showArchived ? nil : "Add idea"
+                    ) { showingAdd = true }
+                } else {
+                    ForEach(visible) { card in cardView(card) }
                 }
             }
             .padding(Theme.Space.lg)
@@ -99,8 +122,80 @@ struct BoardDetailView: View {
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle(board.name)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar { ToolbarItem(placement: .primaryAction) { Button { showingAdd = true } label: { Image(systemName: "plus") }.accessibilityLabel("Add an idea") } }
+        .searchable(text: $search, prompt: "Search ideas")
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Menu {
+                    Picker("Sort", selection: $sort) { ForEach(SortMode.allCases) { Text($0.rawValue).tag($0) } }
+                    Toggle("Favorites only", isOn: $favoritesOnly)
+                    Toggle("Show archived", isOn: $showArchived)
+                } label: { Image(systemName: "line.3.horizontal.decrease.circle") }
+                .accessibilityLabel("Sort and filter")
+            }
+            ToolbarItem(placement: .primaryAction) {
+                Button { showingAdd = true } label: { Image(systemName: "plus") }.accessibilityLabel("Add an idea")
+            }
+        }
         .sheet(isPresented: $showingAdd) { NavigationStack { CardEditorView(boardId: board.id) } }
+    }
+
+    private func cardView(_ card: IdeaCard) -> some View {
+        Card {
+            VStack(alignment: .leading, spacing: Theme.Space.sm) {
+                HStack {
+                    Text(card.title).font(.body.weight(.medium)).foregroundStyle(Theme.ink)
+                    Spacer()
+                    Button { card.favorite.toggle(); try? context.save() } label: {
+                        Image(systemName: card.favorite ? "heart.fill" : "heart")
+                            .foregroundStyle(card.favorite ? Theme.clay : Theme.inkTertiary)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(card.favorite ? "Unfavorite" : "Favorite")
+                    Menu {
+                        Section("Turn into") {
+                            Button { convertToTask(card) } label: { Label("Task", systemImage: "checklist") }
+                            Button { convertToOrder(card) } label: { Label("Order", systemImage: "cart") }
+                            Button { convertToItem(card) } label: { Label("Inventory item", systemImage: "shippingbox") }
+                            Button { convertToReminder(card) } label: { Label("Reminder", systemImage: "calendar") }
+                        }
+                        if card.status == .archived {
+                            Button { card.status = .saved; try? context.save() } label: { Label("Restore", systemImage: "tray.and.arrow.up") }
+                        } else {
+                            Button { card.status = .archived; try? context.save() } label: { Label("Archive", systemImage: "archivebox") }
+                        }
+                        Button(role: .destructive) { context.delete(card); try? context.save() } label: { Label("Delete", systemImage: "trash") }
+                    } label: {
+                        Image(systemName: "ellipsis.circle").foregroundStyle(Theme.inkTertiary)
+                    }
+                    .accessibilityLabel("Idea actions")
+                }
+                if !card.note.isEmpty { Text(card.note).font(.subheadline).foregroundStyle(Theme.inkSecondary) }
+                HStack {
+                    StatusPill(text: card.status.rawValue, tone: card.status == .archived ? .neutral : .primary)
+                    if !card.link.isEmpty, let url = URL(string: card.link) {
+                        Link(destination: url) { StatusPill(text: "Open link", tone: .lavender, systemImage: "link") }
+                    }
+                }
+            }
+        }
+    }
+
+    // Conversions keep the card and create a linked record (mirrors the web engine).
+    private func convertToTask(_ card: IdeaCard) {
+        context.insert(TaskRecord(title: card.title, detail: card.note))
+        try? context.save()
+    }
+    private func convertToOrder(_ card: IdeaCard) {
+        context.insert(Order(name: card.title))
+        try? context.save()
+    }
+    private func convertToItem(_ card: IdeaCard) {
+        context.insert(InventoryItem(name: card.title))
+        try? context.save()
+    }
+    private func convertToReminder(_ card: IdeaCard) {
+        context.insert(CalendarEntry(title: card.title, date: .now, reminderEnabled: true))
+        try? context.save()
     }
 }
 
