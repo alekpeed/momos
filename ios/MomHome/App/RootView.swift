@@ -36,6 +36,11 @@ struct RootView: View {
                 ExplainBanner { explain.isOn = false }
             }
         }
+        .overlay(alignment: .bottomTrailing) {
+            if !explain.isOn {
+                ExplainFloatingButton { explain.isOn = true }
+            }
+        }
         .sheet(item: $explain.current) { exp in
             ExplanationCard(explanation: exp) { explain.current = nil }
         }

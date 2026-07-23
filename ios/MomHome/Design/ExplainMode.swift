@@ -50,6 +50,28 @@ extension View {
     }
 }
 
+/// A persistent floating "?" that turns Explain mode on. Lives at the app root
+/// so it's available on every screen; hidden while Explain mode is already on
+/// (the banner's Done turns it off).
+struct ExplainFloatingButton: View {
+    let action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "questionmark")
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: 46, height: 46)
+                .background(Theme.primary, in: Circle())
+                .overlay(Circle().strokeBorder(.white.opacity(0.3), lineWidth: 1))
+                .shadow(color: .black.opacity(0.18), radius: 8, x: 0, y: 3)
+        }
+        .accessibilityLabel("Explain mode — tap to learn what each thing does")
+        .padding(.trailing, 16)
+        // Sits above the tab bar; tweak if it overlaps on a given device.
+        .padding(.bottom, 78)
+    }
+}
+
 /// The banner shown across the top while Explain mode is on.
 struct ExplainBanner: View {
     let onDone: () -> Void

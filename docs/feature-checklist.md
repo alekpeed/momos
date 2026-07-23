@@ -78,7 +78,8 @@ _Last updated: 2026-07-23_
 - [x] Explain-mode engine — a switch that intercepts taps and, instead of acting,
   shows a plain-language explanation; a top banner, a dashed cue on each control,
   and an explanation card
-- [x] Toggle in Settings + a one-tap "?" on Today
+- [x] Toggle in Settings, plus a floating "?" button on every screen to turn it
+  on from anywhere (and the banner's Done to turn it off)
 - [x] Every screen wired — Today, Tasks, Calendar, Inventory, Low stock, Places
   & bins, Orders, Purchases, Ideas, Supplements, Help, Vault, and More all
   explain their controls (37 explanations)

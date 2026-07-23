@@ -5,7 +5,6 @@ import SwiftData
 /// a low-stock nudge, and one obvious Add action — never a dense dashboard.
 struct TodayView: View {
     @Environment(\.modelContext) private var context
-    @Environment(ExplainMode.self) private var explain
     @Query private var tasks: [TaskRecord]
     @Query private var items: [InventoryItem]
     @Query private var supplements: [Supplement]
@@ -116,10 +115,6 @@ struct TodayView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink { SearchView() } label: { Image(systemName: "magnifyingglass") }
                     .accessibilityLabel("Search")
-            }
-            ToolbarItem(placement: .topBarLeading) {
-                Button { explain.isOn = true } label: { Image(systemName: "questionmark.circle") }
-                    .accessibilityLabel("Explain mode — learn what each thing does")
             }
         }
         .sheet(isPresented: $showingAddTask) {
