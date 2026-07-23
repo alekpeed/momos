@@ -136,15 +136,24 @@ struct RestorePreview: View {
     let onCancel: () -> Void
 
     private var counts: [(String, Int)] {
-        [
-            ("Items", snapshot.items.count), ("Places", snapshot.locations.count), ("Bins", snapshot.bins.count),
-            ("Orders", snapshot.orders.count), ("Purchases", snapshot.purchases.count),
-            ("Tasks", snapshot.tasks.count), ("Projects", snapshot.projects.count),
-            ("Calendar", snapshot.calendar.count), ("Supplements", snapshot.supplements.count),
-            ("Idea boards", snapshot.ideaBoards.count), ("Idea cards", snapshot.ideaCards.count),
-            ("Helpers", snapshot.helperContacts.count), ("Help requests", snapshot.helpRequests.count),
-            ("Vault notes", snapshot.vaultRecords.count)
-        ].filter { $0.1 > 0 }
+        // Built incrementally with an explicit type so the compiler doesn't have
+        // to type-check one giant tuple-array literal (which times out).
+        var rows: [(String, Int)] = []
+        rows.append(("Items", snapshot.items.count))
+        rows.append(("Places", snapshot.locations.count))
+        rows.append(("Bins", snapshot.bins.count))
+        rows.append(("Orders", snapshot.orders.count))
+        rows.append(("Purchases", snapshot.purchases.count))
+        rows.append(("Tasks", snapshot.tasks.count))
+        rows.append(("Projects", snapshot.projects.count))
+        rows.append(("Calendar", snapshot.calendar.count))
+        rows.append(("Supplements", snapshot.supplements.count))
+        rows.append(("Idea boards", snapshot.ideaBoards.count))
+        rows.append(("Idea cards", snapshot.ideaCards.count))
+        rows.append(("Helpers", snapshot.helperContacts.count))
+        rows.append(("Help requests", snapshot.helpRequests.count))
+        rows.append(("Vault notes", snapshot.vaultRecords.count))
+        return rows.filter { $0.1 > 0 }
     }
 
     var body: some View {
