@@ -1,0 +1,138 @@
+<title>Mom Home — Build Progress</title>
+<style>
+  :root {
+    --bg:#f4efe4; --panel:#fffdf7; --panel-2:#f6efdd; --ink:#2b2a22; --muted:#857c68;
+    --line:#e7dcc4; --gold:#b79040; --gold-deep:#9c7a2c;
+    --done:#4c7a6b; --part:#b7862a; --plan:#b8ae98;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,sans-serif;
+  }
+  @media (prefers-color-scheme: dark){:root{
+    --bg:#17140d; --panel:#211d13; --panel-2:#26210f; --ink:#f1eee6; --muted:#afa78f;
+    --line:#332c1a; --gold:#d9b662; --gold-deep:#e4c579;
+    --done:#86b3a3; --part:#d9b662; --plan:#6f6752;
+  }}
+  :root[data-theme="dark"]{--bg:#17140d; --panel:#211d13; --panel-2:#26210f; --ink:#f1eee6; --muted:#afa78f; --line:#332c1a; --gold:#d9b662; --gold-deep:#e4c579; --done:#86b3a3; --part:#d9b662; --plan:#6f6752;}
+  :root[data-theme="light"]{--bg:#f4efe4; --panel:#fffdf7; --panel-2:#f6efdd; --ink:#2b2a22; --muted:#857c68; --line:#e7dcc4; --gold:#b79040; --gold-deep:#9c7a2c; --done:#4c7a6b; --part:#b7862a; --plan:#b8ae98;}
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:860px;margin:0 auto;padding:40px 20px 80px}
+  .eyebrow{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold-deep);font-weight:700;margin:0 0 6px}
+  h1{font-family:var(--serif);font-weight:600;font-size:34px;margin:0 0 4px;letter-spacing:-.01em}
+  .updated{color:var(--muted);font-size:13.5px;margin:0}
+
+  .overall{margin:26px 0;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px;box-shadow:0 12px 30px -20px rgba(120,100,50,.4)}
+  .overall .row{display:flex;align-items:baseline;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+  .overall .pct{font-family:var(--serif);font-size:32px;font-weight:600}
+  .overall .counts{font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .overall .counts b{color:var(--ink)}
+  .bar{height:12px;border-radius:99px;background:var(--panel-2);overflow:hidden;display:flex}
+  .bar i{display:block;height:100%}
+  .bar .b-done{background:var(--done)} .bar .b-part{background:var(--part)} .bar .b-plan{background:transparent}
+  .legend{display:flex;gap:16px;margin-top:12px;font-size:12.5px;color:var(--muted);flex-wrap:wrap}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .dot{width:10px;height:10px;border-radius:50%}
+  .d-done{background:var(--done)} .d-part{background:var(--part)} .d-plan{background:var(--plan)}
+
+  h2{font-family:var(--serif);font-size:20px;font-weight:600;margin:34px 0 12px}
+
+  /* tiers */
+  .tiers{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+  @media(max-width:640px){.tiers{grid-template-columns:1fr 1fr}}
+  .tier{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:13px 14px}
+  .tier .t{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .tier .n{font-size:14.5px;font-weight:650;margin:3px 0 8px}
+  .tier .s{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;display:inline-block}
+  .s-done{background:color-mix(in srgb,var(--done) 18%,transparent);color:var(--done)}
+  .s-pend{background:color-mix(in srgb,var(--part) 20%,transparent);color:var(--part)}
+  .s-plan{background:var(--panel-2);color:var(--muted)}
+
+  /* categories */
+  .cats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:640px){.cats{grid-template-columns:1fr}}
+  .cat{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:14px 15px}
+  .cat .h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .cat .name{font-weight:650;font-size:15px}
+  .cat .frac{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .meter{display:flex;gap:3px;margin-top:9px;flex-wrap:wrap}
+  .meter i{width:13px;height:6px;border-radius:2px}
+  .m-done{background:var(--done)} .m-part{background:var(--part)} .m-plan{background:var(--plan);opacity:.5}
+
+  /* changelog */
+  .log{border-left:2px solid var(--line);margin-left:6px;padding-left:18px}
+  .log .item{margin:0 0 16px;position:relative}
+  .log .item::before{content:"";position:absolute;left:-25px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--gold);border:2px solid var(--bg)}
+  .log .when{font-size:11.5px;color:var(--muted);letter-spacing:.02em}
+  .log .what{font-size:14.5px;margin-top:1px}
+  .log .item.head .what{font-weight:650}
+
+  footer{margin-top:44px;color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);padding-top:16px}
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Native iOS · SwiftUI</p>
+  <h1>Mom Home — Build Progress</h1>
+  <p class="updated">Last updated 23 Jul 2026 · branch <code>claude/codex-work-review-xwwfz5</code></p>
+
+  <div class="overall">
+    <div class="row">
+      <span class="pct">76%</span>
+      <span class="counts"><b>44</b> built · <b>4</b> partial · <b>10</b> planned <span style="opacity:.6">(58 planned features)</span></span>
+    </div>
+    <div class="bar">
+      <i class="b-done" style="width:76%"></i>
+      <i class="b-part" style="width:7%"></i>
+      <i class="b-plan" style="width:17%"></i>
+    </div>
+    <div class="legend">
+      <span><i class="dot d-done"></i> Built</span>
+      <span><i class="dot d-part"></i> Partial</span>
+      <span><i class="dot d-plan"></i> Planned</span>
+      <span style="margin-left:auto">Cloud sync is the bulk of what's left.</span>
+    </div>
+  </div>
+
+  <h2>Release tiers</h2>
+  <div class="tiers">
+    <div class="tier"><div class="t">Tier 0</div><div class="n">First Xcode build</div><span class="s s-pend">Pending you</span></div>
+    <div class="tier"><div class="t">Tier 1</div><div class="n">Submission readiness</div><span class="s s-done">Done</span></div>
+    <div class="tier"><div class="t">Tier 2</div><div class="n">Feature parity</div><span class="s s-done">Done</span></div>
+    <div class="tier"><div class="t">Tier 3</div><div class="n">Cloud &amp; sharing</div><span class="s s-plan">Planned</span></div>
+    <div class="tier"><div class="t">Tier 4</div><div class="n">App Store</div><span class="s s-pend">Pending build</span></div>
+  </div>
+
+  <h2>By area</h2>
+  <div class="cats">
+    <div class="cat"><div class="h"><span class="name">Inventory &amp; storage</span><span class="frac">6/6</span></div><div class="meter"><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i></div></div>
+    <div class="cat"><div class="h"><span class="name">Tasks</span><span class="frac">5/6</span></div><div class="meter"><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i><i class="m-part"></i></div></div>
+    <div class="cat"><div class="h"><span class="name">Calendar &amp; reminders</span><span class="frac">4/4</span></div><div class="meter"><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i></div></div>
+    <div class="cat"><div class="h"><span class="name">Orders &amp; purchases</span><span class="frac">3/6</span></div><div class="meter"><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i><i class="m-part"></i><i class="m-plan"></i><i class="m-plan"></i></div></div>
+    <div class="cat"><div class="h"><span class="name">Supplements</span><span class="frac">2/2</span></div><div class="meter"><i class="m-done"></i><i class="m-done"></i></div></div>
+    <div class="cat"><div class="h"><span class="name">Ideas / Visual Planner</span><span class="frac">5/6</span></div><div class="meter"><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i><i class="m-plan"></i></div></div>
+    <div class="cat"><div class="h"><span class="name">Help &amp; alerts</span><span class="frac">3/3</span></div><div class="meter"><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i></div></div>
+    <div class="cat"><div class="h"><span class="name">Calm &amp; energy</span><span class="frac">2/3</span></div><div class="meter"><i class="m-done"></i><i class="m-done"></i><i class="m-part"></i></div></div>
+    <div class="cat"><div class="h"><span class="name">Private vault</span><span class="frac">3/4</span></div><div class="meter"><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i><i class="m-plan"></i></div></div>
+    <div class="cat"><div class="h"><span class="name">Data &amp; foundation</span><span class="frac">4/5</span></div><div class="meter"><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i><i class="m-part"></i></div></div>
+    <div class="cat"><div class="h"><span class="name">Design &amp; submission</span><span class="frac">7/7</span></div><div class="meter"><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i></div></div>
+    <div class="cat"><div class="h"><span class="name">Cloud &amp; sharing</span><span class="frac">0/6</span></div><div class="meter"><i class="m-plan"></i><i class="m-plan"></i><i class="m-plan"></i><i class="m-plan"></i><i class="m-plan"></i><i class="m-plan"></i></div></div>
+  </div>
+
+  <h2>Recent changes</h2>
+  <div class="log">
+    <div class="item head"><div class="when">23 Jul 2026</div><div class="what">Feature checklist + this progress dashboard.</div></div>
+    <div class="item"><div class="when">23 Jul 2026</div><div class="what">Onboarding + app-wide search.</div></div>
+    <div class="item"><div class="when">23 Jul 2026</div><div class="what">Supplement reports (PDF/CSV) + receipt import.</div></div>
+    <div class="item"><div class="when">23 Jul 2026</div><div class="what">Ideas depth — filter/sort, favorites, archive, convert-to-record.</div></div>
+    <div class="item"><div class="when">23 Jul 2026</div><div class="what">Project management + task unlock map.</div></div>
+    <div class="item"><div class="when">23 Jul 2026</div><div class="what">Calm screen, Energy journal, and the app-icon heart fix.</div></div>
+    <div class="item"><div class="when">23 Jul 2026</div><div class="what">Tier 1 submission readiness — icon, privacy manifest, encryption flag, local notifications, QR scanning, accessibility.</div></div>
+    <div class="item"><div class="when">23 Jul 2026</div><div class="what">Swift 6 + item detail/photo, Places/QR labels, Orders/Purchases, backup/restore.</div></div>
+    <div class="item"><div class="when">23 Jul 2026</div><div class="what">Native SwiftUI app scaffolded; "Warm Paper" look + category colors installed.</div></div>
+    <div class="item"><div class="when">23 Jul 2026</div><div class="what">Fixed 6 correctness bugs in the original engine (receipt dates, recurrence, sms links, restore).</div></div>
+  </div>
+
+  <footer>
+    Updated after every change. Source: <code>docs/progress.html</code> · full detail in <code>docs/feature-checklist.md</code>.
+  </footer>
+</div>
