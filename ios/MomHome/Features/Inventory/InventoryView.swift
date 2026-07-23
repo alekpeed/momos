@@ -48,7 +48,10 @@ struct InventoryView: View {
         .navigationTitle("Inventory")
         .searchable(text: $search, prompt: "Search items")
         .toolbar {
-            ToolbarItem(placement: .primaryAction) { Button { showingAdd = true } label: { Image(systemName: "plus") } }
+            ToolbarItem(placement: .primaryAction) {
+                Button { showingAdd = true } label: { Image(systemName: "plus") }
+                    .accessibilityLabel("Add an item")
+            }
         }
         .sheet(isPresented: $showingAdd) {
             NavigationStack { ItemEditorView() }

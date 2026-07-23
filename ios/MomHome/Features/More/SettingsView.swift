@@ -1,9 +1,11 @@
 import SwiftUI
 import SwiftData
+import UserNotifications
 
 struct SettingsView: View {
     @Environment(\.modelContext) private var context
     @Query private var settingsRows: [AppSettings]
+    @State private var reminderStatus: UNAuthorizationStatus = .notDetermined
 
     private var settings: AppSettings? { settingsRows.first }
 
@@ -18,6 +20,17 @@ struct SettingsView: View {
                 }
             }
             Section("Reminders") {
+                switch reminderStatus {
+                case .authorized, .provisional, .ephemeral:
+                    Label("Reminders are on", systemImage: "checkmark.circle.fill")
+                        .foregroundStyle(Theme.good)
+                case .denied:
+                    Text("Reminders are turned off in iOS Settings. Enable notifications for Mom Home to get them.")
+                        .font(.subheadline).foregroundStyle(Theme.inkSecondary)
+                default:
+                    Button("Turn on reminders") { Task { await enableReminders() } }
+                        .tint(Theme.primary)
+                }
                 if let settings {
                     Stepper("Reminder nag interval: \(settings.defaultNagIntervalMinutes) min",
                             value: Binding(
@@ -26,7 +39,7 @@ struct SettingsView: View {
                             ),
                             in: 5...120, step: 5)
                 }
-                Text("Open-app reminders repeat at this interval until you act on them.")
+                Text("Reminders fire on the day a task is due or an event is set, from this device.")
                     .font(.caption).foregroundStyle(Theme.inkSecondary)
             }
             Section("About") {
@@ -40,6 +53,17 @@ struct SettingsView: View {
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
+        .task { await refreshStatus() }
+    }
+
+    private func refreshStatus() async {
+        reminderStatus = await NotificationService.shared.authorizationStatus()
+    }
+
+    private func enableReminders() async {
+        _ = await NotificationService.shared.requestAuthorization()
+        await NotificationService.shared.reschedule(from: context)
+        await refreshStatus()
     }
 }
 

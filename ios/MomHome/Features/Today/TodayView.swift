@@ -178,6 +178,7 @@ private struct QuickWinRow: View {
                     .foregroundStyle(Theme.primary)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Mark \(task.title) done")
             Text(task.title).font(.body).foregroundStyle(Theme.ink)
             Spacer()
             if task.starred { Image(systemName: "star.fill").font(.caption).foregroundStyle(Theme.gold) }

@@ -69,6 +69,7 @@ struct TasksView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button { showingNew = true } label: { Image(systemName: "plus") }
+                    .accessibilityLabel("Add a task")
             }
         }
         .sheet(isPresented: $showingNew) {
@@ -134,6 +135,7 @@ private struct TaskCard: View {
                         .foregroundStyle(task.status == .done ? Theme.good : Theme.primary)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(task.status == .done ? "Mark \(task.title) not done" : "Mark \(task.title) done")
 
                 VStack(alignment: .leading, spacing: Theme.Space.sm) {
                     Text(task.title)
@@ -172,6 +174,7 @@ private struct TaskCard: View {
                         .foregroundStyle(task.starred ? Theme.gold : Theme.inkTertiary)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(task.starred ? "Unstar \(task.title)" : "Star \(task.title)")
             }
         }
     }

@@ -38,6 +38,7 @@ struct MomHomeApp: App {
                 .onAppear {
                     // onAppear runs on the MainActor, so it can touch mainContext directly.
                     Seed.runIfNeeded(container.mainContext)
+                    Task { await NotificationService.shared.reschedule(from: container.mainContext) }
                 }
         }
         .modelContainer(container)

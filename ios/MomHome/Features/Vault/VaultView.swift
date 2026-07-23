@@ -31,6 +31,7 @@ struct VaultView: View {
             if isUnlocked {
                 ToolbarItem(placement: .primaryAction) {
                     Button { showingAdd = true } label: { Image(systemName: "plus") }
+                        .accessibilityLabel("Add a private note")
                 }
                 ToolbarItem(placement: .cancellationAction) {
                     Button { lock() } label: { Label("Lock", systemImage: "lock.fill") }

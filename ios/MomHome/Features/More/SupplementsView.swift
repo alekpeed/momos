@@ -40,7 +40,7 @@ struct SupplementsView: View {
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle("Supplements")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar { ToolbarItem(placement: .primaryAction) { Button { showingAdd = true } label: { Image(systemName: "plus") } } }
+        .toolbar { ToolbarItem(placement: .primaryAction) { Button { showingAdd = true } label: { Image(systemName: "plus") }.accessibilityLabel("Add a supplement") } }
         .sheet(isPresented: $showingAdd) { NavigationStack { SupplementEditorView() } }
     }
 

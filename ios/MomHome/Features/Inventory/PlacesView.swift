@@ -9,6 +9,9 @@ struct PlacesView: View {
     @Query(sort: \StorageBin.name) private var bins: [StorageBin]
     @State private var showingAddLocation = false
     @State private var addBinForLocation: StorageLocation?
+    @State private var showingScanner = false
+    @State private var scannedBin: StorageBin?
+    @State private var scanMiss = false
 
     var body: some View {
         ScrollView {
@@ -41,9 +44,38 @@ struct PlacesView: View {
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle("Places & bins")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar { ToolbarItem(placement: .primaryAction) { Button { showingAddLocation = true } label: { Image(systemName: "plus") } } }
+        .toolbar {
+            if QRScannerView.isSupported {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { showingScanner = true } label: { Image(systemName: "qrcode.viewfinder") }
+                        .accessibilityLabel("Scan a bin QR")
+                }
+            }
+            ToolbarItem(placement: .primaryAction) {
+                Button { showingAddLocation = true } label: { Image(systemName: "plus") }
+                    .accessibilityLabel("Add a place")
+            }
+        }
         .sheet(isPresented: $showingAddLocation) { NavigationStack { LocationEditor(nextIndex: locations.count) } }
         .sheet(item: $addBinForLocation) { location in NavigationStack { BinEditor(locationId: location.id) } }
+        .sheet(isPresented: $showingScanner) { ScannerSheet(onCode: handleScan) }
+        .navigationDestination(item: $scannedBin) { bin in BinLabelView(bin: bin) }
+        .alert("Bin not found", isPresented: $scanMiss) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("That QR code doesn't match a bin in this household.")
+        }
+    }
+
+    private func handleScan(_ code: String) {
+        guard let comps = URLComponents(string: code),
+              comps.scheme == "momhome", comps.host == "bin" else { scanMiss = true; return }
+        let binCode = comps.path.replacingOccurrences(of: "/", with: "")
+        if let bin = bins.first(where: { $0.containerCode.caseInsensitiveCompare(binCode) == .orderedSame }) {
+            scannedBin = bin
+        } else {
+            scanMiss = true
+        }
     }
 }
 

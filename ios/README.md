@@ -47,6 +47,23 @@ Every one of the six primary tabs and every secondary screen in the brief now ha
 a working implementation. The vault's crypto boundary and backup's
 vault-ciphertext-only rule are both enforced.
 
+## Submission readiness (Tier 1)
+
+Groundwork for shipping through the Apple Developer Program:
+
+- **App icon** — a real 1024px "Warm Paper" mark (gold house + heart on cream).
+- **Privacy manifest** (`PrivacyInfo.xcprivacy`) — declares no tracking, no data
+  collection, no required-reason API use (the app is local-first).
+- **Encryption export compliance** — `ITSAppUsesNonExemptEncryption = NO` (the
+  vault uses only standard on-device encryption).
+- **Local reminders** — `NotificationService` requests permission and schedules
+  on-device notifications for due tasks and reminder-flagged events; opt in from
+  Settings. No push server, no entitlement.
+- **QR scanning** — VisionKit `DataScannerViewController`; scan a bin label to
+  jump straight to that bin.
+- **Accessibility** — VoiceOver labels on icon-only controls; Dynamic Type via
+  system text styles. iPhone-only (`TARGETED_DEVICE_FAMILY = 1`).
+
 ## Architecture
 
 - `MomHomeApp.swift` — app entry, builds the SwiftData `ModelContainer`, seeds on first launch.

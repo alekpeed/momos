@@ -55,7 +55,10 @@ struct CalendarView: View {
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle("Calendar")
         .toolbar {
-            ToolbarItem(placement: .primaryAction) { Button { showingAdd = true } label: { Image(systemName: "plus") } }
+            ToolbarItem(placement: .primaryAction) {
+                Button { showingAdd = true } label: { Image(systemName: "plus") }
+                    .accessibilityLabel("Add an event")
+            }
         }
         .sheet(isPresented: $showingAdd) {
             NavigationStack { EventEditorView(defaultDate: selectedDay) }

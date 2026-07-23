@@ -22,7 +22,7 @@ struct IdeasView: View {
         }
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle("Ideas")
-        .toolbar { ToolbarItem(placement: .primaryAction) { Button { showingAdd = true } label: { Image(systemName: "plus") } } }
+        .toolbar { ToolbarItem(placement: .primaryAction) { Button { showingAdd = true } label: { Image(systemName: "plus") }.accessibilityLabel("New board") } }
         .sheet(isPresented: $showingAdd) {
             NavigationStack { BoardEditorView() }
         }
@@ -99,7 +99,7 @@ struct BoardDetailView: View {
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle(board.name)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar { ToolbarItem(placement: .primaryAction) { Button { showingAdd = true } label: { Image(systemName: "plus") } } }
+        .toolbar { ToolbarItem(placement: .primaryAction) { Button { showingAdd = true } label: { Image(systemName: "plus") }.accessibilityLabel("Add an idea") } }
         .sheet(isPresented: $showingAdd) { NavigationStack { CardEditorView(boardId: board.id) } }
     }
 }

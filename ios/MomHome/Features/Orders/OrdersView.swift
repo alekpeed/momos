@@ -74,7 +74,7 @@ private struct OrdersList: View {
             }
             .padding(Theme.Space.lg)
         }
-        .toolbar { ToolbarItem(placement: .primaryAction) { Button { showingAdd = true } label: { Image(systemName: "plus") } } }
+        .toolbar { ToolbarItem(placement: .primaryAction) { Button { showingAdd = true } label: { Image(systemName: "plus") }.accessibilityLabel("Add an order") } }
         .sheet(isPresented: $showingAdd) { NavigationStack { OrderEditor() } }
     }
 
@@ -115,7 +115,7 @@ private struct PurchasesList: View {
             }
             .padding(Theme.Space.lg)
         }
-        .toolbar { ToolbarItem(placement: .primaryAction) { Button { showingAdd = true } label: { Image(systemName: "plus") } } }
+        .toolbar { ToolbarItem(placement: .primaryAction) { Button { showingAdd = true } label: { Image(systemName: "plus") }.accessibilityLabel("Add a purchase") } }
         .sheet(isPresented: $showingAdd) { NavigationStack { PurchaseEditor() } }
     }
 }
