@@ -203,7 +203,7 @@ private struct SignedInView: View {
                             get: { session.activeHouseholdId ?? household.id },
                             set: { session.activeHouseholdId = $0 }
                         )) {
-                            ForEach(session.households) { Text($0.name).tag($0.id as String?) }
+                            ForEach(session.households) { Text($0.name).tag($0.id) }
                         }
                     }
                 } else {
