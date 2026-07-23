@@ -110,6 +110,12 @@ import type {
 } from "@/lib/inventory-types";
 
 const appBasePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+const shareableViews: View[] = ["home", "tasks", "calendar", "items", "ideas", "low", "places", "orders", "purchases", "supplements", "calm", "alerts", "vault", "mockups", "more", "help", "report"];
+
+function viewFromHash(hash: string): View | null {
+  const hashView = hash.replace(/^#/, "");
+  return shareableViews.includes(hashView as View) ? (hashView as View) : null;
+}
 
 function statusClass(status: QuantityStatus) {
   if (status === "Low" || status === "Very low") return "badge low";
@@ -399,15 +405,27 @@ export default function Home() {
     if (container) {
       setActiveContainerCode(container);
       setView("places");
+      return;
     }
     if (item) {
       setSelectedItemId(item);
       setView("items");
+      return;
     }
+    const initialHashView = viewFromHash(window.location.hash);
+    if (initialHashView) setView(initialHashView);
+    const handleHashChange = () => {
+      const hashView = viewFromHash(window.location.hash);
+      if (hashView) setView(hashView);
+    };
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
   }, []);
 
   useEffect(() => {
     window.scrollTo({ top: 0 });
+    const nextHash = `#${view}`;
+    if (window.location.hash !== nextHash) window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}${nextHash}`);
   }, [view]);
 
   useEffect(() => {
@@ -5756,6 +5774,75 @@ export default function Home() {
 
       {view === "vault" ? renderVaultView() : null}
 
+      {view === "mockups" ? (
+        <section className="mockup-page">
+          <div className="section-head">
+            <div>
+              <span className="cloud-kicker">Design placeholders</span>
+              <h2>Elegant interface concepts</h2>
+              <p className="muted">Temporary, functional previews for Mom Home&apos;s future graphical direction. They reuse the current app actions and do not replace Today yet.</p>
+            </div>
+            <button className="ghost-button" onClick={() => setView("more")}>Back to More</button>
+          </div>
+
+          <div className="mockup-grid">
+            <article className="interface-mockup hearth">
+              <div className="mockup-phone-bar"><span /><span /></div>
+              <div className="mockup-hero">
+                <p className="mockup-label">Hearth</p>
+                <h3>{format(parseISO(todayIso), "EEEE")}</h3>
+                <p>{todayBrief.text}</p>
+              </div>
+              <div className="mockup-orbits" aria-hidden="true">
+                <span>Do</span>
+                <span>Buy</span>
+                <span>Take</span>
+                <span>Watch</span>
+              </div>
+              <div className="mockup-actions">
+                <button onClick={() => { setTaskScope("quick"); setView("tasks"); }}>Quick wins</button>
+                <button onClick={() => setView("orders")}>Buy list</button>
+                <button onClick={() => setView("supplements")}>Supplements</button>
+              </div>
+            </article>
+
+            <article className="interface-mockup quiet">
+              <div className="mockup-phone-bar"><span /><span /></div>
+              <div className="mockup-stack-head">
+                <p className="mockup-label">Quiet command</p>
+                <strong>{state.household.name}</strong>
+              </div>
+              {[
+                ["Ready actions", nextUpTasks.length, "tasks"],
+                ["Calendar today", dueTodayTasks.length + state.calendarEntries.filter((entry) => calendarEntryOccursOnDate(entry, todayIso)).length, "calendar"],
+                ["Low stock", lowItems.length, "low"],
+                ["Help requests", openHelpRequests.length, "alerts"]
+              ].map(([label, value, destination]) => (
+                <button className="mockup-row" key={label} onClick={() => setView(destination as View)}>
+                  <span>{label}</span>
+                  <strong>{value}</strong>
+                </button>
+              ))}
+            </article>
+
+            <article className="interface-mockup glass">
+              <div className="mockup-phone-bar"><span /><span /></div>
+              <div className="mockup-glass-card">
+                <p className="mockup-label">Glass dashboard</p>
+                <h3>One calm place</h3>
+                <p>Inventory, tasks, ideas, and helper alerts stay one tap away while the data engine remains unchanged.</p>
+              </div>
+              <div className="mockup-pill-cloud">
+                <button onClick={() => setView("items")}>Inventory · {state.items.length}</button>
+                <button onClick={() => setView("ideas")}>Ideas · {state.ideaCards.length}</button>
+                <button onClick={() => setView("purchases")}>Purchases · {state.purchaseRecords.length}</button>
+                <button onClick={() => setView("calm")}>Calm</button>
+              </div>
+            </article>
+          </div>
+        </section>
+      ) : null}
+
       {view === "help" ? <HelpCenter onBack={() => setView("more")} /> : null}
 
       {view === "more" ? (
@@ -5963,6 +6050,9 @@ export default function Home() {
               <button className="ghost-button" onClick={() => setView("calm")}>
                 Calm screen
               </button>
+              <button className="ghost-button" onClick={() => setView("mockups")}>
+                Interface mockups
+              </button>
               <button className="ghost-button" onClick={() => setView("alerts")}>
                 Help requests
               </button>
@@ -6007,7 +6097,7 @@ database context -> provider adapter -> suggested actions -> user confirmation`}
           </div>
 
           <div className="notice">
-            <strong>Data note:</strong> Local saving always stays active. When Supabase is connected, cloud backup and private photo transfer are available from Cloud protection above.
+            <strong>Data note:</strong> Local saving always stays active. When cloud protection is connected, cloud backup and private photo transfer are available from Cloud protection above.
           </div>
         </section>
       ) : null}
@@ -6021,7 +6111,7 @@ database context -> provider adapter -> suggested actions -> user confirmation`}
           ["ideas", "Ideas"],
           ["more", "More"]
         ].map(([key, label]) => (
-          <button key={key} className={`nav-tab ${view === key || (key === "more" && (view === "help" || view === "alerts" || view === "vault")) ? "active" : ""}`} onClick={() => setView(key as View)}>
+          <button key={key} className={`nav-tab ${view === key || (key === "more" && (view === "help" || view === "alerts" || view === "vault" || view === "mockups")) ? "active" : ""}`} onClick={() => setView(key as View)}>
             {label}
           </button>
         ))}

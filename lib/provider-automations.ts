@@ -11,53 +11,58 @@ export type ProviderAutomationStatus = {
   nextStep: string;
 };
 
-const providerDefinitions: Record<ProviderAutomationKey, { label: string; envKey: string; summary: string; nextStep: string }> = {
+const providerEndpoints: Record<ProviderAutomationKey, string | undefined> = {
+  push: process.env.NEXT_PUBLIC_MOM_HOME_PUSH_ENDPOINT,
+  sms: process.env.NEXT_PUBLIC_MOM_HOME_SMS_ENDPOINT,
+  email: process.env.NEXT_PUBLIC_MOM_HOME_EMAIL_ENDPOINT,
+  retailer: process.env.NEXT_PUBLIC_MOM_HOME_RETAILER_ENDPOINT,
+  ai: process.env.NEXT_PUBLIC_MOM_HOME_AI_ENDPOINT,
+  inbox: process.env.NEXT_PUBLIC_MOM_HOME_INBOX_ENDPOINT
+};
+
+const providerDefinitions: Record<ProviderAutomationKey, { label: string; summary: string; nextStep: string }> = {
   push: {
     label: "Background push",
-    envKey: "NEXT_PUBLIC_MOM_HOME_PUSH_ENDPOINT",
     summary: "Remote reminders and helper nudges through a protected push service.",
     nextStep: "Connect a server endpoint that owns push subscriptions and credentials."
   },
   sms: {
     label: "SMS sending",
-    envKey: "NEXT_PUBLIC_MOM_HOME_SMS_ENDPOINT",
     summary: "Send helper texts through a provider instead of only opening device drafts.",
     nextStep: "Connect a protected SMS endpoint; keep non-911 helper wording."
   },
   email: {
     label: "Email sending",
-    envKey: "NEXT_PUBLIC_MOM_HOME_EMAIL_ENDPOINT",
     summary: "Send helper emails or household summaries through a provider.",
     nextStep: "Connect a protected email endpoint and require user review before send."
   },
   retailer: {
     label: "Retailer checks",
-    envKey: "NEXT_PUBLIC_MOM_HOME_RETAILER_ENDPOINT",
     summary: "Refresh prices, availability, and checked-at timestamps from approved sources.",
     nextStep: "Connect official retailer/product APIs; avoid brittle scraping as a core dependency."
   },
   ai: {
     label: "Remote AI summaries",
-    envKey: "NEXT_PUBLIC_MOM_HOME_AI_ENDPOINT",
     summary: "Rewrite local dockets or suggest review items without changing records automatically.",
     nextStep: "Connect a review-first AI endpoint; vault plaintext must remain excluded."
   },
   inbox: {
     label: "Receipt inbox parsing",
-    envKey: "NEXT_PUBLIC_MOM_HOME_INBOX_ENDPOINT",
     summary: "Import receipt emails with explicit permission into the existing review queue.",
     nextStep: "Connect an inbox provider and keep every import review-first."
   }
 };
 
-function configuredEndpoint(envKey: string) {
-  const value = process.env[envKey]?.trim();
+function configuredEndpoint(key: ProviderAutomationKey) {
+  // Next.js only inlines NEXT_PUBLIC values when they are referenced statically.
+  // Keep those references in providerEndpoints so client builds can see them.
+  const value = providerEndpoints[key]?.trim();
   return value || undefined;
 }
 
 export function getProviderAutomationStatus(key: ProviderAutomationKey): ProviderAutomationStatus {
   const definition = providerDefinitions[key];
-  const endpoint = configuredEndpoint(definition.envKey);
+  const endpoint = configuredEndpoint(key);
   return {
     key,
     label: definition.label,

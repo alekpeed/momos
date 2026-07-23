@@ -12,6 +12,11 @@ product requirements. The stable data, navigation, accessibility, and action
 contracts remain active so a future design can be installed without rewriting
 the household engine.
 
+Small interface placeholder previews may exist inside the app as functional
+concept samples, but they must remain opt-in, use existing Mom Home actions, and
+avoid replacing the current Today front door until a graphical direction is
+explicitly approved.
+
 ## Phase 1: Local MVP
 
 Status: complete from the repository/code side. See [Phase 1 Local MVP Audit](./phase-1-audit.md) and [Phase 1 Completion Note](./phase-1-completion.md) for implementation status and final live validation steps.
