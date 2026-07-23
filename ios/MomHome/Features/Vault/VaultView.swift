@@ -77,6 +77,7 @@ struct VaultView: View {
                             .buttonStyle(QuietPrimaryButtonStyle())
                             .frame(maxWidth: .infinity)
                             .disabled(passphraseField.count < 8)
+                            .explains("Unlock the vault", "Enter your passphrase to open your private notes. If you forget it, they can't be recovered.")
                         Label("If you forget this passphrase, these notes cannot be recovered. There is no backdoor.", systemImage: "exclamationmark.triangle")
                             .font(.caption)
                             .foregroundStyle(Theme.warning)
@@ -128,6 +129,7 @@ struct VaultView: View {
                         .contextMenu {
                             Button(role: .destructive) { delete(record) } label: { Label("Delete", systemImage: "trash") }
                         }
+                        .explains("A private note", "Encrypted and just for you. Tap Reveal to read it; long-press to delete.")
                     }
                 }
             }

@@ -39,6 +39,7 @@ struct InventoryView: View {
                         .contextMenu {
                             Button { cycle(item) } label: { Label("Change status", systemImage: "arrow.triangle.2.circlepath") }
                         }
+                        .explains("An item", "Something you keep at home. Tap to see details, add a photo, or change how much you have.")
                     }
                 }
             }
@@ -107,6 +108,7 @@ struct LowStockView: View {
                                 StatusPill(text: item.quantityStatus.rawValue, tone: item.quantityStatus.tone)
                             }
                         }
+                        .explains("Low item", "Something running low or out. Add it to your orders when you're ready.")
                     }
                 }
             }

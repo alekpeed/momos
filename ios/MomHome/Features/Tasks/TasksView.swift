@@ -43,10 +43,13 @@ struct TasksView: View {
                 HStack(spacing: Theme.Space.sm) {
                     NavigationLink { UnlockMapView() } label: { navPill("Task map", "point.3.connected.trianglepath.dotted") }
                         .buttonStyle(.plain)
+                        .explains("Task map", "Shows which tasks are ready to do and which are waiting on something else.")
                     NavigationLink { ProjectsView() } label: { navPill("Projects", "folder") }
                         .buttonStyle(.plain)
+                        .explains("Projects", "Groups of related tasks, kept together.")
                 }
                 filterChips
+                    .explains("Filters", "Tap these to narrow the list — open, today, starred, quick wins, and so on.")
                 if filtered.isEmpty {
                     EmptyStateView(
                         systemImage: "checklist",
@@ -65,6 +68,7 @@ struct TasksView: View {
                             toggleStar: { task.starred.toggle(); save() }
                         )
                         .onTapGesture { editingTask = task }
+                        .explains("A task", "Tap the circle to finish it, the star to mark it important, or the card to edit it.")
                     }
                 }
             }

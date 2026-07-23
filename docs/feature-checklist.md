@@ -79,9 +79,9 @@ _Last updated: 2026-07-23_
   shows a plain-language explanation; a top banner, a dashed cue on each control,
   and an explanation card
 - [x] Toggle in Settings + a one-tap "?" on Today
-- [x] Today wired (signals, Calm/Energy, quick wins, restock nudge, Add)
-- [ ] Remaining screens (Tasks, Calendar, Inventory, Orders, Ideas, Supplements,
-  Help, Vault, More) — add an explanation to each control
+- [x] Every screen wired — Today, Tasks, Calendar, Inventory, Low stock, Places
+  & bins, Orders, Purchases, Ideas, Supplements, Help, Vault, and More all
+  explain their controls (37 explanations)
 
 ## Design & submission readiness
 - [x] "Warm Paper" design system (light + dark)

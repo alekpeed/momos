@@ -37,6 +37,7 @@ struct SupplementsView: View {
                                 }
                             }
                         }
+                        .explains("A supplement", "Tap 'Log 1 taken' each time you take one — the count drops so you know when it's low.")
                     }
                 }
             }

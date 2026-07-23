@@ -17,22 +17,25 @@ struct Explanation: Identifiable, Hashable {
 }
 
 private struct Explainable: ViewModifier {
-    @Environment(ExplainMode.self) private var mode
+    // Optional so any view can use `.explains` without providing the object
+    // (e.g. in Xcode previews); it simply does nothing when absent.
+    @Environment(ExplainMode.self) private var mode: ExplainMode?
     let title: String
     let text: String
 
     func body(content: Content) -> some View {
-        content
+        let on = mode?.isOn ?? false
+        return content
             // While explaining, the real control ignores taps…
-            .allowsHitTesting(!mode.isOn)
+            .allowsHitTesting(!on)
             // …and a dashed overlay catches the tap to show the explanation instead.
             .overlay {
-                if mode.isOn {
+                if on {
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .strokeBorder(Theme.gold.opacity(0.85), style: StrokeStyle(lineWidth: 1.5, dash: [5, 3]))
                         .background(Theme.gold.opacity(0.07), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                         .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                        .onTapGesture { mode.current = Explanation(title: title, text: text) }
+                        .onTapGesture { mode?.current = Explanation(title: title, text: text) }
                         .accessibilityLabel("What is \(title)?")
                         .accessibilityHint(text)
                 }

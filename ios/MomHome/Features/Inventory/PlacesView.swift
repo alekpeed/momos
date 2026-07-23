@@ -25,6 +25,7 @@ struct PlacesView: View {
                                 SectionHeader(title: location.name, subtitle: location.note.isEmpty ? nil : location.note)
                                 Button { addBinForLocation = location } label: { Image(systemName: "plus.circle") }
                                     .tint(Theme.primary)
+                                    .explains("Add a bin", "Make a new bin (a box or basket) in this room.")
                             }
                             let locationBins = bins.filter { $0.locationId == location.id }
                             if locationBins.isEmpty {
@@ -33,6 +34,7 @@ struct PlacesView: View {
                                 ForEach(locationBins) { bin in
                                     NavigationLink { BinLabelView(bin: bin) } label: { BinRow(bin: bin) }
                                         .buttonStyle(.plain)
+                                        .explains("A bin", "A box or basket in this room. Tap for its printable QR label.")
                                 }
                             }
                         }

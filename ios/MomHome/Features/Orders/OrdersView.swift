@@ -44,6 +44,7 @@ private struct OrdersList: View {
                         ForEach(OrderStatus.allCases) { s in chip(s.rawValue, active: filter == s) { filter = s } }
                     }
                 }
+                .explains("Filters", "Show all orders, or just the ones needed, ordered, or received.")
                 if filtered.isEmpty {
                     EmptyStateView(systemImage: "cart", title: "Nothing to order", message: "Add things you need to buy.", actionTitle: "Add order") { showingAdd = true }
                 } else {
@@ -69,6 +70,7 @@ private struct OrdersList: View {
                                 } label: { StatusPill(text: order.status.rawValue, tone: order.status.tone) }
                             }
                         }
+                        .explains("An order", "Something to buy. Tap the status to mark it ordered or received.")
                     }
                 }
             }
@@ -111,6 +113,7 @@ private struct PurchasesList: View {
                                 if !p.totalPrice.isEmpty { Text("$\(p.totalPrice)").font(.body.weight(.semibold)).foregroundStyle(Theme.ink) }
                             }
                         }
+                        .explains("A purchase", "Something you've bought, kept for your records.")
                     }
                 }
             }

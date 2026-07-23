@@ -30,10 +30,12 @@ struct HelpView: View {
                         HelpRequestCard(request: request, contact: contacts.first { $0.id == request.contactId }) {
                             request.status = .resolved; request.updatedAt = .now; try? context.save()
                         }
+                        .explains("A help request", "Copy it, send it as a text or email, or mark it resolved. This is never 911.")
                     }
                 }
                 Button { showingNewRequest = true } label: { Label("Ask for help", systemImage: "hand.raised").frame(maxWidth: .infinity) }
                     .buttonStyle(QuietPrimaryButtonStyle())
+                    .explains("Ask for help", "Write what you need and send it to a helper by text or email — already worded for you.")
 
                 SectionHeader(title: "Helper contacts")
                 if contacts.isEmpty {
@@ -50,10 +52,12 @@ struct HelpView: View {
                                 Spacer()
                             }
                         }
+                        .explains("A helper", "Someone who can help. Their phone and email are used when you send a request.")
                     }
                 }
                 Button { showingNewContact = true } label: { Label("Add a helper", systemImage: "person.badge.plus") }
                     .buttonStyle(.bordered).tint(Theme.primary)
+                    .explains("Add a helper", "Save someone (like a son or neighbor) so you can reach them in one tap.")
             }
             .padding(Theme.Space.lg)
         }

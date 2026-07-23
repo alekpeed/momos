@@ -22,12 +22,16 @@ struct CalendarView: View {
                     .tint(Theme.primary)
                     .padding(Theme.Space.sm)
                     .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.cardRadius, style: .continuous))
+                    .explains("Calendar", "Pick a day to see what's on it. Use the + to add an event.")
 
                 SectionHeader(title: "On \(selectedDay.formatted(.dateTime.month().day()))")
                 if agenda.isEmpty {
                     Card { Text("Nothing on this day.").font(.subheadline).foregroundStyle(Theme.inkSecondary) }
                 } else {
-                    ForEach(agenda) { entry in eventRow(entry) }
+                    ForEach(agenda) { entry in
+                        eventRow(entry)
+                            .explains("An event", "Something on your calendar. Long-press to delete it.")
+                    }
                 }
 
                 SectionHeader(title: "Coming up")
@@ -47,6 +51,7 @@ struct CalendarView: View {
                             }
                         }
                         .buttonStyle(.plain)
+                        .explains("Coming up", "An upcoming event. Tap it to jump to that day.")
                     }
                 }
             }

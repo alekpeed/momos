@@ -15,6 +15,7 @@ struct IdeasView: View {
                     ForEach(boards) { board in
                         NavigationLink { BoardDetailView(board: board) } label: { BoardCard(board: board) }
                             .buttonStyle(.plain)
+                            .explains("A board", "A collection of ideas about one thing. Tap to open it.")
                     }
                 }
             }
@@ -104,6 +105,7 @@ struct BoardDetailView: View {
                             .background(favoritesOnly ? Theme.clay : Theme.clay.opacity(0.12), in: RoundedRectangle(cornerRadius: Theme.controlRadius, style: .continuous))
                     }
                     .buttonStyle(.plain)
+                    .explains("Compare favorites", "Show only the ideas you've hearted, side by side.")
                 }
 
                 if visible.isEmpty {
@@ -114,7 +116,10 @@ struct BoardDetailView: View {
                         actionTitle: showArchived ? nil : "Add idea"
                     ) { showingAdd = true }
                 } else {
-                    ForEach(visible) { card in cardView(card) }
+                    ForEach(visible) { card in
+                        cardView(card)
+                            .explains("An idea", "A note, link, or photo. Tap the heart to favorite it, or the ⋯ menu to turn it into a task or order.")
+                    }
                 }
             }
             .padding(Theme.Space.lg)
