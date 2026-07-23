@@ -1,88 +1,85 @@
 rules_version = '2';
 
+// MomOS — Firestore security rules
+// Household-scoped, role-based access. A user only ever sees data for
+// households they are an active member of. Writers must be owner or helper;
+// viewers are read-only. The audit log is append-only.
 service cloud.firestore {
   match /databases/{database}/documents {
+
     function signedIn() {
       return request.auth != null;
     }
-
-    function household(householdId) {
-      return get(/databases/$(database)/documents/households/$(householdId));
+    function memberPath(hid) {
+      return /databases/$(database)/documents/households/$(hid)/members/$(request.auth.uid);
+    }
+    function isMember(hid) {
+      return signedIn()
+        && exists(memberPath(hid))
+        && get(memberPath(hid)).data.status == 'active';
+    }
+    function myRole(hid) {
+      return get(memberPath(hid)).data.role;
+    }
+    function canWrite(hid) {
+      return isMember(hid) && (myRole(hid) == 'owner' || myRole(hid) == 'helper');
+    }
+    function isOwner(hid) {
+      return isMember(hid) && myRole(hid) == 'owner';
+    }
+    function invitePath(hid, token) {
+      return /databases/$(database)/documents/households/$(hid)/invites/$(token);
     }
 
-    function isHouseholdMember(householdId) {
-      return signedIn() && household(householdId).data.memberIds.hasAny([request.auth.uid]);
+    // Lightweight public profile (display name), readable by any signed-in user.
+    match /users/{uid} {
+      allow read: if signedIn();
+      allow write: if signedIn() && request.auth.uid == uid;
     }
 
-    function isHouseholdEditor(householdId) {
-      return signedIn() && household(householdId).data.editorIds.hasAny([request.auth.uid]);
-    }
+    match /households/{hid} {
+      allow read: if isMember(hid);
+      allow create: if signedIn() && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if isOwner(hid);
 
-    function isHouseholdOwner(householdId) {
-      return signedIn() && household(householdId).data.ownerUserId == request.auth.uid;
-    }
-
-    function activeInvite(householdId, inviteId) {
-      return get(/databases/$(database)/documents/households/$(householdId)/invites/$(inviteId)).data.active == true
-        && get(/databases/$(database)/documents/households/$(householdId)/invites/$(inviteId)).data.expiresAt > request.time;
-    }
-
-    function inviteRole(householdId, inviteId) {
-      return get(/databases/$(database)/documents/households/$(householdId)/invites/$(inviteId)).data.role;
-    }
-
-    match /households/{householdId} {
-      allow create: if signedIn()
-        && request.resource.data.ownerUserId == request.auth.uid
-        && request.resource.data.memberIds.hasAny([request.auth.uid])
-        && request.resource.data.editorIds.hasAny([request.auth.uid]);
-      // Parent document access must use resource.data. Calling get() for this
-      // same document recursively denies the client request.
-      allow read: if signedIn() && resource.data.memberIds.hasAny([request.auth.uid]);
-      allow update: if signedIn()
-        && (resource.data.ownerUserId == request.auth.uid
-          || (resource.data.editorIds.hasAny([request.auth.uid])
-          && request.resource.data.ownerUserId == resource.data.ownerUserId
-          && request.resource.data.memberIds == resource.data.memberIds
-          && request.resource.data.editorIds == resource.data.editorIds
-          && request.resource.data.memberRoles == resource.data.memberRoles));
-      allow delete: if signedIn() && resource.data.ownerUserId == request.auth.uid;
-
-      match /metadata/{documentId} {
-        allow read: if isHouseholdMember(householdId);
-        allow create, update: if isHouseholdEditor(householdId);
-        allow delete: if isHouseholdOwner(householdId);
+      // Members: owner manages everyone; the owner bootstraps their own
+      // membership at creation; anyone else self-joins with a valid invite.
+      match /members/{uid} {
+        allow read: if isMember(hid);
+        allow update, delete: if isOwner(hid);
+        allow create: if isOwner(hid)
+          || (
+            signedIn() && request.auth.uid == uid
+            && request.resource.data.role == 'owner'
+            && get(/databases/$(database)/documents/households/$(hid)).data.ownerId == request.auth.uid
+          )
+          || (
+            signedIn() && request.auth.uid == uid
+            && request.resource.data.status == 'active'
+            && exists(invitePath(hid, request.resource.data.inviteToken))
+            && get(invitePath(hid, request.resource.data.inviteToken)).data.status == 'pending'
+            && get(invitePath(hid, request.resource.data.inviteToken)).data.expiresAt > request.time
+            && request.resource.data.role == get(invitePath(hid, request.resource.data.inviteToken)).data.role
+          );
       }
 
-      match /activity/{activityId} {
-        allow read: if isHouseholdMember(householdId);
-        allow create: if isHouseholdEditor(householdId);
+      // Invites: owner creates/revokes; any signed-in user may read one to accept.
+      match /invites/{token} {
+        allow read: if signedIn();
+        allow create, update, delete: if isOwner(hid);
+      }
+
+      // Records: the synced household data (items, tasks, etc.). Viewers read-only.
+      match /records/{doc} {
+        allow read: if isMember(hid);
+        allow create, update, delete: if canWrite(hid);
+      }
+
+      // Audit log: append-only, never edited or deleted.
+      match /audit/{doc} {
+        allow read: if isMember(hid);
+        allow create: if isMember(hid);
         allow update, delete: if false;
-      }
-
-      match /invites/{inviteId} {
-        // A signed-in person who knows an active code may read only that exact
-        // invite. Only the owner can list, create, revoke, or alter invites.
-        allow get: if signedIn()
-          && resource.data.active == true
-          && resource.data.expiresAt > request.time;
-        allow list, create, update, delete: if isHouseholdOwner(householdId);
-      }
-
-      match /joinRequests/{requestUserId} {
-        // A request is bound to the signed-in recipient and to the role stored
-        // on the matching active invite. The owner alone approves membership.
-        allow create: if signedIn()
-          && requestUserId == request.auth.uid
-          && request.resource.data.userId == request.auth.uid
-          && request.resource.data.status == "pending"
-          && request.resource.data.inviteCode is string
-          && activeInvite(householdId, request.resource.data.inviteCode)
-          && request.resource.data.role == inviteRole(householdId, request.resource.data.inviteCode);
-        allow get: if signedIn() && (requestUserId == request.auth.uid || isHouseholdOwner(householdId));
-        allow list: if isHouseholdOwner(householdId);
-        allow delete: if signedIn() && (requestUserId == request.auth.uid || isHouseholdOwner(householdId));
-        allow update: if false;
       }
     }
   }

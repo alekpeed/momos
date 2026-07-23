@@ -43,8 +43,8 @@ struct MoreView: View {
             Section("Data") {
                 link("Backup & restore", "externaldrive",
                      "Save everything to a file, or restore from one — with a preview first.", BackupView())
-                staticRow("Cloud protection", "icloud", "Local-first — cloud sync is a later step")
-                    .explains("Cloud protection", "Where cloud syncing will live later. For now, everything stays on this phone.")
+                link("Cloud", "icloud",
+                     "Optional account, sharing with a helper, and syncing across devices.", CloudView())
             }
             Section("Help") {
                 link("User manual", "book",
@@ -67,15 +67,6 @@ struct MoreView: View {
             Label(title, systemImage: icon).foregroundStyle(Theme.ink)
         }
         .explains(title, explanation)
-    }
-
-    private func staticRow(_ title: String, _ icon: String, _ subtitle: String) -> some View {
-        Label {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title).foregroundStyle(Theme.ink)
-                Text(subtitle).font(.caption).foregroundStyle(Theme.inkSecondary)
-            }
-        } icon: { Image(systemName: icon).foregroundStyle(Theme.inkSecondary) }
     }
 }
 

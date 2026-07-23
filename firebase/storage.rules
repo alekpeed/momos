@@ -1,23 +1,36 @@
 rules_version = '2';
 
+// MomOS — Cloud Storage security rules
+// Household-scoped media (item photos, receipt scans). Access mirrors the
+// Firestore model: a user only reaches a household's files if they are an
+// active member; only owner/helper may upload or delete. Membership is read
+// from the members subcollection so there is one source of truth.
 service firebase.storage {
   match /b/{bucket}/o {
-    function isMember(householdId) {
+
+    function memberDoc(hid) {
+      return firestore.get(
+        /databases/(default)/documents/households/$(hid)/members/$(request.auth.uid)
+      );
+    }
+    function isMember(hid) {
       return request.auth != null
-        && firestore.get(/databases/(default)/documents/households/$(householdId)).data.memberIds.hasAny([request.auth.uid]);
+        && firestore.exists(
+          /databases/(default)/documents/households/$(hid)/members/$(request.auth.uid)
+        )
+        && memberDoc(hid).data.status == 'active';
+    }
+    function canWrite(hid) {
+      return isMember(hid)
+        && (memberDoc(hid).data.role == 'owner' || memberDoc(hid).data.role == 'helper');
     }
 
-    function isEditor(householdId) {
-      return request.auth != null
-        && firestore.get(/databases/(default)/documents/households/$(householdId)).data.editorIds.hasAny([request.auth.uid]);
-    }
-
-    match /household-media/{householdId}/{allPaths=**} {
-      allow read: if isMember(householdId);
-      allow create, update: if isEditor(householdId)
+    match /households/{hid}/{allPaths=**} {
+      allow read: if isMember(hid);
+      allow create, update: if canWrite(hid)
         && request.resource.size < 15 * 1024 * 1024
         && request.resource.contentType.matches('image/.*|application/pdf');
-      allow delete: if isEditor(householdId);
+      allow delete: if canWrite(hid);
     }
   }
 }

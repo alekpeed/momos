@@ -28,6 +28,25 @@ jobs:
           echo "--- Simulator SDKs ---"
           xcodebuild -showsdks | grep -i simulator || true
 
+      - name: Resolve Swift packages
+        run: |
+          # Firebase pulls a large transitive tree (gRPC, abseil, leveldb, …).
+          # Resolve it as its own step so a network hiccup is distinct from a
+          # compile failure, and retry a few times before giving up.
+          for attempt in 1 2 3; do
+            echo "Package resolution attempt $attempt"
+            if xcodebuild -resolvePackageDependencies \
+                 -project ios/MomHome.xcodeproj \
+                 -scheme MomHome \
+                 -clonedSourcePackagesDirPath .spm-cache; then
+              exit 0
+            fi
+            echo "Resolution failed; retrying after backoff…"
+            sleep $((attempt * 10))
+          done
+          echo "Package resolution failed after retries" >&2
+          exit 1
+
       - name: Build
         run: |
           set -o pipefail
@@ -36,6 +55,8 @@ jobs:
             -scheme MomHome \
             -configuration Debug \
             -destination 'generic/platform=iOS Simulator' \
+            -clonedSourcePackagesDirPath .spm-cache \
             -skipPackagePluginValidation \
+            -disableAutomaticPackageResolution \
             CODE_SIGNING_ALLOWED=NO \
             COMPILER_INDEX_STORE_ENABLE=NO

@@ -99,7 +99,24 @@ so the household engine stays easy to reason about and export.
 - Urgent help alerts stay clearly non-911; wording says so on screen.
 - User-defined flags/tags/colors carry no fixed app meaning.
 
+## Cloud (Tier 3 — Firebase, in progress)
+
+An optional cloud layer is wired in under **More → Cloud**, using Firebase
+(project `kmos-3da65`) with email/password sign-in. What's built: accounts,
+household creation, helper sharing via invite codes, owner/helper/viewer roles
+(enforced by `firebase/firestore.rules`), and an append-only audit log. The
+Firebase SDK is linked via SPM (`FirebaseAuth`, `FirebaseFirestore`,
+`FirebaseStorage`).
+
+It stays **completely dormant** until a real `GoogleService-Info.plist` is added
+(`FirebaseBootstrap.configureIfPossible()` is a no-op without it), so the app
+builds and runs fully local with nothing committed. Console setup steps are in
+[`docs/firebase-setup.md`](../docs/firebase-setup.md).
+
+**Still to build:** cloud data sync (items/tasks/etc. ↔ Firestore) and photo
+upload to Cloud Storage — the next increment.
+
 ## Next
 
-- Item detail + photo capture, Places/Bins + QR, Orders/Purchases, cloud protection,
-  backup/restore, and the user manual are the natural next screens to deepen.
+- Cloud **data sync** + **photo upload** (Firestore `records` ↔ SwiftData, media
+  to Storage) are the immediate next screens to deepen the Tier 3 layer.

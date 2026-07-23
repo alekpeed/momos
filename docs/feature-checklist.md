@@ -95,15 +95,31 @@ _Last updated: 2026-07-23_
 
 ---
 
-## Not yet built (planned)
+## In progress / planned
 
-### Cloud sync & sharing (Tier 3 — needs Firebase/Supabase accounts)
-- [ ] Sign in / accounts
-- [ ] Cloud database + cloud photo storage
-- [ ] Shared access for a helper (son)
-- [ ] Roles & permissions
-- [ ] Audit log of helper actions
-- [ ] Offline-friendly sync
+### Cloud sync & sharing (Tier 3 — Firebase, project `kmos-3da65`)
+
+Native Firebase (Auth + Firestore + Storage) is now wired into the Xcode project
+and the security rules are written. What's coded vs. still pending:
+
+- [x] Firebase SDK linked into the app (SPM: Auth, Firestore, Storage)
+- [x] Sign in / create account (email + password)
+- [x] Household create + membership
+- [x] Shared access for a helper — invite codes + join by code
+- [x] Roles & permissions (owner / helper / viewer) enforced in Firestore rules
+- [x] Audit log of cloud actions (append-only)
+- [x] Firestore + Storage security rules (`firebase/`)
+- [ ] **Cloud data sync** — pushing/pulling items, tasks, etc. (next increment)
+- [ ] **Cloud photo storage** — uploading item/receipt images (next increment)
+- [ ] Offline-friendly sync (Firestore's offline cache; wired with data sync)
+- [ ] **Your console steps** — register the iOS app, download
+  `GoogleService-Info.plist`, enable Email/Password auth, publish the rules
+  (see `docs/firebase-setup.md`)
+
+> Note on the invite model: the current flow is a **self-join code** (owner makes
+> a time-limited code; whoever enters it joins immediately with that role), which
+> is simpler than the original "owner approves each request." Say the word to add
+> the approval step back.
 
 ### Ideas under consideration
 - [ ] Calm ambient sounds
@@ -117,5 +133,8 @@ _Last updated: 2026-07-23_
   still needs your Apple Developer account.
 - **Tier 1 — submission readiness:** done
 - **Tier 2 — feature parity:** done
-- **Tier 3 — cloud + sharing:** planned (needs accounts)
+- **Tier 3 — cloud + sharing:** in progress on Firebase (`kmos-3da65`). Accounts,
+  household, sharing/roles, audit log, and security rules are coded; **cloud data
+  sync + photo upload are the next increment**, and the Firebase console steps
+  (`docs/firebase-setup.md`) are still yours to do before cloud goes live.
 - **Tier 4 — App Store submission:** pending (needs a running build for screenshots)

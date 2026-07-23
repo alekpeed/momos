@@ -9,3 +9,9 @@ tmp/
 work/
 
 out/
+
+# Firebase — per-project config, no reason to publish
+ios/MomHome/GoogleService-Info.plist
+
+# Swift Package Manager clone cache (CI)
+.spm-cache/

@@ -5,6 +5,7 @@ import SwiftData
 struct MomHomeApp: App {
     let container: ModelContainer
     @State private var explain = ExplainMode()
+    @State private var cloud = CloudSession()
 
     init() {
         let schema = Schema([
@@ -38,10 +39,12 @@ struct MomHomeApp: App {
             RootView()
                 .tint(Theme.primary)
                 .environment(explain)
+                .environment(cloud)
                 .onAppear {
                     // onAppear runs on the MainActor, so it can touch mainContext directly.
                     Seed.runIfNeeded(container.mainContext)
                     Task { await NotificationService.shared.reschedule(from: container.mainContext) }
+                    Task { await cloud.bootstrap() }
                 }
         }
         .modelContainer(container)

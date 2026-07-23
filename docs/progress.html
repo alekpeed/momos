@@ -77,19 +77,19 @@
 
   <div class="overall">
     <div class="row">
-      <span class="pct">77%</span>
-      <span class="counts"><b>47</b> built · <b>4</b> partial · <b>10</b> planned <span style="opacity:.6">(61 planned features)</span></span>
+      <span class="pct">84%</span>
+      <span class="counts"><b>51</b> built · <b>4</b> partial · <b>6</b> planned <span style="opacity:.6">(61 planned features)</span></span>
     </div>
     <div class="bar">
-      <i class="b-done" style="width:77%"></i>
-      <i class="b-part" style="width:7%"></i>
-      <i class="b-plan" style="width:16%"></i>
+      <i class="b-done" style="width:84%"></i>
+      <i class="b-part" style="width:6%"></i>
+      <i class="b-plan" style="width:10%"></i>
     </div>
     <div class="legend">
       <span><i class="dot d-done"></i> Built</span>
       <span><i class="dot d-part"></i> Partial</span>
       <span><i class="dot d-plan"></i> Planned</span>
-      <span style="margin-left:auto">Cloud sync is the bulk of what's left.</span>
+      <span style="margin-left:auto">Cloud data sync + photos are the main pieces left.</span>
     </div>
   </div>
 
@@ -98,7 +98,7 @@
     <div class="tier"><div class="t">Tier 0</div><div class="n">Compiles (CI)</div><span class="s s-done">Green</span></div>
     <div class="tier"><div class="t">Tier 1</div><div class="n">Submission readiness</div><span class="s s-done">Done</span></div>
     <div class="tier"><div class="t">Tier 2</div><div class="n">Feature parity</div><span class="s s-done">Done</span></div>
-    <div class="tier"><div class="t">Tier 3</div><div class="n">Cloud &amp; sharing</div><span class="s s-plan">Planned</span></div>
+    <div class="tier"><div class="t">Tier 3</div><div class="n">Cloud &amp; sharing</div><span class="s s-pend">In progress</span></div>
     <div class="tier"><div class="t">Tier 4</div><div class="n">App Store</div><span class="s s-pend">Pending build</span></div>
   </div>
 
@@ -116,12 +116,13 @@
     <div class="cat"><div class="h"><span class="name">Data &amp; foundation</span><span class="frac">4/5</span></div><div class="meter"><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i><i class="m-part"></i></div></div>
     <div class="cat"><div class="h"><span class="name">Design &amp; submission</span><span class="frac">7/7</span></div><div class="meter"><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i></div></div>
     <div class="cat"><div class="h"><span class="name">Guided help (Explain mode)</span><span class="frac">3/3</span></div><div class="meter"><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i></div></div>
-    <div class="cat"><div class="h"><span class="name">Cloud &amp; sharing</span><span class="frac">0/6</span></div><div class="meter"><i class="m-plan"></i><i class="m-plan"></i><i class="m-plan"></i><i class="m-plan"></i><i class="m-plan"></i><i class="m-plan"></i></div></div>
+    <div class="cat"><div class="h"><span class="name">Cloud &amp; sharing</span><span class="frac">4/6</span></div><div class="meter"><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i><i class="m-done"></i><i class="m-plan"></i><i class="m-plan"></i></div></div>
   </div>
 
   <h2>Recent changes</h2>
   <div class="log">
-    <div class="item head"><div class="when">23 Jul 2026</div><div class="what">Renamed to <b>MomOS</b> (home-screen display name + all user-facing text, docs, and the guide).</div></div>
+    <div class="item head"><div class="when">23 Jul 2026</div><div class="what">Phase 3 foundation on <b>Firebase</b> (<code>kmos-3da65</code>) — SDK linked, email/password accounts, household create, helper sharing (invite codes + roles), append-only audit log, and Firestore + Storage security rules. <b>Cloud data sync + photo upload are the next increment</b>; the Firebase console steps are still yours (see <code>docs/firebase-setup.md</code>).</div></div>
+    <div class="item"><div class="when">23 Jul 2026</div><div class="what">Renamed to <b>MomOS</b> (home-screen display name + all user-facing text, docs, and the guide).</div></div>
     <div class="item"><div class="when">23 Jul 2026</div><div class="what">✅ First compile is green — the app builds on a macOS runner (Xcode 26 / iOS 26 Simulator). Fixed a type-check timeout in BackupView.</div></div>
     <div class="item"><div class="when">23 Jul 2026</div><div class="what">Explain-mode toggle now on every screen — a floating "?" button turns it on from anywhere.</div></div>
     <div class="item"><div class="when">23 Jul 2026</div><div class="what">Explain mode completed — every screen's controls now explain themselves (37 explanations).</div></div>
