@@ -65,6 +65,21 @@ enum HelpStatus: String, Codable, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+enum OrderStatus: String, Codable, CaseIterable, Identifiable {
+    case needed = "Needed"
+    case ordered = "Ordered"
+    case received = "Received"
+    var id: String { rawValue }
+
+    var tone: Tone {
+        switch self {
+        case .needed:   return .warning
+        case .ordered:  return .primary
+        case .received: return .good
+        }
+    }
+}
+
 enum IdeaStatus: String, Codable, CaseIterable, Identifiable {
     case saved = "Saved"
     case considering = "Considering"

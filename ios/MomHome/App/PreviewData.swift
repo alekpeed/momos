@@ -7,8 +7,8 @@ enum PreviewData {
     static let container: ModelContainer = {
         let schema = Schema([
             Household.self, StorageLocation.self, StorageBin.self, InventoryItem.self,
-            TaskProject.self, TaskRecord.self, CalendarEntry.self, Supplement.self,
-            IdeaBoard.self, IdeaCard.self, HelperContact.self, HelpRequest.self,
+            Order.self, Purchase.self, TaskProject.self, TaskRecord.self, CalendarEntry.self,
+            Supplement.self, IdeaBoard.self, IdeaCard.self, HelperContact.self, HelpRequest.self,
             VaultRecord.self, AppSettings.self
         ])
         let container = try! ModelContainer(

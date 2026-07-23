@@ -3,13 +3,15 @@ import SwiftData
 
 struct MoreView: View {
     @Query private var settingsRows: [AppSettings]
-    private var householdName: String { settingsRows.first?.householdName ?? "Our Home" }
 
     var body: some View {
         List {
             Section("Household") {
-                row("Supplements", "pills", .gold) { SupplementsView() }
-                row("Help & alerts", "hand.raised", .clay) { HelpView() }
+                link("Orders & purchases", "cart", OrdersView())
+                link("Places & bins", "map", PlacesView())
+                link("Low stock", "exclamationmark.triangle", LowStockView())
+                link("Supplements", "pills", SupplementsView())
+                link("Help & alerts", "hand.raised", HelpView())
             }
             Section("Private") {
                 NavigationLink { VaultView() } label: {
@@ -24,9 +26,12 @@ struct MoreView: View {
                 }
             }
             Section("Data") {
+                link("Backup & restore", "externaldrive", BackupView())
                 staticRow("Cloud protection", "icloud", "Local-first — cloud sync is a later step")
-                staticRow("Backup & restore", "arrow.down.doc", "Export/import a full JSON backup")
-                staticRow("User manual", "book", "How Mom Home works")
+            }
+            Section("Help") {
+                link("User manual", "book", ManualView())
+                link("Settings", "gearshape", SettingsView())
             }
             Section {
                 Text("Mom Home keeps your household organized on this device first. Nothing is sent anywhere unless you set up cloud protection.")
@@ -38,7 +43,7 @@ struct MoreView: View {
         .navigationTitle("More")
     }
 
-    private func row<Destination: View>(_ title: String, _ icon: String, _ tint: Color, @ViewBuilder destination: @escaping () -> Destination) -> some View {
+    private func link<Destination: View>(_ title: String, _ icon: String, _ destination: @autoclosure @escaping () -> Destination) -> some View {
         NavigationLink { destination() } label: {
             Label(title, systemImage: icon).foregroundStyle(Theme.ink)
         }

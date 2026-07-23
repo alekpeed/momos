@@ -24,9 +24,9 @@ a small starter household so every screen shows real content.
 
 > Note: this project was authored in a Linux environment where the iOS toolchain
 > can't compile, so it has **not** been built yet. Expect to resolve a few small
-> diagnostics on first build in Xcode. The `SWIFT_VERSION` is set to `5.0` for a
-> smooth first compile; flip it to `6.0` in Build Settings when you want strict
-> concurrency and we can clean up any diagnostics it surfaces.
+> diagnostics on first build in Xcode. `SWIFT_VERSION` is `6.0` (strict
+> concurrency); the code was written MainActor-clean for it, but if the compiler
+> flags anything, send me the errors and I'll clear them.
 
 ## What's here
 
@@ -36,8 +36,16 @@ a small starter household so every screen shows real content.
 | **Today** — daily signals (Do/Buy/Take/Watch/Help), quick wins, agenda, low-stock nudge, add action | Built |
 | **Tasks** — filters, task cards, blocked-by explanation, star/done, full add/edit editor with dependencies | Built |
 | **Vault** — locked/unlock gate, encrypted add, on-demand reveal, wrong-passphrase error, non-recovery warning | Built |
-| **Inventory** + Low stock, **Calendar** + recurrence, **Ideas** boards/cards, **Supplements**, **Help & alerts** | Built (lighter) |
+| **Inventory** — list, search, **item detail**, add/edit with **photo capture** (PhotosPicker), place/bin selection | Built |
+| **Places & bins** — locations, bins, on-device **QR label** generation + share/print | Built |
+| **Orders & purchases** — to-order list with status, purchase history, add flows | Built |
+| **Backup & restore** — full JSON export + import with a **restore preview** before replacing data | Built |
+| **Calendar** + recurrence, **Ideas** boards/cards, **Supplements**, **Help & alerts**, **Settings**, **Manual** | Built |
 | Design system — "Quiet Household" tokens (warm cream / sage / clay / gold), serif titles, light + dark | Built |
+
+Every one of the six primary tabs and every secondary screen in the brief now has
+a working implementation. The vault's crypto boundary and backup's
+vault-ciphertext-only rule are both enforced.
 
 ## Architecture
 

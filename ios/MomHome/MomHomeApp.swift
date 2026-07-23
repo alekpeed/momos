@@ -11,6 +11,8 @@ struct MomHomeApp: App {
             StorageLocation.self,
             StorageBin.self,
             InventoryItem.self,
+            Order.self,
+            Purchase.self,
             TaskProject.self,
             TaskRecord.self,
             CalendarEntry.self,
@@ -33,7 +35,8 @@ struct MomHomeApp: App {
         WindowGroup {
             RootView()
                 .tint(Theme.primary)
-                .task {
+                .onAppear {
+                    // onAppear runs on the MainActor, so it can touch mainContext directly.
                     Seed.runIfNeeded(container.mainContext)
                 }
         }

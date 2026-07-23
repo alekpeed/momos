@@ -34,6 +34,10 @@ enum Seed {
         context.insert(CalendarEntry(title: "Trash night", date: .now, allDay: true, repeatRule: .weekly, reminderEnabled: true))
         context.insert(CalendarEntry(title: "Book club", date: Calendar.current.date(byAdding: .day, value: 3, to: .now) ?? .now, allDay: false, startTime: "18:30", endTime: "20:00"))
 
+        context.insert(Order(name: "Paper towels", status: .needed, quantity: 2, store: "Costco"))
+        context.insert(Order(name: "Furnace filter", status: .ordered, store: "Home Depot", expectedDate: Calendar.current.date(byAdding: .day, value: 2, to: .now)))
+        context.insert(Purchase(productName: "Coffee beans", storeName: "Trader Joe's", totalPrice: "12.99", purchasedAt: Calendar.current.date(byAdding: .day, value: -5, to: .now) ?? .now))
+
         context.insert(Supplement(name: "Vitamin D", instructions: "1 in the morning with food", remainingCount: 12, lowThreshold: 7))
         context.insert(Supplement(name: "Fish oil", instructions: "1 with dinner", remainingCount: 40, lowThreshold: 10))
 

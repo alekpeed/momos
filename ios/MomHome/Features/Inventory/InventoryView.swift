@@ -21,18 +21,21 @@ struct InventoryView: View {
                     EmptyStateView(systemImage: "shippingbox", title: "No items yet", message: "Add the things you keep track of at home.", actionTitle: "Add an item") { showingAdd = true }
                 } else {
                     ForEach(filtered) { item in
-                        Card {
-                            HStack(spacing: Theme.Space.md) {
-                                itemThumb(item)
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(item.name).font(.body.weight(.medium)).foregroundStyle(Theme.ink)
-                                    Text(locationName(item.locationId) ?? item.category)
-                                        .font(.caption).foregroundStyle(Theme.inkSecondary)
+                        NavigationLink { ItemDetailView(item: item) } label: {
+                            Card {
+                                HStack(spacing: Theme.Space.md) {
+                                    itemThumb(item)
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(item.name).font(.body.weight(.medium)).foregroundStyle(Theme.ink)
+                                        Text(locationName(item.locationId) ?? item.category)
+                                            .font(.caption).foregroundStyle(Theme.inkSecondary)
+                                    }
+                                    Spacer()
+                                    StatusPill(text: item.quantityStatus.rawValue, tone: item.quantityStatus.tone)
                                 }
-                                Spacer()
-                                StatusPill(text: item.quantityStatus.rawValue, tone: item.quantityStatus.tone)
                             }
                         }
+                        .buttonStyle(.plain)
                         .contextMenu {
                             Button { cycle(item) } label: { Label("Change status", systemImage: "arrow.triangle.2.circlepath") }
                         }
@@ -108,45 +111,6 @@ struct LowStockView: View {
         }
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle("Low stock")
-    }
-}
-
-/// Minimal item add/edit form.
-struct ItemEditorView: View {
-    @Environment(\.modelContext) private var context
-    @Environment(\.dismiss) private var dismiss
-    @State private var name = ""
-    @State private var category = "General"
-    @State private var status: QuantityStatus = .ok
-    @State private var preferredStore = ""
-
-    var body: some View {
-        Form {
-            Section {
-                TextField("Item name", text: $name)
-                TextField("Category", text: $category)
-            }
-            Section("On hand") {
-                Picker("Status", selection: $status) {
-                    ForEach(QuantityStatus.allCases) { Text($0.rawValue).tag($0) }
-                }
-                TextField("Preferred store (optional)", text: $preferredStore)
-            }
-        }
-        .navigationTitle("New item")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Save") {
-                    let item = InventoryItem(name: name.trimmingCharacters(in: .whitespaces), category: category, quantityStatus: status, preferredStore: preferredStore)
-                    context.insert(item)
-                    try? context.save()
-                    dismiss()
-                }
-                .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
-            }
-        }
     }
 }
 

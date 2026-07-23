@@ -8,7 +8,7 @@ struct CalendarView: View {
     @State private var showingAdd = false
 
     private var upcoming: [(entry: CalendarEntry, date: Date)] {
-        Recurrence.upcoming(entries, from: .now, days: 45)
+        Array(Recurrence.upcoming(entries, from: .now, days: 45).prefix(8))
     }
     private var agenda: [CalendarEntry] {
         entries.filter { Recurrence.entry($0, occursOn: selectedDay) }
@@ -34,7 +34,8 @@ struct CalendarView: View {
                 if upcoming.isEmpty {
                     Card { Text("No upcoming events.").font(.subheadline).foregroundStyle(Theme.inkSecondary) }
                 } else {
-                    ForEach(Array(upcoming.prefix(8).enumerated()), id: \.offset) { _, item in
+                    ForEach(upcoming.indices, id: \.self) { index in
+                        let item = upcoming[index]
                         Button { selectedDay = item.date } label: {
                             Card {
                                 HStack {

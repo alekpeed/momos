@@ -95,6 +95,73 @@ final class InventoryItem {
 }
 
 @Model
+final class Order {
+    @Attribute(.unique) var id: String
+    var name: String
+    var itemId: String?
+    var status: OrderStatus
+    var quantity: Int
+    var store: String
+    var expectedDate: Date?
+    var createdAt: Date
+    var updatedAt: Date
+
+    init(
+        id: String = UUID().uuidString,
+        name: String,
+        itemId: String? = nil,
+        status: OrderStatus = .needed,
+        quantity: Int = 1,
+        store: String = "",
+        expectedDate: Date? = nil,
+        createdAt: Date = .now,
+        updatedAt: Date = .now
+    ) {
+        self.id = id
+        self.name = name
+        self.itemId = itemId
+        self.status = status
+        self.quantity = quantity
+        self.store = store
+        self.expectedDate = expectedDate
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+    }
+}
+
+@Model
+final class Purchase {
+    @Attribute(.unique) var id: String
+    var productName: String
+    var itemId: String?
+    var storeName: String
+    var totalPrice: String
+    var purchasedAt: Date
+    var notes: String
+    var receiptText: String
+
+    init(
+        id: String = UUID().uuidString,
+        productName: String,
+        itemId: String? = nil,
+        storeName: String = "",
+        totalPrice: String = "",
+        purchasedAt: Date = .now,
+        notes: String = "",
+        receiptText: String = ""
+    ) {
+        self.id = id
+        self.productName = productName
+        self.itemId = itemId
+        self.storeName = storeName
+        self.totalPrice = totalPrice
+        self.purchasedAt = purchasedAt
+        self.notes = notes
+        self.receiptText = receiptText
+    }
+}
+
+@Model
 final class TaskProject {
     @Attribute(.unique) var id: String
     var name: String
