@@ -4,6 +4,7 @@ import UserNotifications
 
 struct SettingsView: View {
     @Environment(\.modelContext) private var context
+    @Environment(ExplainMode.self) private var explain
     @Query private var settingsRows: [AppSettings]
     @State private var reminderStatus: UNAuthorizationStatus = .notDetermined
 
@@ -11,6 +12,11 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            Section("Guided help") {
+                Toggle("Explain mode", isOn: Binding(get: { explain.isOn }, set: { explain.isOn = $0 }))
+                Text("When this is on, tapping anything shows what it does — and nothing happens. A safe way to explore.")
+                    .font(.caption).foregroundStyle(Theme.inkSecondary)
+            }
             Section("Household") {
                 if let settings {
                     TextField("Household name", text: Binding(
@@ -103,4 +109,5 @@ struct ManualView: View {
 #Preview {
     NavigationStack { SettingsView() }
         .modelContainer(PreviewData.container)
+        .environment(ExplainMode())
 }

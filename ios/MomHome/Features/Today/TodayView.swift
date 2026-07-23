@@ -5,6 +5,7 @@ import SwiftData
 /// a low-stock nudge, and one obvious Add action — never a dense dashboard.
 struct TodayView: View {
     @Environment(\.modelContext) private var context
+    @Environment(ExplainMode.self) private var explain
     @Query private var tasks: [TaskRecord]
     @Query private var items: [InventoryItem]
     @Query private var supplements: [Supplement]
@@ -39,7 +40,9 @@ struct TodayView: View {
 
             HStack(spacing: Theme.Space.sm) {
                 todayTool(title: "Calm", icon: "leaf", destination: CalmView())
+                    .explains("Calm", "A quiet minute — a breathing circle and a small timer for one calm stretch.")
                 todayTool(title: "Log energy", icon: "waveform.path.ecg", destination: EnergyJournalView())
+                    .explains("Log energy", "A private note about how the day feels, kept just for you.")
             }
 
             signalsGrid
@@ -49,6 +52,7 @@ struct TodayView: View {
                 VStack(spacing: Theme.Space.sm) {
                     ForEach(quickWins) { task in
                         QuickWinRow(task: task) { complete(task) }
+                            .explains("Quick win", "A small task you can finish now. Tap the circle to check it off.")
                     }
                 }
             }
@@ -94,6 +98,7 @@ struct TodayView: View {
                     }
                 }
                 .buttonStyle(.plain)
+                .explains("Restock nudge", "Things running low or out. Tap to open your low-stock list.")
             }
 
             Button {
@@ -104,12 +109,17 @@ struct TodayView: View {
             }
             .buttonStyle(QuietPrimaryButtonStyle())
             .padding(.top, Theme.Space.sm)
+            .explains("Add a task", "Write down something you need to do. This opens a simple form.")
         }
         .navigationTitle(householdName)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink { SearchView() } label: { Image(systemName: "magnifyingglass") }
                     .accessibilityLabel("Search")
+            }
+            ToolbarItem(placement: .topBarLeading) {
+                Button { explain.isOn = true } label: { Image(systemName: "questionmark.circle") }
+                    .accessibilityLabel("Explain mode — learn what each thing does")
             }
         }
         .sheet(isPresented: $showingAddTask) {
@@ -120,11 +130,16 @@ struct TodayView: View {
     private var signalsGrid: some View {
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Theme.Space.md) {
             SignalTile(kind: .doIt, count: doCount, caption: "to do")
+                .explains("Do", "The things to do today — tasks you starred or that are due. The Tasks screen has the full list.")
             SignalTile(kind: .buy, count: buyItems.count, caption: "to buy")
+                .explains("Buy", "Things running low or out at home, so you know what to pick up.")
             SignalTile(kind: .take, count: takeCount, caption: "to take")
+                .explains("Take", "Supplements you haven't logged yet today.")
             SignalTile(kind: .watch, count: todaysEvents.count, caption: "today")
+                .explains("Watch", "What's on the calendar today — appointments, trash night, anything dated.")
             if helpCount > 0 {
                 SignalTile(kind: .help, count: helpCount, caption: "needs a hand")
+                    .explains("Help", "Anything you've marked as needing a hand from someone.")
             }
         }
     }
@@ -218,4 +233,5 @@ private struct QuickWinRow: View {
 #Preview {
     NavigationStack { TodayView() }
         .modelContainer(PreviewData.container)
+        .environment(ExplainMode())
 }

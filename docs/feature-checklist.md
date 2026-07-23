@@ -74,6 +74,15 @@ _Last updated: 2026-07-23_
 - [x] First-run onboarding _(new in native)_
 - [~] General CSV/text export of all data (JSON backup + supplement CSV exist; no universal CSV dump)
 
+## Guided help (Explain mode)
+- [x] Explain-mode engine — a switch that intercepts taps and, instead of acting,
+  shows a plain-language explanation; a top banner, a dashed cue on each control,
+  and an explanation card
+- [x] Toggle in Settings + a one-tap "?" on Today
+- [x] Today wired (signals, Calm/Energy, quick wins, restock nudge, Add)
+- [ ] Remaining screens (Tasks, Calendar, Inventory, Orders, Ideas, Supplements,
+  Help, Vault, More) — add an explanation to each control
+
 ## Design & submission readiness
 - [x] "Warm Paper" design system (light + dark)
 - [x] Category color code (Do purple, Buy sage, Take amber, Watch periwinkle, Help rose)
@@ -96,9 +105,6 @@ _Last updated: 2026-07-23_
 - [ ] Offline-friendly sync
 
 ### Ideas under consideration
-- [ ] **Explain mode** — a switch that turns the app into a guided state where tapping
-  any control tells her what it does and how to use it, instead of performing the
-  action. (See discussion; strong candidate.)
 - [ ] Calm ambient sounds
 - [ ] Personalized guide (her name, real helper names)
 

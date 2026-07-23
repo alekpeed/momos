@@ -5,11 +5,13 @@ import SwiftUI
 struct RootView: View {
     enum Section: Hashable { case today, tasks, calendar, inventory, ideas, more }
     @Environment(\.modelContext) private var context
+    @Environment(ExplainMode.self) private var explain
     @State private var selection: Section = .today
     @State private var showOnboarding = false
 
     var body: some View {
-        TabView(selection: $selection) {
+        @Bindable var explain = explain
+        return TabView(selection: $selection) {
             Tab("Today", systemImage: "sun.max", value: .today) {
                 NavigationStack { TodayView() }
             }
@@ -29,6 +31,14 @@ struct RootView: View {
                 NavigationStack { MoreView() }
             }
         }
+        .safeAreaInset(edge: .top) {
+            if explain.isOn {
+                ExplainBanner { explain.isOn = false }
+            }
+        }
+        .sheet(item: $explain.current) { exp in
+            ExplanationCard(explanation: exp) { explain.current = nil }
+        }
         .onAppear {
             if !AppSettings.current(in: context).hasOnboarded { showOnboarding = true }
         }
@@ -47,4 +57,5 @@ struct RootView: View {
 #Preview {
     RootView()
         .modelContainer(PreviewData.container)
+        .environment(ExplainMode())
 }

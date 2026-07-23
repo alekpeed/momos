@@ -4,6 +4,7 @@ import SwiftData
 @main
 struct MomHomeApp: App {
     let container: ModelContainer
+    @State private var explain = ExplainMode()
 
     init() {
         let schema = Schema([
@@ -36,6 +37,7 @@ struct MomHomeApp: App {
         WindowGroup {
             RootView()
                 .tint(Theme.primary)
+                .environment(explain)
                 .onAppear {
                     // onAppear runs on the MainActor, so it can touch mainContext directly.
                     Seed.runIfNeeded(container.mainContext)
