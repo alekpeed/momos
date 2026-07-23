@@ -1,16 +1,17 @@
 :root {
   color-scheme: light;
-  --bg: #f5f7f8;
-  --panel: #ffffff;
-  --ink: #1f2a27;
-  --muted: #66736f;
-  --line: #d8dee3;
-  --green: #37685f;
-  --green-strong: #255047;
-  --gold: #a9782d;
-  --red: #b33a2f;
-  --blue: #315f8b;
-  --shadow: 0 10px 28px rgba(31, 42, 39, 0.08);
+  /* "Warm Paper" — cream stock, ivory cards, antique gold worn as jewelry. */
+  --bg: #faf5ea;
+  --panel: #fffdf7;
+  --ink: #2b2a22;
+  --muted: #857c68;
+  --line: #ece3d0;
+  --green: #a07d2e;
+  --green-strong: #866521;
+  --gold: #b79040;
+  --red: #bf5561;
+  --blue: #6d6ea0;
+  --shadow: 0 10px 28px rgba(120, 100, 50, 0.10);
   --radius: 12px;
   --radius-soft: 10px;
   --tap: 48px;
@@ -170,7 +171,7 @@ button {
 }
 
 .nav-tab.active {
-  background: #e6efeb;
+  background: #f1e9d6;
   color: var(--green-strong);
 }
 
@@ -250,7 +251,7 @@ button {
 
 .ghost-button,
 .small-button {
-  background: #eef2ef;
+  background: #f4ecd9;
   color: var(--green-strong);
 }
 
@@ -262,7 +263,7 @@ button {
 .icon-button {
   min-width: 48px;
   padding: 0 12px;
-  background: #eef2ef;
+  background: #f4ecd9;
   color: var(--green-strong);
 }
 
@@ -283,7 +284,7 @@ button {
   width: 64px;
   height: 64px;
   border-radius: 8px;
-  background: #e8ece8;
+  background: #ece3d0;
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -320,7 +321,7 @@ button {
   min-height: 26px;
   border-radius: 999px;
   padding: 4px 9px;
-  background: #eef2ef;
+  background: #f4ecd9;
   color: var(--green-strong);
   font-size: 0.78rem;
   font-weight: 800;
@@ -333,7 +334,7 @@ button {
 }
 
 .badge.plenty {
-  background: #e3f0e9;
+  background: #f1e9d6;
   color: #286142;
 }
 
@@ -343,7 +344,7 @@ button {
 }
 
 .badge.ready {
-  background: #e3f0e9;
+  background: #f1e9d6;
   color: #286142;
 }
 
@@ -521,7 +522,7 @@ button {
   place-items: center;
   overflow: hidden;
   border-radius: 8px;
-  background: #e8ece8;
+  background: #ece3d0;
   color: var(--muted);
   font-size: 0.82rem;
   font-weight: 900;
@@ -554,7 +555,7 @@ button {
   min-width: 0;
   padding: 9px;
   border-radius: 8px;
-  background: #f7f8f5;
+  background: #faf6ec;
 }
 
 .supplement-facts span {
@@ -581,7 +582,7 @@ button {
 .supplement-note {
   padding: 10px;
   border-radius: 8px;
-  background: #fbfcfb;
+  background: #fffdf7;
 }
 
 .supplement-store {
@@ -684,7 +685,7 @@ button {
   padding: 11px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fbfcfb;
+  background: #fffdf7;
 }
 
 .supplement-log h3 {
@@ -760,7 +761,7 @@ button {
   min-width: 0;
   padding: 9px;
   border-radius: 8px;
-  background: #f7f8f5;
+  background: #faf6ec;
 }
 
 .place-facts span {
@@ -789,7 +790,7 @@ button {
   margin: 0;
   padding: 10px;
   border-radius: 8px;
-  background: #fbfcfb;
+  background: #fffdf7;
   color: var(--ink-soft);
   line-height: 1.4;
   overflow-wrap: anywhere;
@@ -819,7 +820,7 @@ button {
   padding: 11px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #f7f8f5;
+  background: #faf6ec;
   color: var(--ink);
   text-align: left;
 }
@@ -895,7 +896,7 @@ button {
   min-width: 0;
   padding: 9px;
   border-radius: 8px;
-  background: #f7f8f5;
+  background: #faf6ec;
 }
 
 .order-facts span {
@@ -922,7 +923,7 @@ button {
 .order-note {
   padding: 10px;
   border-radius: 8px;
-  background: #fbfcfb;
+  background: #fffdf7;
   color: var(--ink-soft);
 }
 
@@ -982,7 +983,7 @@ button {
   min-width: 0;
   padding: 9px;
   border-radius: 8px;
-  background: #f7f8f5;
+  background: #faf6ec;
 }
 
 .purchase-facts span {
@@ -1008,7 +1009,7 @@ button {
 .purchase-trail span {
   padding: 7px 9px;
   border-radius: 999px;
-  background: #fbfcfb;
+  background: #fffdf7;
   line-height: 1.25;
   overflow-wrap: anywhere;
 }
@@ -1017,7 +1018,7 @@ button {
   margin: 0;
   padding: 10px;
   border-radius: 8px;
-  background: #fbfcfb;
+  background: #fffdf7;
   color: var(--ink-soft);
   line-height: 1.4;
   overflow-wrap: anywhere;
@@ -1058,7 +1059,7 @@ button {
   place-items: center;
   overflow: hidden;
   border-radius: 8px;
-  background: #e8ece8;
+  background: #ece3d0;
   color: var(--muted);
   font-weight: 900;
 }
@@ -1099,7 +1100,7 @@ button {
   min-width: 0;
   padding: 10px;
   border-radius: 8px;
-  background: #f7f8f5;
+  background: #faf6ec;
 }
 
 .item-detail-grid span {
@@ -1119,7 +1120,7 @@ button {
   margin: 0;
   padding: 11px;
   border-radius: 8px;
-  background: #fbfcfb;
+  background: #fffdf7;
   color: var(--ink-soft);
   line-height: 1.45;
   overflow-wrap: anywhere;
@@ -1169,7 +1170,7 @@ button {
 }
 
 .low-stock-stat.muted-stat {
-  background: #fbfcfb;
+  background: #fffdf7;
 }
 
 .attention-section {
@@ -1234,7 +1235,7 @@ button {
   min-width: 0;
   padding: 9px;
   border-radius: 8px;
-  background: #f7f8f5;
+  background: #faf6ec;
 }
 
 .low-stock-facts span {
@@ -1254,7 +1255,7 @@ button {
   margin: 0;
   padding: 10px;
   border-radius: 8px;
-  background: #fbfcfb;
+  background: #fffdf7;
   color: var(--ink-soft);
   line-height: 1.4;
   overflow-wrap: anywhere;
@@ -1391,7 +1392,7 @@ button {
 .purchase-receipt-stat {
   grid-column: 1 / -1;
   min-height: 58px;
-  background: #fbfcfb;
+  background: #fffdf7;
 }
 
 .install-steps {
@@ -1567,7 +1568,7 @@ button {
 
 .choice-token.active {
   border-color: var(--green);
-  background: #e6efeb;
+  background: #f1e9d6;
   color: var(--green-strong);
 }
 
@@ -1622,7 +1623,7 @@ button {
   gap: 8px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fbfcfb;
+  background: #fffdf7;
   padding: 10px;
 }
 
@@ -1655,7 +1656,7 @@ button {
   display: grid;
   gap: 8px;
   padding: 13px;
-  background: #fbfcfb;
+  background: #fffdf7;
   border: 1px solid var(--line);
   border-radius: 8px;
 }
@@ -1666,7 +1667,7 @@ button {
 }
 
 .everything-map {
-  background: linear-gradient(135deg, #fbfcfb 0%, #eef6f1 100%);
+  background: linear-gradient(135deg, #fffdf7 0%, #f4ecd9 100%);
 }
 
 .everything-map-grid {
@@ -1810,11 +1811,12 @@ button {
 }
 
 .today-command {
-  --today-do: #55b89c;
-  --today-buy: #e0ad4f;
-  --today-take: #66a7dc;
-  --today-watch: #dc7e85;
-  --today-help: #9b84c7;
+  /* Shared category color code: Do purple, Buy sage, Take amber, Watch periwinkle, Help rose. */
+  --today-do: #8a5aa5;
+  --today-buy: #4c7a6b;
+  --today-take: #b7862a;
+  --today-watch: #6d6ea0;
+  --today-help: #bf5561;
   display: grid;
   gap: 16px;
   min-width: 0;
@@ -2029,7 +2031,7 @@ button {
   border: 1px solid #293231;
   border-radius: 8px;
   background: #111817;
-  color: #f6f6f1;
+  color: #f6efdd;
   box-shadow: 0 14px 32px rgba(17, 24, 23, 0.16);
 }
 
@@ -2046,7 +2048,7 @@ button {
 .today-lens-verb-portals .today-mode-picker select {
   border-color: rgba(246, 246, 241, 0.17);
   background: rgba(246, 246, 241, 0.07);
-  color: #f6f6f1;
+  color: #f6efdd;
 }
 
 .today-lens-compass .today-focus-switcher button,
@@ -2060,8 +2062,8 @@ button {
 .today-lens-radar .today-focus-switcher button.active,
 .today-lens-verb-universe .today-focus-switcher button.active,
 .today-lens-verb-portals .today-focus-switcher button.active {
-  border-bottom-color: #d8fff3;
-  color: #f6f6f1;
+  border-bottom-color: #f4ecd9;
+  color: #f6efdd;
 }
 
 .today-compass,
@@ -2202,7 +2204,7 @@ button {
 
 .today-lens-detail .today-signal-row {
   border-color: rgba(246, 246, 241, 0.1);
-  color: #f6f6f1;
+  color: #f6efdd;
 }
 
 .today-lens-detail .today-signal-copy small {
@@ -2210,7 +2212,7 @@ button {
 }
 
 .today-lens-detail .today-signal-action {
-  color: #d8fff3;
+  color: #f4ecd9;
 }
 
 .today-lens-empty {
@@ -2353,7 +2355,7 @@ button {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: #eef2ef;
+  background: #f4ecd9;
 }
 
 .focus-season {
@@ -2437,7 +2439,7 @@ button {
 
 .focus-presets button.active {
   border-color: var(--blue);
-  background: #eaf2f8;
+  background: #efe9f1;
   color: #214e72;
 }
 
@@ -2900,7 +2902,7 @@ button {
   position: absolute;
   inset: 0 0 auto;
   height: 4px;
-  background: linear-gradient(90deg, #315f8b, #2f786c 48%, #a9782d);
+  background: linear-gradient(90deg, #b79040, #a07d2e 48%, #866521);
 }
 
 .cloud-panel-offline::before {
@@ -2922,7 +2924,7 @@ button {
   padding: 7px 10px;
   border: 1px solid #ccd5d5;
   border-radius: 999px;
-  background: #f1f4f4;
+  background: #f4ecd9;
   color: #5f6d6a;
   font-size: 0.78rem;
   font-weight: 800;
@@ -2930,7 +2932,7 @@ button {
 
 .cloud-state.connected {
   border-color: #a8c7be;
-  background: #e5f1ed;
+  background: #f1e9d6;
   color: var(--green-strong);
 }
 
@@ -3056,7 +3058,7 @@ button {
   grid-template-columns: 1fr 1fr;
   gap: 8px 14px;
   margin-top: 12px;
-  background: #f7f9f9;
+  background: #faf6ec;
 }
 
 .cloud-permissions small {
@@ -3126,7 +3128,7 @@ button {
   padding: 13px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #f7f9f9;
+  background: #faf6ec;
 }
 
 .cloud-invite-form .button {
@@ -3550,7 +3552,7 @@ button {
   width: 100%;
   height: 180px;
   object-fit: cover;
-  background: #eef4ef;
+  background: #f4ecd9;
 }
 
 .empty-image {
@@ -3885,7 +3887,7 @@ button {
   padding: 6px 10px;
   border: 1px solid #ccd5d5;
   border-radius: 999px;
-  background: #f1f4f4;
+  background: #f4ecd9;
   color: #5f6d6a;
   font-size: 0.76rem;
   font-weight: 800;
@@ -3894,7 +3896,7 @@ button {
 
 .cloud-online.connected {
   border-color: #a8c7be;
-  background: #e5f1ed;
+  background: #f1e9d6;
   color: var(--green-strong);
 }
 
