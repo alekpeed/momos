@@ -40,6 +40,12 @@ struct TasksView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.Space.lg) {
+                HStack(spacing: Theme.Space.sm) {
+                    NavigationLink { UnlockMapView() } label: { navPill("Task map", "point.3.connected.trianglepath.dotted") }
+                        .buttonStyle(.plain)
+                    NavigationLink { ProjectsView() } label: { navPill("Projects", "folder") }
+                        .buttonStyle(.plain)
+                }
                 filterChips
                 if filtered.isEmpty {
                     EmptyStateView(
@@ -100,6 +106,17 @@ struct TasksView: View {
             }
             .padding(.horizontal, 2)
         }
+    }
+
+    private func navPill(_ title: String, _ icon: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon).font(.caption)
+            Text(title).font(.subheadline.weight(.semibold))
+        }
+        .foregroundStyle(Theme.primary)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, Theme.Space.sm + 2)
+        .background(Theme.primary.opacity(0.10), in: RoundedRectangle(cornerRadius: Theme.controlRadius, style: .continuous))
     }
 
     private var emptyMessage: String {
