@@ -212,6 +212,15 @@ function preserveUnreadableLocalBackup(rawState: string) {
   localStorage.setItem(`${unreadableLocalBackupPrefix}-${stamp}`, rawState);
 }
 
+function escapeXml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
 function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} bytes`;
   const kilobytes = bytes / 1024;
@@ -1236,7 +1245,9 @@ export default function Home() {
     const contact = helperContactForRequest(request.contactId);
     const body = encodeURIComponent(helpRequestText(request));
     if (channel === "email") return `mailto:${contact?.email ?? ""}?subject=${encodeURIComponent(request.title)}&body=${body}`;
-    return `sms:${contact?.phone ?? ""}?&body=${body}`;
+    // Strip formatting (spaces, parens, dashes) so the number is a valid sms: URI target.
+    const phone = (contact?.phone ?? "").replace(/[^\d+]/g, "");
+    return `sms:${phone}?body=${body}`;
   }
 
   async function sendHelpRequestEmailProvider(request: HelpRequest) {
@@ -1531,7 +1542,11 @@ export default function Home() {
     if (!ok) return;
     setState((current) => ({
       ...current,
-      tasks: current.tasks.filter((entry) => entry.id !== taskId)
+      tasks: current.tasks
+        .filter((entry) => entry.id !== taskId)
+        .map((entry) => entry.dependencyIds.includes(taskId)
+          ? { ...entry, dependencyIds: entry.dependencyIds.filter((id) => id !== taskId) }
+          : entry)
     }));
   }
 
@@ -2339,6 +2354,22 @@ export default function Home() {
     }));
   }
 
+  function normalizeImportedDate(raw?: string) {
+    if (!raw) return undefined;
+    if (/^20\d{2}-\d{2}-\d{2}$/.test(raw)) return raw;
+    const slash = raw.match(/^(\d{1,2})\/(\d{1,2})\/(20\d{2})$/);
+    if (!slash) return undefined;
+    let month = Number(slash[1]);
+    let day = Number(slash[2]);
+    const year = Number(slash[3]);
+    // Receipts are usually M/D/Y, but if the first number can only be a day
+    // (e.g. a European 25/12/2026) treat it as D/M/Y instead of crashing.
+    if (month > 12 && day <= 12) [month, day] = [day, month];
+    if (month < 1 || month > 12 || day < 1 || day > 31) return undefined;
+    const iso = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    return Number.isNaN(new Date(`${iso}T00:00:00`).getTime()) ? undefined : iso;
+  }
+
   function parsePurchaseImportText(text: string) {
     const lines = text.split(/\n+/).map((line) => line.trim()).filter(Boolean);
     const priceMatch = text.match(/\$?([0-9]+\.[0-9]{2})/);
@@ -2347,7 +2378,7 @@ export default function Home() {
       productName: lines.find((line) => !/total|subtotal|visa|mastercard|receipt/i.test(line)) ?? lines[0] ?? "Imported purchase",
       storeName: lines[0] ?? "",
       totalPrice: priceMatch?.[1],
-      purchasedAt: dateMatch?.[1]?.includes("/") ? format(new Date(dateMatch[1]), "yyyy-MM-dd") : dateMatch?.[1]
+      purchasedAt: normalizeImportedDate(dateMatch?.[1])
     };
   }
 
@@ -5289,7 +5320,7 @@ export default function Home() {
                           onClick={() =>
                             downloadText(
                               `${container.containerCode}-qr.svg`,
-                              `<svg xmlns="http://www.w3.org/2000/svg" width="420" height="500"><rect width="100%" height="100%" fill="white"/><text x="210" y="48" text-anchor="middle" font-family="Arial" font-size="28" font-weight="700">${container.name}</text><image href="${qrImages[container.id] ?? ""}" x="70" y="80" width="280" height="280"/><text x="210" y="410" text-anchor="middle" font-family="Arial" font-size="24">${container.containerCode}</text></svg>`,
+                              `<svg xmlns="http://www.w3.org/2000/svg" width="420" height="500"><rect width="100%" height="100%" fill="white"/><text x="210" y="48" text-anchor="middle" font-family="Arial" font-size="28" font-weight="700">${escapeXml(container.name)}</text><image href="${qrImages[container.id] ?? ""}" x="70" y="80" width="280" height="280"/><text x="210" y="410" text-anchor="middle" font-family="Arial" font-size="24">${escapeXml(container.containerCode)}</text></svg>`,
                               "image/svg+xml"
                             )
                           }

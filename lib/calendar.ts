@@ -35,7 +35,15 @@ export function calendarEntryOccursOnDate(entry: CalendarEntry, dateIso: string)
   if (entry.repeatUntil && dateIso > entry.repeatUntil) return false;
   if (entry.repeat === "Daily") return true;
   if (entry.repeat === "Weekly") return dayDifference % 7 === 0;
-  if (entry.repeat === "Monthly") return candidate.getDate() === start.getDate();
+  if (entry.repeat === "Monthly") {
+    const startDay = start.getDate();
+    const candidateDay = candidate.getDate();
+    if (candidateDay === startDay) return true;
+    // An event on a day the month doesn't have (e.g. the 31st in February)
+    // occurs on that month's last day instead of being skipped entirely.
+    const lastDayOfCandidateMonth = endOfMonth(candidate).getDate();
+    return startDay > lastDayOfCandidateMonth && candidateDay === lastDayOfCandidateMonth;
+  }
   if (entry.repeat === "Yearly") return format(candidate, "MM-dd") === format(start, "MM-dd");
   return dateIso === entry.date;
 }
