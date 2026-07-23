@@ -91,6 +91,7 @@ private struct OrdersList: View {
 private struct PurchasesList: View {
     @Query(sort: \Purchase.purchasedAt, order: .reverse) private var purchases: [Purchase]
     @State private var showingAdd = false
+    @State private var showingImport = false
 
     var body: some View {
         ScrollView {
@@ -115,8 +116,17 @@ private struct PurchasesList: View {
             }
             .padding(Theme.Space.lg)
         }
-        .toolbar { ToolbarItem(placement: .primaryAction) { Button { showingAdd = true } label: { Image(systemName: "plus") }.accessibilityLabel("Add a purchase") } }
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button { showingImport = true } label: { Image(systemName: "text.viewfinder") }
+                    .accessibilityLabel("Import from receipt")
+            }
+            ToolbarItem(placement: .primaryAction) {
+                Button { showingAdd = true } label: { Image(systemName: "plus") }.accessibilityLabel("Add a purchase")
+            }
+        }
         .sheet(isPresented: $showingAdd) { NavigationStack { PurchaseEditor() } }
+        .sheet(isPresented: $showingImport) { ReceiptImportView() }
     }
 }
 
@@ -157,10 +167,17 @@ struct OrderEditor: View {
 struct PurchaseEditor: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
-    @State private var name = ""
-    @State private var store = ""
-    @State private var price = ""
-    @State private var date = Date.now
+    @State private var name: String
+    @State private var store: String
+    @State private var price: String
+    @State private var date: Date
+
+    init(name: String = "", store: String = "", price: String = "", date: Date = .now) {
+        _name = State(initialValue: name)
+        _store = State(initialValue: store)
+        _price = State(initialValue: price)
+        _date = State(initialValue: date)
+    }
 
     var body: some View {
         Form {

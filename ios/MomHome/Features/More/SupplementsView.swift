@@ -1,10 +1,15 @@
 import SwiftUI
 import SwiftData
+import UniformTypeIdentifiers
 
 struct SupplementsView: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \Supplement.name) private var supplements: [Supplement]
+    @Query private var settingsRows: [AppSettings]
     @State private var showingAdd = false
+    @State private var exportDoc: ReportDocument?
+    @State private var exportName = "supplements"
+    @State private var showingExporter = false
 
     var body: some View {
         ScrollView {
@@ -40,8 +45,33 @@ struct SupplementsView: View {
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle("Supplements")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar { ToolbarItem(placement: .primaryAction) { Button { showingAdd = true } label: { Image(systemName: "plus") }.accessibilityLabel("Add a supplement") } }
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Menu {
+                    Button { export(.pdf) } label: { Label("Export PDF", systemImage: "doc.richtext") }
+                    Button { export(.commaSeparatedText) } label: { Label("Export CSV", systemImage: "tablecells") }
+                } label: { Image(systemName: "square.and.arrow.up") }
+                    .accessibilityLabel("Export report")
+                    .disabled(supplements.isEmpty)
+            }
+            ToolbarItem(placement: .primaryAction) {
+                Button { showingAdd = true } label: { Image(systemName: "plus") }.accessibilityLabel("Add a supplement")
+            }
+        }
         .sheet(isPresented: $showingAdd) { NavigationStack { SupplementEditorView() } }
+        .fileExporter(isPresented: $showingExporter, document: exportDoc, contentType: exportDoc?.type ?? .pdf, defaultFilename: exportName) { _ in }
+    }
+
+    private func export(_ type: UTType) {
+        let household = settingsRows.first?.householdName ?? "Our Home"
+        if type == .pdf {
+            exportDoc = ReportDocument(data: ReportService.supplementsPDF(supplements, household: household), type: .pdf)
+            exportName = "supplements-report"
+        } else {
+            exportDoc = ReportDocument(data: ReportService.supplementsCSV(supplements), type: .commaSeparatedText)
+            exportName = "supplements"
+        }
+        showingExporter = true
     }
 
     private func logTaken(_ s: Supplement) {
