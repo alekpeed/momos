@@ -223,8 +223,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSCameraUsageDescription = "Mom Home uses the camera to add photos to items and idea cards, and to scan bin QR labels.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Mom Home uses your photo library to add photos to items and idea cards.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "MomOS uses the camera to add photos to items and idea cards, and to scan bin QR labels.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "MomOS uses your photo library to add photos to items and idea cards.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -237,6 +237,7 @@
 				);
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.momhome.app;
+				INFOPLIST_KEY_CFBundleDisplayName = MomOS;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
@@ -254,8 +255,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSCameraUsageDescription = "Mom Home uses the camera to add photos to items and idea cards, and to scan bin QR labels.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Mom Home uses your photo library to add photos to items and idea cards.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "MomOS uses the camera to add photos to items and idea cards, and to scan bin QR labels.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "MomOS uses your photo library to add photos to items and idea cards.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -268,6 +269,7 @@
 				);
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.momhome.app;
+				INFOPLIST_KEY_CFBundleDisplayName = MomOS;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;

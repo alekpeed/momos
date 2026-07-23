@@ -12,7 +12,7 @@ struct OnboardingView: View {
         let body: String
     }
     private let slides = [
-        Slide(icon: "house", title: "Welcome to Mom Home",
+        Slide(icon: "house", title: "Welcome to MomOS",
               body: "A calm place to keep the household organized — what to do, what to buy, what to remember."),
         Slide(icon: "sun.max", title: "Start with Today",
               body: "Today shows a few gentle signals and quick wins. Tap the colored tiles to see what needs a hand."),

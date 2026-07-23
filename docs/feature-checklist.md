@@ -1,4 +1,4 @@
-# Mom Home — Feature Checklist (native iOS)
+# MomOS — Feature Checklist (native iOS)
 
 The running source of truth for what's planned vs. built in the native SwiftUI app.
 Web app is retired; "done" means done in the native app.

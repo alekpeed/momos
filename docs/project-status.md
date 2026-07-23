@@ -1,4 +1,4 @@
-# Mom Home Project Status
+# MomOS Project Status
 
 This snapshot summarizes how far along each major project area appears to be
 based on the current roadmap, app map, handoff, Phase 1 audit, architecture notes, future backlog, and
@@ -9,7 +9,7 @@ certifications.
 
 **Estimated overall completion: 82%**
 
-Mom Home has completed the Phase 1 local-first MVP from the repository/code
+MomOS has completed the Phase 1 local-first MVP from the repository/code
 side: core pages exist, local data is stored in the browser, exports/backups are
 available, and documentation maps Phase 1 and navigation. The project is not yet
 production-finished because live iPhone QA, visual polish, automated sync,
@@ -65,7 +65,7 @@ Phase 6 is complete from the repository/code side as an encrypted local vault fo
 
 ## Best Next Work
 
-See [Mom Home Handoff](./HANDOFF.md) before continuing.
+See [MomOS Handoff](./HANDOFF.md) before continuing.
 
 1. **Run the Phase 1 live validation checklist** in a browser/iPhone session and
    record findings; the first static pass found no blocking code-map mismatches.

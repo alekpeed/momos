@@ -48,12 +48,12 @@ struct MoreView: View {
             }
             Section("Help") {
                 link("User manual", "book",
-                     "How Mom Home works, in plain language.", ManualView())
+                     "How MomOS works, in plain language.", ManualView())
                 link("Settings", "gearshape",
                      "Your household name, reminders, and Explain mode.", SettingsView())
             }
             Section {
-                Text("Mom Home keeps your household organized on this device first. Nothing is sent anywhere unless you set up cloud protection.")
+                Text("MomOS keeps your household organized on this device first. Nothing is sent anywhere unless you set up cloud protection.")
                     .font(.caption).foregroundStyle(Theme.inkSecondary)
             }
         }

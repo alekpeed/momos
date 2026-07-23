@@ -16,7 +16,7 @@ Phase 4 is complete from the repository/code side.
 
 ## Important Boundary
 
-Mom Home prepares helper text and opens device SMS/email drafts. It does not silently send messages, dispatch emergency services, or guarantee delivery. Real provider-backed background push and confirmed helper receipt remain future provider/live-validation work.
+MomOS prepares helper text and opens device SMS/email drafts. It does not silently send messages, dispatch emergency services, or guarantee delivery. Real provider-backed background push and confirmed helper receipt remain future provider/live-validation work.
 
 ## Live Validation Remaining
 

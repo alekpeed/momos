@@ -1,6 +1,6 @@
-# Mom Home — Native iOS (SwiftUI)
+# MomOS — Native iOS (SwiftUI)
 
-The native Swift/iOS build of Mom Home, implementing the interim "Quiet Household"
+The native Swift/iOS build of MomOS, implementing the interim "Quiet Household"
 design from [`docs/native-ios-design-handoff.md`](../docs/native-ios-design-handoff.md).
 This is a real, standalone app target — not a wrapper around the web app. The web
 PWA remains the reference for the product model; this is where the native app grows.
@@ -22,11 +22,10 @@ open ios/MomHome.xcodeproj
 Select the **MomHome** scheme and an iPhone simulator, then Run. First launch seeds
 a small starter household so every screen shows real content.
 
-> Note: this project was authored in a Linux environment where the iOS toolchain
-> can't compile, so it has **not** been built yet. Expect to resolve a few small
-> diagnostics on first build in Xcode. `SWIFT_VERSION` is `6.0` (strict
-> concurrency); the code was written MainActor-clean for it, but if the compiler
-> flags anything, send me the errors and I'll clear them.
+> Build status: **compiles green** on a GitHub-hosted macOS runner (Xcode 26 /
+> iOS 26 Simulator) via `.github/workflows/ios-build.yml`. The app's display name
+> is **MomOS**; the internal target/folder is still `MomHome`. `SWIFT_VERSION` is
+> `6.0` (strict concurrency), MainActor-clean.
 
 ## What's here
 

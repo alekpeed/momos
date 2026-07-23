@@ -1,6 +1,6 @@
 # Navigation QA Checklist
 
-Use this checklist with the [Mom Home App Map](./app-map.md). It is a manual
+Use this checklist with the [MomOS App Map](./app-map.md). It is a manual
 click-through script for confirming that each documented button goes to the
 expected page, form, or action before larger design changes are made.
 
@@ -131,7 +131,7 @@ expected page, form, or action before larger design changes are made.
 | Search/filter/sort cards | Board card list changes without deleting data. |  |
 | Favorite cards and compare favorites | Comparison area shows selected favorite cards. |  |
 | Copy card to another board | Same card appears on the other board without duplicate card details. |  |
-| Convert card to task/order/item/project/reminder | Connected Mom Home record is created and the card remains. |  |
+| Convert card to task/order/item/project/reminder | Connected MomOS record is created and the card remains. |  |
 | Archive/delete/restore cards | Card leaves active list and can be restored from archive/trash. |  |
 | Export or print a board | Board report action runs. |  |
 | Archive and restore a board | Board leaves active list and can be restored. |  |

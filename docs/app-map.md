@@ -1,6 +1,6 @@
-# Mom Home App Map
+# MomOS App Map
 
-This document maps the current Mom Home app structure in plain language: what is
+This document maps the current MomOS app structure in plain language: what is
 on each page, which buttons appear there, and where each action leads. It is a
 builder-facing design and QA aid, not a new user-facing feature.
 
@@ -269,7 +269,7 @@ Runs the Visual Planner: boards, sections, idea cards, source memory, comparison
 - Add/edit board, section, and card forms.
 - Active board list with room, section count, card count, notes, open, edit, and archive actions.
 - Board detail with filters, sorting, section strip, favorite comparison, budget summary, cards, archive/trash, export, and print.
-- Card actions for edit, favorite, archive, delete/restore, copy to another board, open source, and conversion into other Mom Home records.
+- Card actions for edit, favorite, archive, delete/restore, copy to another board, open source, and conversion into other MomOS records.
 
 **Buttons and destinations**
 
@@ -282,7 +282,7 @@ Runs the Visual Planner: boards, sections, idea cards, source memory, comparison
 | Edit | Reopens that board, section, or card in its form. |
 | Archive / Delete / Restore | Moves records out of the active view while keeping recovery paths. |
 | Copy to another board | Adds a second placement for the same card without duplicating the card. |
-| Make task/order/item/project/reminder | Creates the connected Mom Home record and keeps the original idea linked. |
+| Make task/order/item/project/reminder | Creates the connected MomOS record and keeps the original idea linked. |
 | Export board / Print | Produces a clean board report for sharing or printing. |
 
 **Data used**

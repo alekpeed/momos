@@ -1,6 +1,6 @@
 # Navigation QA Findings
 
-This file records navigation QA passes against the [Mom Home App Map](./app-map.md)
+This file records navigation QA passes against the [MomOS App Map](./app-map.md)
 and [Navigation QA Checklist](./navigation-qa-checklist.md).
 
 ## Pass 1: Static Code Review

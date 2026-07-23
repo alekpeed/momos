@@ -1,6 +1,6 @@
 # Provider Automations
 
-Mom Home now has a safe provider-automation readiness layer for optional live services. The app still works local-first when no provider endpoints are configured.
+MomOS now has a safe provider-automation readiness layer for optional live services. The app still works local-first when no provider endpoints are configured.
 
 ## Supported Provider Slots
 
@@ -39,7 +39,7 @@ When `NEXT_PUBLIC_MOM_HOME_EMAIL_ENDPOINT` is configured, open help requests sho
     "title": "What Mom needs",
     "details": "Optional details",
     "urgency": "Soon",
-    "nonEmergencyNotice": "This is a helper alert from Mom Home, not emergency dispatch or 911.",
+    "nonEmergencyNotice": "This is a helper alert from MomOS, not emergency dispatch or 911.",
     "createdAt": "ISO timestamp"
   },
   "contact": {
@@ -55,7 +55,7 @@ When `NEXT_PUBLIC_MOM_HOME_EMAIL_ENDPOINT` is configured, open help requests sho
   },
   "review": {
     "reviewedByUser": true,
-    "sentFrom": "Mom Home"
+    "sentFrom": "MomOS"
   }
 }
 ```

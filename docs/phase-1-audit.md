@@ -1,7 +1,7 @@
 # Phase 1 Local MVP Audit
 
 This audit translates the Phase 1 roadmap into a practical checklist for keeping
-Mom Home's first usable version stable before new cloud, AI, vault, or major
+MomOS's first usable version stable before new cloud, AI, vault, or major
 visual-direction work continues.
 
 ## Scope Guardrails

@@ -1,6 +1,6 @@
-# Mom Home Roadmap
+# MomOS Roadmap
 
-Current progress snapshot: see [Mom Home Project Status](./project-status.md). Current continuation instructions are in [Mom Home Handoff](./HANDOFF.md). Speculative and provider-dependent ideas are tracked in [Future Ideas / Backlog](./future-backlog.md).
+Current progress snapshot: see [MomOS Project Status](./project-status.md). Current continuation instructions are in [MomOS Handoff](./HANDOFF.md). Speculative and provider-dependent ideas are tracked in [Future Ideas / Backlog](./future-backlog.md).
 
 ## Design Direction Hold
 
@@ -13,7 +13,7 @@ contracts remain active so a future design can be installed without rewriting
 the household engine.
 
 Small interface placeholder previews may exist inside the app as functional
-concept samples, but they must remain opt-in, use existing Mom Home actions, and
+concept samples, but they must remain opt-in, use existing MomOS actions, and
 avoid replacing the current Today front door until a graphical direction is
 explicitly approved.
 
@@ -60,7 +60,7 @@ Status tracking: see [Ideas / Visual Planner](./ideas-visual-planner.md). First 
 This is a new planning track for Pinterest-like boards that connect visual ideas
 to tasks, inventory, purchases, rooms, and projects. The first version should be
 local-first and action-oriented: boards, sections, idea cards, fast capture,
-search/filtering, archive/restore, and links into existing Mom Home records.
+search/filtering, archive/restore, and links into existing MomOS records.
 
 ## Phase 3: Cloud Sync And Sharing
 

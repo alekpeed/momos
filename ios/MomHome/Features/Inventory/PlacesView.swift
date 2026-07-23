@@ -119,7 +119,7 @@ struct BinLabelView: View {
                                 .background(.white, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                         }
                         Text(bin.containerCode).font(.headline.monospaced()).foregroundStyle(Theme.inkSecondary)
-                        Text("Scanning this label opens Mom Home to this bin.").font(.caption).foregroundStyle(Theme.inkTertiary).multilineTextAlignment(.center)
+                        Text("Scanning this label opens MomOS to this bin.").font(.caption).foregroundStyle(Theme.inkTertiary).multilineTextAlignment(.center)
                     }
                 }
                 if let image = QRCode.image(for: link, scale: 16) {

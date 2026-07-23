@@ -35,7 +35,7 @@ enum ReportService {
         return renderer.pdfData { ctx in
             ctx.beginPage()
             var y: CGFloat = 56
-            draw("Mom Home — Supplements", at: &y, x: 48, size: 22, weight: .semibold)
+            draw("MomOS — Supplements", at: &y, x: 48, size: 22, weight: .semibold)
             draw("\(household) · \(Date.now.formatted(date: .abbreviated, time: .omitted))", at: &y, x: 48, size: 12, color: .gray)
             y += 12
             if items.isEmpty {

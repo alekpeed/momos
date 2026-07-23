@@ -2,7 +2,7 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- Mom Home is local-first: it does not track users, and collects no data
+	<!-- MomOS is local-first: it does not track users, and collects no data
 	     that leaves the device. -->
 	<key>NSPrivacyTracking</key>
 	<false/>

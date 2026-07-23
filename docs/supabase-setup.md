@@ -1,6 +1,6 @@
-# Supabase Setup For Mom Home
+# Supabase Setup For MomOS
 
-Mom Home works without Supabase. Do this setup only when cloud accounts and backups are ready to be tested.
+MomOS works without Supabase. Do this setup only when cloud accounts and backups are ready to be tested.
 
 ## What This Foundation Provides
 
@@ -32,7 +32,7 @@ The private vault is not part of the household snapshot. Helpers and admins cann
 2. Use `.env.example` as the template.
 3. Put the Project URL after `NEXT_PUBLIC_SUPABASE_URL=`.
 4. Put the publishable key after `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=`.
-5. Restart the local Mom Home server.
+5. Restart the local MomOS server.
 6. Open More, then Cloud protection.
 
 The `.gitignore` file prevents `.env.local` from being committed to Git.

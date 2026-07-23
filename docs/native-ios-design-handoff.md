@@ -1,13 +1,13 @@
 # Native Swift iOS Design Handoff
 
 This document is a packageable brief for a third-party designer or Swift/iOS
-team. It describes the current Mom Home product, the interim iOS interface to
+team. It describes the current MomOS product, the interim iOS interface to
 request, the non-negotiable product boundaries, and the assets/specifications the
 team should return.
 
 ## Copy-Paste Vendor Brief
 
-> We are designing an interim native iOS interface for **Mom Home**, a calm
+> We are designing an interim native iOS interface for **MomOS**, a calm
 > household command center for one primary user, "Mom," and optional helpers.
 > The current implementation is a local-first web/PWA app with working flows for
 > Today, tasks, calendar, inventory, places/bins, low stock, orders, purchases,
@@ -22,7 +22,7 @@ team should return.
 > legible, and highly usable for an older or overwhelmed household manager. It
 > should not feel like a generic enterprise dashboard, a medical app, a game, or
 > a sci-fi interface. Do not invent a replacement product concept. Use the
-> existing Mom Home screens, records, and action flows as the source of truth.
+> existing MomOS screens, records, and action flows as the source of truth.
 >
 > The immediate goal is an interim native interface that looks much better than
 > the current functional web UI, while keeping every major action easy to find.
@@ -31,7 +31,7 @@ team should return.
 
 ## Product Context
 
-Mom Home is a local-first household command center. It helps Mom remember,
+MomOS is a local-first household command center. It helps Mom remember,
 organize, and hand off household work without needing a complicated productivity
 system.
 
@@ -359,9 +359,9 @@ Minimum useful package:
 
 ## Example Instruction Email
 
-Subject: Native iOS design brief for Mom Home interim interface
+Subject: Native iOS design brief for MomOS interim interface
 
-Hi — I need an interim native iOS interface designed for Mom Home.
+Hi — I need an interim native iOS interface designed for MomOS.
 
 The current app is a working local-first household command center. I am planning
 a more ambitious graphical/3D interface later, but this project is **not** that

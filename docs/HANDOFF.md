@@ -1,4 +1,4 @@
-# Mom Home Handoff
+# MomOS Handoff
 
 This file is the current repository handoff for the next builder. It summarizes what is complete, what was verified in code, and what still requires live device/provider validation.
 
@@ -22,7 +22,7 @@ See `docs/project-status.md` for percentages and `docs/roadmap.md` for the phase
 
 ## Important Boundaries
 
-- Mom Home remains local-first even when cloud backup is configured.
+- MomOS remains local-first even when cloud backup is configured.
 - Provider-backed push, SMS/email sending, retailer checks, remote AI, and email inbox parsing now have endpoint readiness slots, but still require protected live provider services, credentials, and explicit validation.
 - Vault records are encrypted locally with a passphrase. The app cannot recover forgotten passphrases.
 - Vault plaintext must stay out of helper handoff, AI-style summaries, cloud member flows, and printable reports.

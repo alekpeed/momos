@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The Ideas section is a Pinterest-like planning space for Mom Home. It should not
+The Ideas section is a Pinterest-like planning space for MomOS. It should not
 be a passive image collection. Each saved idea should be searchable, organized,
 actionable, and connectable to the rest of the household app.
 
@@ -174,7 +174,7 @@ and fill details later.
 
 ## Connection Rules
 
-Ideas should connect to existing Mom Home records without replacing them:
+Ideas should connect to existing MomOS records without replacing them:
 
 - Card to task.
 - Card to calendar entry.

@@ -77,7 +77,7 @@ struct BackupView: View {
         }
     }
 
-    private let exportFilename = "mom-home-backup"
+    private let exportFilename = "momos-backup"
 
     // Bridge BackupSnapshot to an Identifiable sheet item.
     private var pendingBinding: Binding<IdentifiedSnapshot?> {
@@ -109,7 +109,7 @@ struct BackupView: View {
                 pending = try BackupService.decoder().decode(BackupSnapshot.self, from: data)
                 message = ""
             } catch {
-                message = "That file is not a valid Mom Home backup."; isError = true
+                message = "That file is not a valid MomOS backup."; isError = true
             }
         }
     }

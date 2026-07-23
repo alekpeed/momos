@@ -1,8 +1,8 @@
-# Mom Home User Manual
+# MomOS User Manual
 
 ## Overview
 
-Mom Home is an iPhone-friendly home screen app for household inventory, tasks, ordering, and simple daily planning.
+MomOS is an iPhone-friendly home screen app for household inventory, tasks, ordering, and simple daily planning.
 
 Main sections:
 
@@ -68,7 +68,7 @@ Focus Season is an adjustable timer on Today. It can be used for a specific open
 3. Tap `Start`. Use `Pause` when needed; `Restart` starts the selected length again.
 4. When a task is selected, `Open task` returns to its full record.
 
-The timer keeps its place if the page refreshes. While Mom Home is open, it can play a gentle chime and show a device notification when alerts have been enabled. It is not a background iPhone timer yet.
+The timer keeps its place if the page refreshes. While MomOS is open, it can play a gentle chime and show a device notification when alerts have been enabled. It is not a background iPhone timer yet.
 
 ## Help Requests And Alerts
 
@@ -77,7 +77,7 @@ Use Help requests when Mom needs another person to step in. This area is for hum
 1. From Today, tap `Ask help`, or open More → Help requests.
 2. Add trusted helper contacts with phone and/or email.
 3. Create a help request with a title, details, urgency, optional related task, and optional related order.
-4. Use `Copy`, `Text`, or `Email` to send the prepared message through the device. Mom Home does not silently send messages.
+4. Use `Copy`, `Text`, or `Email` to send the prepared message through the device. MomOS does not silently send messages.
 5. Mark the request resolved or cancelled when it is handled.
 
 The urgent helper alert is clearly labeled as not 911. If there is a real emergency, call 911 or local emergency services.
@@ -126,7 +126,7 @@ To make one task wait for another:
 
 Use the Next up filter to see tasks that are not blocked by unfinished earlier tasks.
 
-Mom Home prevents circular waiting loops. For example, if Task A already waits on Task B, the app will not let Task B be changed to wait on Task A.
+MomOS prevents circular waiting loops. For example, if Task A already waits on Task B, the app will not let Task B be changed to wait on Task A.
 
 The Project map shows each project as a readable tree/list plus a small flowchart preview of which tasks unlock other tasks.
 
@@ -205,7 +205,7 @@ To add an entry:
 4. Enter only the details that are useful.
 5. Tap Save entry.
 
-Device alerts require permission. In this local MVP, reminders and repeat alerts can alert while Mom Home is open. True background iPhone push notifications require the later cloud notification service. Calendar entries are already structured for that upgrade.
+Device alerts require permission. In this local MVP, reminders and repeat alerts can alert while MomOS is open. True background iPhone push notifications require the later cloud notification service. Calendar entries are already structured for that upgrade.
 
 Task reminders use the Reminder field inside the task editor and appear alongside calendar entries.
 
@@ -336,13 +336,13 @@ Common actions:
 5. Tap Product link to open the saved product page.
 6. Tap Edit delivery to add or change an order number, tracking link, or expected delivery date. Tap Track delivery to open the carrier or store page.
 
-When Mom marks an entry Ordered or Received, Mom Home records that date automatically. These details are optional and work with any store or vendor; they do not sign in to, read, or control any store account.
+When Mom marks an entry Ordered or Received, MomOS records that date automatically. These details are optional and work with any store or vendor; they do not sign in to, read, or control any store account.
 
-Web links can be pasted with or without `https://`. Mom Home adds the secure web prefix when it is missing and only opens normal `http` or `https` addresses.
+Web links can be pasted with or without `https://`. MomOS adds the secure web prefix when it is missing and only opens normal `http` or `https` addresses.
 
 The main search also finds saved order number, tracking link, expected delivery date, and ordered/received dates.
 
-For an active order with an expected delivery date, Mom Home shows `Expected today`, `Expected tomorrow`, or `Past expected date`. This is a reminder based on the saved date, not a live carrier-status claim.
+For an active order with an expected delivery date, MomOS shows `Expected today`, `Expected tomorrow`, or `Past expected date`. This is a reminder based on the saved date, not a live carrier-status claim.
 
 ## Purchase Import And Local AI Docket
 
@@ -366,7 +366,7 @@ The Private Vault stores encrypted notes in this browser.
 4. To read a note, type the passphrase and tap `Unlock`.
 5. Tap `Lock` to hide the plaintext again.
 
-If the passphrase is forgotten, Mom Home cannot recover the vault note. Vault plaintext is not included in helper handoff, AI-style summaries, or normal reports.
+If the passphrase is forgotten, MomOS cannot recover the vault note. Vault plaintext is not included in helper handoff, AI-style summaries, or normal reports.
 
 ## Supplements
 
@@ -444,7 +444,7 @@ Use Purchases to:
 
 Each purchase card separates vendor, total price, brand, amount, receipt status, preference, order number, notes, and actions so Mom does not have to read one long compressed line.
 
-Inside an inventory item's Purchase history, Mom Home shows the number of recorded purchases and the lowest saved total price. This is a simple record of what was entered, not an automatic store-price comparison. Check package size and unit size before deciding that one saved total is the better deal.
+Inside an inventory item's Purchase history, MomOS shows the number of recorded purchases and the lowest saved total price. This is a simple record of what was entered, not an automatic store-price comparison. Check package size and unit size before deciding that one saved total is the better deal.
 
 
 ## Ideas
@@ -455,7 +455,7 @@ Current actions:
 
 1. Tap Ideas in the bottom navigation.
 2. Add boards and optional sections.
-3. Add cards from a photo, screenshot, link, note, product, recipe, document, inventory item, task, or project. When an image is added, Mom Home extracts a small color palette and creates a simple local image fingerprint for duplicate warnings.
+3. Add cards from a photo, screenshot, link, note, product, recipe, document, inventory item, task, or project. When an image is added, MomOS extracts a small color palette and creates a simple local image fingerprint for duplicate warnings.
 4. Search, filter, sort, favorite, compare, archive, restore, copy to another board, export, or print board ideas.
 5. Convert useful cards into tasks, orders, inventory items, projects, or calendar reminders while keeping the original idea card saved.
 
@@ -494,23 +494,23 @@ The PDF report opens a print screen. Choose Save as PDF if the browser asks for 
 
 ## Calm Screen
 
-The Calm screen is a quiet reset page. It can play the selected local sound, switch to silent mode, open quick wins, open help, or let Mom log energy. The Focus Season timer also uses the selected calm sound when it finishes while Mom Home is open.
+The Calm screen is a quiet reset page. It can play the selected local sound, switch to silent mode, open quick wins, open help, or let Mom log energy. The Focus Season timer also uses the selected calm sound when it finishes while MomOS is open.
 
 ## iPhone Home Screen
 
-Use Safari to install Mom Home on an iPhone:
+Use Safari to install MomOS on an iPhone:
 
-1. Open the deployed Mom Home website in Safari.
+1. Open the deployed MomOS website in Safari.
 2. Tap the Share button.
 3. Tap Add to Home Screen.
 4. Tap Add.
-5. Open Mom Home from the new Home Screen icon.
+5. Open MomOS from the new Home Screen icon.
 
 After the app has opened successfully once while connected, its basic app shell is kept available for brief connection interruptions. Household records remain on the device through the browser's local storage. Cloud backup and restore still need an internet connection.
 
 ## Cloud Protection
 
-Mom Home always saves locally in the browser. If Firebase or Supabase has been connected, More also shows account and cloud protection controls. Cloud protection shows whether the device is online, the latest cloud revision, and whether a failed cloud backup is queued for retry.
+MomOS always saves locally in the browser. If Firebase or Supabase has been connected, More also shows account and cloud protection controls. Cloud protection shows whether the device is online, the latest cloud revision, and whether a failed cloud backup is queued for retry.
 
 To create the first cloud household:
 
@@ -524,7 +524,7 @@ If the account password is forgotten, open **More > Cloud protection**, type the
 
 To protect newer changes, tap Back up this device. Photos saved inside the app are copied to private cloud storage during that backup.
 
-Mom Home automatically reduces oversized camera photos before saving them locally or sending them to cloud storage. Most large item, bin, receipt, and bottle photos are downscaled and saved as compact JPEGs. GIFs, SVGs, and files a browser cannot safely process are kept as originally selected.
+MomOS automatically reduces oversized camera photos before saving them locally or sending them to cloud storage. Most large item, bin, receipt, and bottle photos are downscaled and saved as compact JPEGs. GIFs, SVGs, and files a browser cannot safely process are kept as originally selected.
 
 To restore:
 
@@ -541,11 +541,11 @@ Cloud roles are owner, admin, helper, and viewer. The private vault is not inclu
 
 ### Sharing A Household
 
-Only the owner can add people. The owner opens **More > Cloud protection > Shared access**, chooses an access level, and taps **Create invitation**. Mom Home creates a one-use code that expires after seven days. The owner can copy that code and send it however they prefer.
+Only the owner can add people. The owner opens **More > Cloud protection > Shared access**, chooses an access level, and taps **Create invitation**. MomOS creates a one-use code that expires after seven days. The owner can copy that code and send it however they prefer.
 
-The recipient must create or sign into their own Mom Home account. In **More > Cloud protection**, they paste the code under **Join a shared household** and tap **Request access**. Nothing is shared at that point. The owner must return to **Shared access** and tap **Approve** before the recipient can see the household. The recipient then taps **Check for approved access**, chooses the household if needed, and uses **Check cloud backup > Restore to this device** to load the latest shared copy.
+The recipient must create or sign into their own MomOS account. In **More > Cloud protection**, they paste the code under **Join a shared household** and tap **Request access**. Nothing is shared at that point. The owner must return to **Shared access** and tap **Approve** before the recipient can see the household. The recipient then taps **Check for approved access**, chooses the household if needed, and uses **Check cloud backup > Restore to this device** to load the latest shared copy.
 
-Sharing currently uses deliberate cloud backups. An owner, admin, or helper chooses **Back up this device** when they want their latest changes shared. A viewer can check and restore the current shared backup but cannot upload changes. Mom Home will not silently overwrite another person's work.
+Sharing currently uses deliberate cloud backups. An owner, admin, or helper chooses **Back up this device** when they want their latest changes shared. A viewer can check and restore the current shared backup but cannot upload changes. MomOS will not silently overwrite another person's work.
 
 The owner can later change a person's role, remove them immediately, revoke unused invitation codes, or decline a pending request. There is no secret access path and no one, including an admin or helper, can enter the future private vault through household sharing.
 

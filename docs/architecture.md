@@ -1,8 +1,8 @@
-# Mom Home MVP Architecture
+# MomOS MVP Architecture
 
 ## App Map
 
-The current page and button flow is tracked in [Mom Home App Map](./app-map.md). Use that document before changing navigation or adding major new screens.
+The current page and button flow is tracked in [MomOS App Map](./app-map.md). Use that document before changing navigation or adding major new screens.
 
 ## Current MVP
 

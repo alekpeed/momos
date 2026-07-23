@@ -1,6 +1,6 @@
 # Firebase setup
 
-Mom Home remains fully usable in local mode until Firebase is configured. Firebase adds optional cloud accounts, household backups, private photo storage, and restore across devices.
+MomOS remains fully usable in local mode until Firebase is configured. Firebase adds optional cloud accounts, household backups, private photo storage, and restore across devices.
 
 ## Create the project
 
@@ -23,13 +23,13 @@ The Web App configuration is intended to be present in browser code. Do not put 
 
 1. In Firebase Console, open **Firestore Database > Rules** and replace its contents with `firebase/firestore.rules`.
 2. Open **Storage > Rules** and replace its contents with `firebase/storage.rules`.
-3. Publish both before creating a household in Mom Home.
+3. Publish both before creating a household in MomOS.
 
 The rules allow household members to read their own household, permit the owner and approved editors to save data, and block everyone else. Media uploads are limited to images or PDFs under 15 MB.
 
 ## First backup
 
-1. Open Mom Home and use **More > Cloud protection**.
+1. Open MomOS and use **More > Cloud protection**.
 2. Create an email/password account.
 3. Create the household and choose **Back up this device**.
 
@@ -37,7 +37,7 @@ Local saving remains on. Restoring a cloud backup asks before replacing the data
 
 ## Shared household access
 
-After publishing the Firestore rules, the household owner can make a one-use invitation code from **More > Cloud protection > Shared access**. The recipient signs into their own Mom Home account, pastes the code, and sends a request. The owner must explicitly approve it before the recipient receives access.
+After publishing the Firestore rules, the household owner can make a one-use invitation code from **More > Cloud protection > Shared access**. The recipient signs into their own MomOS account, pastes the code, and sends a request. The owner must explicitly approve it before the recipient receives access.
 
 The owner can change a member's role, remove a member, decline a request, or revoke an unused code at any time. Invitation codes expire after seven days. The private vault is excluded from household sharing.
 
